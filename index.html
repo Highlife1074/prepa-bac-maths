@@ -1,22 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Révisions Maison : Cloud</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-
-    <div id="app-container" class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full">
-        </div>
-
-    <script type="module">
-        // 1. IMPORTATION DE FIREBASE (Version Web CDN)
+<script type="module">
+        // 1. IMPORTATION DE FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        // 2. VOS CLÉS FIREBASE OFFICIELLES
+        // 2. VOS CLÉS FIREBASE (Nettoyées des espaces invisibles)
         const firebaseConfig = {
             apiKey: "AIzaSyCD-3YfPCRPDVzYgQ0FW-XPxf4gZkPIO88",
             authDomain: "famille-revision.firebaseapp.com",
@@ -26,7 +13,6 @@
             appId: "1:124956066429:web:b68b839ce55e9b6e67e714"
         };
 
-        // Initialisation du Cloud Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -43,7 +29,6 @@
             { theme: "Proportionnalité", target: "Logique", question: "3 cahiers coûtent 6 euros, combien coûtent 5 cahiers ?", answer: "10", explanation: "Un cahier = 2€. 5*2 = 10.", hints: ["Cherche le prix d'un seul cahier d'abord."] }
         ];
 
-        // --- ÉTAT DE L'APPLICATION ---
         let currentQuiz = [];
         let currentProfile = "";
         let currentIndex = 0;
@@ -77,26 +62,24 @@
             currentProfile = profile;
             currentQuiz = profile === '1ere' ? quiz1ere : quizCM2;
             
-            // Afficher un message de chargement pendant qu'on interroge Firebase
             container.innerHTML = `<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>`;
 
             try {
-                // On va chercher le document de l'enfant dans la collection "users"
                 const docRef = doc(db, "users", profile);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    // Le profil existe, on récupère ses données !
                     currentIndex = docSnap.data().currentIndex || 0;
                     score = docSnap.data().score || 0;
                 } else {
-                    // C'est sa première fois, on part de zéro
                     currentIndex = 0;
                     score = 0;
                 }
             } catch (error) {
                 console.error("Erreur Firebase:", error);
-                alert("Erreur de connexion de sauvegarde. Vérifiez vos clés Firebase ou l'état de votre base (Mode Test requis).");
+                // En cas d'erreur de base de données, on lance quand même l'app de zéro
+                currentIndex = 0;
+                score = 0;
             }
 
             hintLevel = 0;
@@ -107,7 +90,6 @@
         async function saveDataToCloud() {
             try {
                 const docRef = doc(db, "users", currentProfile);
-                // setDoc avec { merge: true } crée le document s'il n'existe pas, ou le met à jour
                 await setDoc(docRef, {
                     currentIndex: currentIndex,
                     score: score,
@@ -132,8 +114,14 @@
             }
 
             const currentQ = currentQuiz[currentIndex];
-            let hintsHtml = hintLevel > 0 ? `<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">${currentQ.hints.slice(0, hintLevel).map(h => \`<li>\${h}</li>\`).join('')}</ul>` : '';
             const themeColor = currentProfile === '1ere' ? 'blue' : 'green';
+            
+            // Correction de la syntaxe des indices (Ligne 135 nettoyée)
+            let hintsHtml = '';
+            if (hintLevel > 0) {
+                const listItems = currentQ.hints.slice(0, hintLevel).map(h => "<li>" + h + "</li>").join('');
+                hintsHtml = '<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">' + listItems + '</ul>';
+            }
 
             container.innerHTML = `
                 <div class="mb-6 flex justify-between items-center border-b pb-4">
@@ -167,7 +155,7 @@
             
             if (userAnswer === currentQ.answer.toLowerCase()) {
                 if (hintLevel === 0) score++;
-                saveDataToCloud(); // On sauvegarde le score en temps réel
+                saveDataToCloud();
                 
                 feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
                 feedbackArea.innerHTML = `
@@ -189,12 +177,10 @@
         window.nextQuestion = function() {
             currentIndex++;
             hintLevel = 0;
-            saveDataToCloud(); // On sauvegarde l'avancement de la question
+            saveDataToCloud();
             render();
         };
 
         // Démarrage de l'application
         showHome();
     </script>
-</body>
-</html>
