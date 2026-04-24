@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Bac Maths</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full">
+        </div>
+
+    <script>
+        // 1. Les données du Quiz (Intégrées directement ici)
+        const quizData = [
+            {
+                theme: "Produit Scalaire",
+                target: "Automatisme de calcul",
+                question: "Soient les vecteurs u(2; -3) et v(4; 1). Calculer le produit scalaire u.v",
+                answer: "5",
+                explanation: "On applique la formule : 2 * 4 + (-3) * 1 = 8 - 3 = 5.",
+                hints: ["Quelle est la formule du produit scalaire avec les coordonnées ?", "Multiplie les abscisses entre elles, puis les ordonnées, et additionne."]
+            },
+            {
+                theme: "Équations Cartésiennes",
+                target: "Lecture de base",
+                question: "Soit la droite d'équation 3x - 2y + 5 = 0. Donne les coordonnées du vecteur normal n sous la forme (x; y).",
+                answer: "(3; -2)",
+                explanation: "Dans ax + by + c = 0, le vecteur normal est n(a; b). Ici a=3 et b=-2.",
+                hints: ["Regarde les coefficients devant x et y.", "Le cours dit que n a pour coordonnées (a; b)."]
+            },
+            {
+                theme: "Probabilités",
+                target: "Calcul de base",
+                question: "P(V) = 0.4 et P sachant V de M = 0.05. Calcule P(V inter M).",
+                answer: "0.02",
+                explanation: "0.4 * 0.05 = 0.02.",
+                hints: ["C'est une multiplication.", "Multiplie la probabilité de V par la probabilité conditionnelle."]
+            }
+        ];
+
+        // 2. L'état de l'application
+        let currentIndex = 0;
+        let hintLevel = 0;
+        let score = 0;
+
+        const container = document.getElementById('app-container');
+
+        // 3. Fonction pour afficher l'interface
+        function render() {
+            if (currentIndex >= quizData.length) {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Diagnostic Terminé !</h2>
+                        <p class="text-xl mb-6">Ton score (sans indice) : <span class="font-bold text-blue-600">${score} / ${quizData.length}</span></p>
+                        <p class="text-gray-600">Recharge la page pour recommencer.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const currentQ = quizData[currentIndex];
+            let hintsHtml = '';
+            
+            if (hintLevel > 0) {
+                const visibleHints = currentQ.hints.slice(0, hintLevel).map(h => `<li>${h}</li>`).join('');
+                hintsHtml = `<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">${visibleHints}</ul>`;
+            }
+
+            container.innerHTML = `
+                <div class="mb-6 flex justify-between items-center border-b pb-4">
+                    <span class="text-sm font-semibold text-blue-600 uppercase tracking-wider">${currentQ.theme}</span>
+                    <span class="text-sm text-gray-500">Question ${currentIndex + 1} / ${quizData.length}</span>
+                </div>
+                <div class="mb-8">
+                    <p class="text-xs text-gray-400 mb-2">Objectif : ${currentQ.target}</p>
+                    <h2 class="text-xl font-medium text-gray-800">${currentQ.question}</h2>
+                </div>
+                
+                <div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>
+
+                <div class="mb-6">
+                    <input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4" />
+                    <button onclick="checkAnswer()" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>
+                    
+                    <button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-red-600 hover:text-red-800">J'ai besoin d'un indice</button>
+                    ${hintsHtml}
+                </div>
+            `;
+        }
+
+        // 4. Logique de validation
+        window.checkAnswer = function() {
+            const currentQ = quizData[currentIndex];
+            const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
+            const feedbackArea = document.getElementById('feedback-area');
+            const submitBtn = document.getElementById('submit-btn');
+            const hintBtn = document.getElementById('hint-btn');
+
+            if (userAnswer === currentQ.answer.toLowerCase()) {
+                if (hintLevel === 0) score++;
+                feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
+                feedbackArea.innerHTML = `
+                    <p class="font-bold text-lg mb-2">Bravo, c'est exact ! 🎉</p>
+                    <p class="text-sm mb-4">${currentQ.explanation}</p>
+                    <button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Question suivante</button>
+                `;
+                submitBtn.style.display = 'none';
+                hintBtn.style.display = 'none';
+            } else {
+                feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
+                feedbackArea.innerHTML = `<p class="font-semibold">Ce n'est pas tout à fait ça. Essaie encore !</p>`;
+                if (hintLevel < currentQ.hints.length) {
+                    hintBtn.style.display = 'block';
+                }
+            }
+        };
+
+        window.showHint = function() {
+            hintLevel++;
+            render();
+            // Réafficher l'erreur pour garder le contexte
+            const feedbackArea = document.getElementById('feedback-area');
+            feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
+            feedbackArea.innerHTML = `<p class="font-semibold">Ce n'est pas tout à fait ça. Essaie encore !</p>`;
+        };
+
+        window.nextQuestion = function() {
+            currentIndex++;
+            hintLevel = 0;
+            render();
+        };
+
+        // Lancer l'application
+        render();
+    </script>
+</body>
+</html>
