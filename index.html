@@ -1,9 +1,20 @@
-<script type="module">
-        // 1. IMPORTATION DE FIREBASE
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révisions Maison : Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full">
+        </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        // 2. VOS CLÉS FIREBASE (Nettoyées des espaces invisibles)
         const firebaseConfig = {
             apiKey: "AIzaSyCD-3YfPCRPDVzYgQ0FW-XPxf4gZkPIO88",
             authDomain: "famille-revision.firebaseapp.com",
@@ -16,7 +27,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- BASES DE DONNÉES DES EXERCICES ---
         const quiz1ere = [
             { theme: "Produit Scalaire", target: "Automatisme de calcul", question: "Soient u(2; -3) et v(4; 1). Calculer u.v", answer: "5", explanation: "2*4 + (-3)*1 = 5", hints: ["Formule : xx' + yy'"] },
             { theme: "Probabilités", target: "Calcul conditionnel", question: "P(V)=0.4 et P_V(M)=0.05. Calcule P(V inter M).", answer: "0.02", explanation: "0.4 * 0.05 = 0.02.", hints: ["C'est une multiplication."] },
@@ -37,32 +47,29 @@
 
         const container = document.getElementById('app-container');
 
-        // --- INTERFACE D'ACCUEIL ---
         window.showHome = function() {
-            container.innerHTML = `
-                <div class="text-center">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud</h1>
-                    <p class="text-gray-500 mb-8">Les sauvegardes sont synchronisées.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button onclick="startApp('1ere')" class="p-6 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">
-                            <h2 class="text-2xl font-bold text-blue-600 mb-2">Objectif Bac</h2>
-                            <p class="text-sm text-gray-600">Maths (1ère)</p>
-                        </button>
-                        <button onclick="startApp('cm2')" class="p-6 border-2 border-green-500 rounded-xl hover:bg-green-50 transition">
-                            <h2 class="text-2xl font-bold text-green-600 mb-2">Objectif Collège</h2>
-                            <p class="text-sm text-gray-600">Maths (CM2)</p>
-                        </button>
-                    </div>
-                </div>
-            `;
+            container.innerHTML = 
+                '<div class="text-center">' +
+                    '<h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud</h1>' +
+                    '<p class="text-gray-500 mb-8">Les sauvegardes sont synchronisées.</p>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+                        '<button onclick="startApp(\'1ere\')" class="p-6 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">' +
+                            '<h2 class="text-2xl font-bold text-blue-600 mb-2">Objectif Bac</h2>' +
+                            '<p class="text-sm text-gray-600">Maths (1ère)</p>' +
+                        '</button>' +
+                        '<button onclick="startApp(\'cm2\')" class="p-6 border-2 border-green-500 rounded-xl hover:bg-green-50 transition">' +
+                            '<h2 class="text-2xl font-bold text-green-600 mb-2">Objectif Collège</h2>' +
+                            '<p class="text-sm text-gray-600">Maths (CM2)</p>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
         };
 
-        // --- CONNEXION À FIREBASE ET LANCEMENT ---
         window.startApp = async function(profile) {
             currentProfile = profile;
             currentQuiz = profile === '1ere' ? quiz1ere : quizCM2;
             
-            container.innerHTML = `<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>`;
+            container.innerHTML = '<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>';
 
             try {
                 const docRef = doc(db, "users", profile);
@@ -77,7 +84,6 @@
                 }
             } catch (error) {
                 console.error("Erreur Firebase:", error);
-                // En cas d'erreur de base de données, on lance quand même l'app de zéro
                 currentIndex = 0;
                 score = 0;
             }
@@ -86,7 +92,6 @@
             render();
         };
 
-        // --- SAUVEGARDE SUR FIREBASE ---
         async function saveDataToCloud() {
             try {
                 const docRef = doc(db, "users", currentProfile);
@@ -100,54 +105,52 @@
             }
         }
 
-        // --- AFFICHAGE DES QUESTIONS ---
         function render() {
             if (currentIndex >= currentQuiz.length) {
-                container.innerHTML = `
-                    <div class="text-center">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Entraînement Terminé !</h2>
-                        <p class="text-xl mb-6">Ton score : <span class="font-bold text-blue-600">${score} / ${currentQuiz.length}</span></p>
-                        <button onclick="showHome()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Retour à l'accueil</button>
-                    </div>
-                `;
+                container.innerHTML = 
+                    '<div class="text-center">' +
+                        '<h2 class="text-3xl font-bold text-gray-800 mb-4">Entraînement Terminé !</h2>' +
+                        '<p class="text-xl mb-6">Ton score : <span class="font-bold text-blue-600">' + score + ' / ' + currentQuiz.length + '</span></p>' +
+                        '<button onclick="showHome()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Retour à l\'accueil</button>' +
+                    '</div>';
                 return;
             }
 
             const currentQ = currentQuiz[currentIndex];
             const themeColor = currentProfile === '1ere' ? 'blue' : 'green';
             
-            // Correction de la syntaxe des indices (Ligne 135 nettoyée)
             let hintsHtml = '';
             if (hintLevel > 0) {
-                const listItems = currentQ.hints.slice(0, hintLevel).map(h => "<li>" + h + "</li>").join('');
+                let listItems = '';
+                for(let i = 0; i < hintLevel; i++) {
+                    if(currentQ.hints[i]) {
+                        listItems += '<li>' + currentQ.hints[i] + '</li>';
+                    }
+                }
                 hintsHtml = '<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">' + listItems + '</ul>';
             }
 
-            container.innerHTML = `
-                <div class="mb-6 flex justify-between items-center border-b pb-4">
-                    <span class="text-sm font-semibold text-${themeColor}-600 uppercase tracking-wider">${currentQ.theme}</span>
-                    <span class="text-sm text-gray-500">Q. ${currentIndex + 1} / ${currentQuiz.length}</span>
-                </div>
-                <div class="mb-8">
-                    <p class="text-xs text-gray-400 mb-2">Objectif : ${currentQ.target}</p>
-                    <h2 class="text-xl font-medium text-gray-800">${currentQ.question}</h2>
-                </div>
-                
-                <div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>
-
-                <div class="mb-6">
-                    <input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${themeColor}-500 focus:outline-none mb-4" />
-                    <button onclick="checkAnswer()" id="submit-btn" class="w-full bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>
-                    <button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-red-600 hover:text-red-800">J'ai besoin d'un indice</button>
-                    ${hintsHtml}
-                </div>
-                <div class="text-center mt-4">
-                     <button onclick="showHome()" class="text-xs text-gray-400 underline hover:text-gray-600">Quitter l'exercice</button>
-                </div>
-            `;
+            container.innerHTML = 
+                '<div class="mb-6 flex justify-between items-center border-b pb-4">' +
+                    '<span class="text-sm font-semibold text-' + themeColor + '-600 uppercase tracking-wider">' + currentQ.theme + '</span>' +
+                    '<span class="text-sm text-gray-500">Q. ' + (currentIndex + 1) + ' / ' + currentQuiz.length + '</span>' +
+                '</div>' +
+                '<div class="mb-8">' +
+                    '<p class="text-xs text-gray-400 mb-2">Objectif : ' + currentQ.target + '</p>' +
+                    '<h2 class="text-xl font-medium text-gray-800">' + currentQ.question + '</h2>' +
+                '</div>' +
+                '<div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>' +
+                '<div class="mb-6">' +
+                    '<input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-' + themeColor + '-500 focus:outline-none mb-4" />' +
+                    '<button onclick="checkAnswer()" id="submit-btn" class="w-full bg-' + themeColor + '-600 hover:bg-' + themeColor + '-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>' +
+                    '<button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-red-600 hover:text-red-800">J\'ai besoin d\'un indice</button>' +
+                    hintsHtml +
+                '</div>' +
+                '<div class="text-center mt-4">' +
+                     '<button onclick="showHome()" class="text-xs text-gray-400 underline hover:text-gray-600">Quitter l\'exercice</button>' +
+                '</div>';
         }
 
-        // --- VALIDATION ET PASSAGE ---
         window.checkAnswer = function() {
             const currentQ = currentQuiz[currentIndex];
             const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
@@ -158,17 +161,19 @@
                 saveDataToCloud();
                 
                 feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
-                feedbackArea.innerHTML = `
-                    <p class="font-bold text-lg mb-2">Bravo ! 🎉</p>
-                    <p class="text-sm mb-4">${currentQ.explanation}</p>
-                    <button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante</button>
-                `;
+                feedbackArea.innerHTML = 
+                    '<p class="font-bold text-lg mb-2">Bravo ! 🎉</p>' +
+                    '<p class="text-sm mb-4">' + currentQ.explanation + '</p>' +
+                    '<button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante</button>';
+                
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('hint-btn').style.display = 'none';
             } else {
                 feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
-                feedbackArea.innerHTML = `<p class="font-semibold">Ce n'est pas tout à fait ça. Essaie encore !</p>`;
-                if (hintLevel < currentQ.hints.length) document.getElementById('hint-btn').style.display = 'block';
+                feedbackArea.innerHTML = '<p class="font-semibold">Ce n\'est pas tout à fait ça. Essaie encore !</p>';
+                if (hintLevel < currentQ.hints.length) {
+                    document.getElementById('hint-btn').style.display = 'block';
+                }
             }
         };
 
@@ -181,6 +186,7 @@
             render();
         };
 
-        // Démarrage de l'application
         showHome();
     </script>
+</body>
+</html>
