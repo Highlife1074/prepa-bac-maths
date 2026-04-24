@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnostic Bac Maths</title>
+    <title>Révisions Maison : Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -11,67 +11,134 @@
     <div id="app-container" class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full">
         </div>
 
-    <script>
-        // 1. Les données du Quiz (Intégrées directement ici)
-        const quizData = [
-            {
-                theme: "Produit Scalaire",
-                target: "Automatisme de calcul",
-                question: "Soient les vecteurs u(2; -3) et v(4; 1). Calculer le produit scalaire u.v",
-                answer: "5",
-                explanation: "On applique la formule : 2 * 4 + (-3) * 1 = 8 - 3 = 5.",
-                hints: ["Quelle est la formule du produit scalaire avec les coordonnées ?", "Multiplie les abscisses entre elles, puis les ordonnées, et additionne."]
-            },
-            {
-                theme: "Équations Cartésiennes",
-                target: "Lecture de base",
-                question: "Soit la droite d'équation 3x - 2y + 5 = 0. Donne les coordonnées du vecteur normal n sous la forme (x; y).",
-                answer: "(3; -2)",
-                explanation: "Dans ax + by + c = 0, le vecteur normal est n(a; b). Ici a=3 et b=-2.",
-                hints: ["Regarde les coefficients devant x et y.", "Le cours dit que n a pour coordonnées (a; b)."]
-            },
-            {
-                theme: "Probabilités",
-                target: "Calcul de base",
-                question: "P(V) = 0.4 et P sachant V de M = 0.05. Calcule P(V inter M).",
-                answer: "0.02",
-                explanation: "0.4 * 0.05 = 0.02.",
-                hints: ["C'est une multiplication.", "Multiplie la probabilité de V par la probabilité conditionnelle."]
-            }
+    <script type="module">
+        // 1. IMPORTATION DE FIREBASE (Version Web CDN)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // 2. VOS CLÉS FIREBASE OFFICIELLES
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD-3YfPCRPDVzYgQ0FW-XPxf4gZkPIO88",
+            authDomain: "famille-revision.firebaseapp.com",
+            projectId: "famille-revision",
+            storageBucket: "famille-revision.firebasestorage.app",
+            messagingSenderId: "124956066429",
+            appId: "1:124956066429:web:b68b839ce55e9b6e67e714"
+        };
+
+        // Initialisation du Cloud Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- BASES DE DONNÉES DES EXERCICES ---
+        const quiz1ere = [
+            { theme: "Produit Scalaire", target: "Automatisme de calcul", question: "Soient u(2; -3) et v(4; 1). Calculer u.v", answer: "5", explanation: "2*4 + (-3)*1 = 5", hints: ["Formule : xx' + yy'"] },
+            { theme: "Probabilités", target: "Calcul conditionnel", question: "P(V)=0.4 et P_V(M)=0.05. Calcule P(V inter M).", answer: "0.02", explanation: "0.4 * 0.05 = 0.02.", hints: ["C'est une multiplication."] },
+            { theme: "Équations Cartésiennes", target: "Lecture de base", question: "Soit la droite d'équation 3x - 2y + 5 = 0. Donne les coordonnées du vecteur normal n sous la forme (x; y).", answer: "(3; -2)", explanation: "Dans ax + by + c = 0, le vecteur normal est n(a; b). Ici a=3 et b=-2.", hints: ["Regarde les coefficients devant x et y.", "Le cours dit que n a pour coordonnées (a; b)."] }
         ];
 
-        // 2. L'état de l'application
+        const quizCM2 = [
+            { theme: "Fractions", target: "Sens et addition", question: "Combien font 1/2 + 1/4 ? (ex: 3/4)", answer: "3/4", explanation: "1/2 = 2/4. Donc 2/4 + 1/4 = 3/4.", hints: ["Transforme 1/2 pour avoir un 4 en bas."] },
+            { theme: "Nombres Décimaux", target: "Calcul mental", question: "Quel est le double de 2,5 ?", answer: "5", explanation: "2,5 + 2,5 = 5.", hints: ["Sépare le calcul : le double de 2, et le double de 0,5."] },
+            { theme: "Proportionnalité", target: "Logique", question: "3 cahiers coûtent 6 euros, combien coûtent 5 cahiers ?", answer: "10", explanation: "Un cahier = 2€. 5*2 = 10.", hints: ["Cherche le prix d'un seul cahier d'abord."] }
+        ];
+
+        // --- ÉTAT DE L'APPLICATION ---
+        let currentQuiz = [];
+        let currentProfile = "";
         let currentIndex = 0;
         let hintLevel = 0;
         let score = 0;
 
         const container = document.getElementById('app-container');
 
-        // 3. Fonction pour afficher l'interface
+        // --- INTERFACE D'ACCUEIL ---
+        window.showHome = function() {
+            container.innerHTML = `
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud</h1>
+                    <p class="text-gray-500 mb-8">Les sauvegardes sont synchronisées.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="startApp('1ere')" class="p-6 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">
+                            <h2 class="text-2xl font-bold text-blue-600 mb-2">Objectif Bac</h2>
+                            <p class="text-sm text-gray-600">Maths (1ère)</p>
+                        </button>
+                        <button onclick="startApp('cm2')" class="p-6 border-2 border-green-500 rounded-xl hover:bg-green-50 transition">
+                            <h2 class="text-2xl font-bold text-green-600 mb-2">Objectif Collège</h2>
+                            <p class="text-sm text-gray-600">Maths (CM2)</p>
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- CONNEXION À FIREBASE ET LANCEMENT ---
+        window.startApp = async function(profile) {
+            currentProfile = profile;
+            currentQuiz = profile === '1ere' ? quiz1ere : quizCM2;
+            
+            // Afficher un message de chargement pendant qu'on interroge Firebase
+            container.innerHTML = `<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>`;
+
+            try {
+                // On va chercher le document de l'enfant dans la collection "users"
+                const docRef = doc(db, "users", profile);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    // Le profil existe, on récupère ses données !
+                    currentIndex = docSnap.data().currentIndex || 0;
+                    score = docSnap.data().score || 0;
+                } else {
+                    // C'est sa première fois, on part de zéro
+                    currentIndex = 0;
+                    score = 0;
+                }
+            } catch (error) {
+                console.error("Erreur Firebase:", error);
+                alert("Erreur de connexion de sauvegarde. Vérifiez vos clés Firebase ou l'état de votre base (Mode Test requis).");
+            }
+
+            hintLevel = 0;
+            render();
+        };
+
+        // --- SAUVEGARDE SUR FIREBASE ---
+        async function saveDataToCloud() {
+            try {
+                const docRef = doc(db, "users", currentProfile);
+                // setDoc avec { merge: true } crée le document s'il n'existe pas, ou le met à jour
+                await setDoc(docRef, {
+                    currentIndex: currentIndex,
+                    score: score,
+                    lastActive: new Date()
+                }, { merge: true });
+            } catch (error) {
+                console.error("Erreur de sauvegarde:", error);
+            }
+        }
+
+        // --- AFFICHAGE DES QUESTIONS ---
         function render() {
-            if (currentIndex >= quizData.length) {
+            if (currentIndex >= currentQuiz.length) {
                 container.innerHTML = `
                     <div class="text-center">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Diagnostic Terminé !</h2>
-                        <p class="text-xl mb-6">Ton score (sans indice) : <span class="font-bold text-blue-600">${score} / ${quizData.length}</span></p>
-                        <p class="text-gray-600">Recharge la page pour recommencer.</p>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Entraînement Terminé !</h2>
+                        <p class="text-xl mb-6">Ton score : <span class="font-bold text-blue-600">${score} / ${currentQuiz.length}</span></p>
+                        <button onclick="showHome()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Retour à l'accueil</button>
                     </div>
                 `;
                 return;
             }
 
-            const currentQ = quizData[currentIndex];
-            let hintsHtml = '';
-            
-            if (hintLevel > 0) {
-                const visibleHints = currentQ.hints.slice(0, hintLevel).map(h => `<li>${h}</li>`).join('');
-                hintsHtml = `<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">${visibleHints}</ul>`;
-            }
+            const currentQ = currentQuiz[currentIndex];
+            let hintsHtml = hintLevel > 0 ? `<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">${currentQ.hints.slice(0, hintLevel).map(h => \`<li>\${h}</li>\`).join('')}</ul>` : '';
+            const themeColor = currentProfile === '1ere' ? 'blue' : 'green';
 
             container.innerHTML = `
                 <div class="mb-6 flex justify-between items-center border-b pb-4">
-                    <span class="text-sm font-semibold text-blue-600 uppercase tracking-wider">${currentQ.theme}</span>
-                    <span class="text-sm text-gray-500">Question ${currentIndex + 1} / ${quizData.length}</span>
+                    <span class="text-sm font-semibold text-${themeColor}-600 uppercase tracking-wider">${currentQ.theme}</span>
+                    <span class="text-sm text-gray-500">Q. ${currentIndex + 1} / ${currentQuiz.length}</span>
                 </div>
                 <div class="mb-8">
                     <p class="text-xs text-gray-400 mb-2">Objectif : ${currentQ.target}</p>
@@ -81,59 +148,53 @@
                 <div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>
 
                 <div class="mb-6">
-                    <input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4" />
-                    <button onclick="checkAnswer()" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>
-                    
+                    <input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${themeColor}-500 focus:outline-none mb-4" />
+                    <button onclick="checkAnswer()" id="submit-btn" class="w-full bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>
                     <button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-red-600 hover:text-red-800">J'ai besoin d'un indice</button>
                     ${hintsHtml}
+                </div>
+                <div class="text-center mt-4">
+                     <button onclick="showHome()" class="text-xs text-gray-400 underline hover:text-gray-600">Quitter l'exercice</button>
                 </div>
             `;
         }
 
-        // 4. Logique de validation
+        // --- VALIDATION ET PASSAGE ---
         window.checkAnswer = function() {
-            const currentQ = quizData[currentIndex];
+            const currentQ = currentQuiz[currentIndex];
             const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
             const feedbackArea = document.getElementById('feedback-area');
-            const submitBtn = document.getElementById('submit-btn');
-            const hintBtn = document.getElementById('hint-btn');
-
+            
             if (userAnswer === currentQ.answer.toLowerCase()) {
                 if (hintLevel === 0) score++;
+                saveDataToCloud(); // On sauvegarde le score en temps réel
+                
                 feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
                 feedbackArea.innerHTML = `
-                    <p class="font-bold text-lg mb-2">Bravo, c'est exact ! 🎉</p>
+                    <p class="font-bold text-lg mb-2">Bravo ! 🎉</p>
                     <p class="text-sm mb-4">${currentQ.explanation}</p>
-                    <button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Question suivante</button>
+                    <button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante</button>
                 `;
-                submitBtn.style.display = 'none';
-                hintBtn.style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'none';
+                document.getElementById('hint-btn').style.display = 'none';
             } else {
                 feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
                 feedbackArea.innerHTML = `<p class="font-semibold">Ce n'est pas tout à fait ça. Essaie encore !</p>`;
-                if (hintLevel < currentQ.hints.length) {
-                    hintBtn.style.display = 'block';
-                }
+                if (hintLevel < currentQ.hints.length) document.getElementById('hint-btn').style.display = 'block';
             }
         };
 
-        window.showHint = function() {
-            hintLevel++;
-            render();
-            // Réafficher l'erreur pour garder le contexte
-            const feedbackArea = document.getElementById('feedback-area');
-            feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
-            feedbackArea.innerHTML = `<p class="font-semibold">Ce n'est pas tout à fait ça. Essaie encore !</p>`;
-        };
-
+        window.showHint = function() { hintLevel++; render(); };
+        
         window.nextQuestion = function() {
             currentIndex++;
             hintLevel = 0;
+            saveDataToCloud(); // On sauvegarde l'avancement de la question
             render();
         };
 
-        // Lancer l'application
-        render();
+        // Démarrage de l'application
+        showHome();
     </script>
 </body>
 </html>
