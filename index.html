@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Révisions Maison : Cloud</title>
+    <title>Révisions Maison : IA Cloud</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -15,6 +18,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+        // VOS CLÉS FIREBASE (La sauvegarde)
         const firebaseConfig = {
             apiKey: "AIzaSyCD-3YfPCRPDVzYgQ0FW-XPxf4gZkPIO88",
             authDomain: "famille-revision.firebaseapp.com",
@@ -23,35 +27,29 @@
             messagingSenderId: "124956066429",
             appId: "1:124956066429:web:b68b839ce55e9b6e67e714"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const quiz1ere = [
-            { theme: "Produit Scalaire", target: "Automatisme de calcul", question: "Soient u(2; -3) et v(4; 1). Calculer u.v", answer: "5", explanation: "2*4 + (-3)*1 = 5", hints: ["Formule : xx' + yy'"] },
-            { theme: "Probabilités", target: "Calcul conditionnel", question: "P(V)=0.4 et P_V(M)=0.05. Calcule P(V inter M).", answer: "0.02", explanation: "0.4 * 0.05 = 0.02.", hints: ["C'est une multiplication."] },
-            { theme: "Équations Cartésiennes", target: "Lecture de base", question: "Soit la droite d'équation 3x - 2y + 5 = 0. Donne les coordonnées du vecteur normal n sous la forme (x; y).", answer: "(3; -2)", explanation: "Dans ax + by + c = 0, le vecteur normal est n(a; b). Ici a=3 et b=-2.", hints: ["Regarde les coefficients devant x et y.", "Le cours dit que n a pour coordonnées (a; b)."] }
-        ];
+        // ⚠️ L'ADRESSE DE VOTRE NOUVEAU CERVEAU IA (COLLEZ VOTRE LIEN ICI)
+        const URL_SERVEUR_IA = "URL_DE_VOTRE_SERVEUR_ICI";
 
-        const quizCM2 = [
-            { theme: "Fractions", target: "Sens et addition", question: "Combien font 1/2 + 1/4 ? (ex: 3/4)", answer: "3/4", explanation: "1/2 = 2/4. Donc 2/4 + 1/4 = 3/4.", hints: ["Transforme 1/2 pour avoir un 4 en bas."] },
-            { theme: "Nombres Décimaux", target: "Calcul mental", question: "Quel est le double de 2,5 ?", answer: "5", explanation: "2,5 + 2,5 = 5.", hints: ["Sépare le calcul : le double de 2, et le double de 0,5."] },
-            { theme: "Proportionnalité", target: "Logique", question: "3 cahiers coûtent 6 euros, combien coûtent 5 cahiers ?", answer: "10", explanation: "Un cahier = 2€. 5*2 = 10.", hints: ["Cherche le prix d'un seul cahier d'abord."] }
-        ];
+        // Les thèmes de révision possibles pour l'IA
+        const themes1ere = ["Produit Scalaire", "Probabilités", "Équations Cartésiennes", "Suites Numériques", "Fonctions Dérivées"];
+        const themesCM2 = ["Fractions", "Nombres Décimaux", "Proportionnalité", "Géométrie", "Conversions de mesures"];
 
-        let currentQuiz = [];
         let currentProfile = "";
         let currentIndex = 0;
-        let hintLevel = 0;
         let score = 0;
+        let hintLevel = 0;
+        let currentQ = null; // La question actuelle générée par l'IA
 
         const container = document.getElementById('app-container');
 
         window.showHome = function() {
             container.innerHTML = 
                 '<div class="text-center">' +
-                    '<h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud</h1>' +
-                    '<p class="text-gray-500 mb-8">Les sauvegardes sont synchronisées.</p>' +
+                    '<h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud IA</h1>' +
+                    '<p class="text-gray-500 mb-8">Génération d\'exercices infinis en temps réel.</p>' +
                     '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
                         '<button onclick="startApp(\'1ere\')" class="p-6 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">' +
                             '<h2 class="text-2xl font-bold text-blue-600 mb-2">Objectif Bac</h2>' +
@@ -67,14 +65,13 @@
 
         window.startApp = async function(profile) {
             currentProfile = profile;
-            currentQuiz = profile === '1ere' ? quiz1ere : quizCM2;
             
             container.innerHTML = '<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>';
 
+            // 1. Récupération de la sauvegarde Firebase
             try {
                 const docRef = doc(db, "users", profile);
                 const docSnap = await getDoc(docRef);
-
                 if (docSnap.exists()) {
                     currentIndex = docSnap.data().currentIndex || 0;
                     score = docSnap.data().score || 0;
@@ -84,48 +81,61 @@
                 }
             } catch (error) {
                 console.error("Erreur Firebase:", error);
-                currentIndex = 0;
-                score = 0;
             }
 
-            hintLevel = 0;
-            render();
+            // 2. On demande la première question à l'IA
+            demanderQuestionIA();
         };
+
+        // --- LA MAGIE OPÈRE ICI : CONNEXION AU SERVEUR ---
+        async function demanderQuestionIA() {
+            container.innerHTML = `
+                <div class="text-center py-10">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p class="text-xl text-gray-600 animate-pulse">Le professeur prépare l'exercice sur mesure...</p>
+                </div>
+            `;
+
+            const themes = currentProfile === '1ere' ? themes1ere : themesCM2;
+            const themeChoisi = themes[Math.floor(Math.random() * themes.length)];
+
+            try {
+                const reponse = await fetch(URL_SERVEUR_IA, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        profil: currentProfile === '1ere' ? "1ère spécialité Maths" : "CM2",
+                        theme: themeChoisi,
+                        niveau: 1
+                    })
+                });
+
+                currentQ = await reponse.json();
+                hintLevel = 0;
+                render(); // On affiche la question générée !
+
+            } catch (error) {
+                console.error("Erreur avec l'IA:", error);
+                container.innerHTML = `<div class="text-center py-10 text-red-600">Erreur de connexion au professeur IA. Rechargez la page.</div>`;
+            }
+        }
 
         async function saveDataToCloud() {
             try {
                 const docRef = doc(db, "users", currentProfile);
-                await setDoc(docRef, {
-                    currentIndex: currentIndex,
-                    score: score,
-                    lastActive: new Date()
-                }, { merge: true });
-            } catch (error) {
-                console.error("Erreur de sauvegarde:", error);
-            }
+                await setDoc(docRef, { currentIndex, score, lastActive: new Date() }, { merge: true });
+            } catch (error) {}
         }
 
         function render() {
-            if (currentIndex >= currentQuiz.length) {
-                container.innerHTML = 
-                    '<div class="text-center">' +
-                        '<h2 class="text-3xl font-bold text-gray-800 mb-4">Entraînement Terminé !</h2>' +
-                        '<p class="text-xl mb-6">Ton score : <span class="font-bold text-blue-600">' + score + ' / ' + currentQuiz.length + '</span></p>' +
-                        '<button onclick="showHome()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Retour à l\'accueil</button>' +
-                    '</div>';
-                return;
-            }
-
-            const currentQ = currentQuiz[currentIndex];
+            if (!currentQ) return;
             const themeColor = currentProfile === '1ere' ? 'blue' : 'green';
             
             let hintsHtml = '';
             if (hintLevel > 0) {
                 let listItems = '';
                 for(let i = 0; i < hintLevel; i++) {
-                    if(currentQ.hints[i]) {
-                        listItems += '<li>' + currentQ.hints[i] + '</li>';
-                    }
+                    if(currentQ.hints[i]) listItems += '<li>' + currentQ.hints[i] + '</li>';
                 }
                 hintsHtml = '<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">' + listItems + '</ul>';
             }
@@ -133,7 +143,7 @@
             container.innerHTML = 
                 '<div class="mb-6 flex justify-between items-center border-b pb-4">' +
                     '<span class="text-sm font-semibold text-' + themeColor + '-600 uppercase tracking-wider">' + currentQ.theme + '</span>' +
-                    '<span class="text-sm text-gray-500">Q. ' + (currentIndex + 1) + ' / ' + currentQuiz.length + '</span>' +
+                    '<span class="text-sm text-gray-500">Généré par IA ✨</span>' +
                 '</div>' +
                 '<div class="mb-8">' +
                     '<p class="text-xs text-gray-400 mb-2">Objectif : ' + currentQ.target + '</p>' +
@@ -152,19 +162,19 @@
         }
 
         window.checkAnswer = function() {
-            const currentQ = currentQuiz[currentIndex];
             const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
             const feedbackArea = document.getElementById('feedback-area');
             
             if (userAnswer === currentQ.answer.toLowerCase()) {
                 if (hintLevel === 0) score++;
+                currentIndex++;
                 saveDataToCloud();
                 
                 feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
                 feedbackArea.innerHTML = 
                     '<p class="font-bold text-lg mb-2">Bravo ! 🎉</p>' +
                     '<p class="text-sm mb-4">' + currentQ.explanation + '</p>' +
-                    '<button onclick="nextQuestion()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante</button>';
+                    '<button onclick="demanderQuestionIA()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante (IA)</button>';
                 
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('hint-btn').style.display = 'none';
@@ -178,13 +188,7 @@
         };
 
         window.showHint = function() { hintLevel++; render(); };
-        
-        window.nextQuestion = function() {
-            currentIndex++;
-            hintLevel = 0;
-            saveDataToCloud();
-            render();
-        };
+        window.demanderQuestionIA = demanderQuestionIA;
 
         showHome();
     </script>
