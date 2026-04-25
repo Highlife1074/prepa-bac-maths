@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Révisions Maison : IA Cloud</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -18,7 +15,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        // VOS CLÉS FIREBASE (La sauvegarde)
+        // VOS CLÉS FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCD-3YfPCRPDVzYgQ0FW-XPxf4gZkPIO88",
             authDomain: "famille-revision.firebaseapp.com",
@@ -30,81 +27,153 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ⚠️ L'ADRESSE DE VOTRE NOUVEAU CERVEAU IA (COLLEZ VOTRE LIEN ICI)
-        const URL_SERVEUR_IA = "URL_DE_VOTRE_SERVEUR_ICI";
+        // ⚠️ REMETTEZ VOTRE LIEN DE SERVEUR ICI ⚠️
+        const URL_SERVEUR_IA = "https://console.firebase.google.com/project/famille-revision/overview";
 
-        // Les thèmes de révision possibles pour l'IA
-        const themes1ere = ["Produit Scalaire", "Probabilités", "Équations Cartésiennes", "Suites Numériques", "Fonctions Dérivées"];
-        const themesCM2 = ["Fractions", "Nombres Décimaux", "Proportionnalité", "Géométrie", "Conversions de mesures"];
+        const codesSecrets = { '1ere': '1111', 'seconde': '2222', 'cm2': '3333' };
 
-        let currentProfile = "";
+        // 📚 LE NOUVEAU CATALOGUE (Très facile à modifier !)
+        const catalogue = {
+            '1ere': {
+                nomProfil: "1ère spécialité Maths",
+                couleur: "blue",
+                matieres: {
+                    "Mathématiques": ["Produit Scalaire", "Probabilités", "Équations Cartésiennes", "Suites Numériques", "Fonctions Dérivées"]
+                }
+            },
+            'seconde': {
+                nomProfil: "Seconde option Scientifique",
+                couleur: "purple",
+                matieres: {
+                    "Mathématiques": ["Fonctions de référence", "Vecteurs", "Équations de droites", "Arithmétique", "Géométrie dans l'espace", "Statistiques"]
+                }
+            },
+            'cm2': {
+                nomProfil: "CM2",
+                couleur: "green",
+                matieres: {
+                    "Mathématiques": ["Fractions", "Nombres Décimaux", "Proportionnalité", "Géométrie", "Conversions de mesures"],
+                    "Français": ["Grammaire (Nature et fonction)", "Conjugaison (Présent, Imparfait, Passé Composé)", "Orthographe (Accords)", "Vocabulaire (Synonymes et Contraires)"]
+                }
+            }
+        };
+
+        let currentProfileId = "";
+        let currentMatiere = "";
         let currentIndex = 0;
         let score = 0;
         let hintLevel = 0;
-        let currentQ = null; // La question actuelle générée par l'IA
+        let currentQ = null;
 
         const container = document.getElementById('app-container');
 
+        // Écran 1 : Accueil
         window.showHome = function() {
             container.innerHTML = 
                 '<div class="text-center">' +
                     '<h1 class="text-3xl font-bold text-gray-800 mb-2">Espace Cloud IA</h1>' +
-                    '<p class="text-gray-500 mb-8">Génération d\'exercices infinis en temps réel.</p>' +
-                    '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
-                        '<button onclick="startApp(\'1ere\')" class="p-6 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">' +
-                            '<h2 class="text-2xl font-bold text-blue-600 mb-2">Objectif Bac</h2>' +
-                            '<p class="text-sm text-gray-600">Maths (1ère)</p>' +
+                    '<p class="text-gray-500 mb-8">Choisis ton profil pour commencer.</p>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' +
+                        '<button onclick="demanderCode(\'1ere\')" class="p-4 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition">' +
+                            '<h2 class="text-xl font-bold text-blue-600 mb-1">Objectif Bac</h2>' +
                         '</button>' +
-                        '<button onclick="startApp(\'cm2\')" class="p-6 border-2 border-green-500 rounded-xl hover:bg-green-50 transition">' +
-                            '<h2 class="text-2xl font-bold text-green-600 mb-2">Objectif Collège</h2>' +
-                            '<p class="text-sm text-gray-600">Maths (CM2)</p>' +
+                        '<button onclick="demanderCode(\'seconde\')" class="p-4 border-2 border-purple-500 rounded-xl hover:bg-purple-50 transition">' +
+                            '<h2 class="text-xl font-bold text-purple-600 mb-1">Seconde</h2>' +
+                        '</button>' +
+                        '<button onclick="demanderCode(\'cm2\')" class="p-4 border-2 border-green-500 rounded-xl hover:bg-green-50 transition">' +
+                            '<h2 class="text-xl font-bold text-green-600 mb-1">Collège</h2>' +
                         '</button>' +
                     '</div>' +
                 '</div>';
         };
 
-        window.startApp = async function(profile) {
-            currentProfile = profile;
-            
-            container.innerHTML = '<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Connexion au profil...</p></div>';
+        // Écran 2 : Code PIN
+        window.demanderCode = function(profile) {
+            let info = catalogue[profile];
+            container.innerHTML = `
+                <div class="text-center max-w-sm mx-auto">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Profil ${info.nomProfil}</h2>
+                    <input type="password" id="pin-input" class="w-full text-center text-3xl tracking-widest p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-${info.couleur}-500 mb-4" placeholder="••••" maxlength="4" />
+                    <button onclick="verifierCode('${profile}')" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg mb-4 transition">Déverrouiller</button>
+                    <button onclick="showHome()" class="text-sm text-gray-500 underline">Retour</button>
+                    <p id="pin-error" class="text-red-500 text-sm mt-2 hidden font-semibold">❌ Code incorrect !</p>
+                </div>
+            `;
+        };
 
-            // 1. Récupération de la sauvegarde Firebase
+        window.verifierCode = function(profile) {
+            if(document.getElementById('pin-input').value === codesSecrets[profile]) {
+                choisirMatiere(profile);
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+                document.getElementById('pin-input').value = ''; 
+            }
+        };
+
+        // Écran 3 : NOUVEAU - Choix de la matière !
+        window.choisirMatiere = async function(profile) {
+            currentProfileId = profile;
+            let info = catalogue[profile];
+            
+            // Si la classe n'a qu'une seule matière (comme la 1ere pour l'instant), on passe direct à l'étape suivante
+            const matieresDisponibles = Object.keys(info.matieres);
+            if (matieresDisponibles.length === 1) {
+                startApp(matieresDisponibles[0]);
+                return;
+            }
+
+            // S'il y a plusieurs matières (comme le CM2), on affiche les boutons
+            let boutonsHtml = matieresDisponibles.map(mat => 
+                `<button onclick="startApp('${mat}')" class="p-4 border-2 border-gray-200 rounded-xl hover:bg-${info.couleur}-50 hover:border-${info.couleur}-500 transition text-lg font-bold text-gray-700">${mat}</button>`
+            ).join('');
+
+            container.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Que veux-tu réviser ?</h2>
+                    <div class="grid grid-cols-1 gap-4 mb-6">${boutonsHtml}</div>
+                    <button onclick="showHome()" class="text-sm text-gray-500 underline">Changer de profil</button>
+                </div>
+            `;
+        };
+
+        window.startApp = async function(matiere) {
+            currentMatiere = matiere;
+            container.innerHTML = '<div class="text-center py-10"><p class="text-xl text-gray-600 animate-pulse">Ouverture du dossier...</p></div>';
+
             try {
-                const docRef = doc(db, "users", profile);
+                // On sépare la sauvegarde par matière pour ne pas mélanger les scores !
+                const docRef = doc(db, "users", `${currentProfileId}_${matiere}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     currentIndex = docSnap.data().currentIndex || 0;
                     score = docSnap.data().score || 0;
                 } else {
-                    currentIndex = 0;
-                    score = 0;
+                    currentIndex = 0; score = 0;
                 }
-            } catch (error) {
-                console.error("Erreur Firebase:", error);
-            }
+            } catch (error) {}
 
-            // 2. On demande la première question à l'IA
             demanderQuestionIA();
         };
 
-        // --- LA MAGIE OPÈRE ICI : CONNEXION AU SERVEUR ---
         async function demanderQuestionIA() {
             container.innerHTML = `
                 <div class="text-center py-10">
                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-                    <p class="text-xl text-gray-600 animate-pulse">Le professeur prépare l'exercice sur mesure...</p>
+                    <p class="text-xl text-gray-600 animate-pulse">Le professeur de ${currentMatiere} prépare l'exercice...</p>
                 </div>
             `;
 
-            const themes = currentProfile === '1ere' ? themes1ere : themesCM2;
-            const themeChoisi = themes[Math.floor(Math.random() * themes.length)];
+            let info = catalogue[currentProfileId];
+            let themesDeLaMatiere = info.matieres[currentMatiere];
+            const themeChoisi = themesDeLaMatiere[Math.floor(Math.random() * themesDeLaMatiere.length)];
 
             try {
                 const reponse = await fetch(URL_SERVEUR_IA, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        profil: currentProfile === '1ere' ? "1ère spécialité Maths" : "CM2",
+                        profil: info.nomProfil,
+                        matiere: currentMatiere, // NOUVEAU : On prévient l'IA !
                         theme: themeChoisi,
                         niveau: 1
                     })
@@ -112,53 +181,51 @@
 
                 currentQ = await reponse.json();
                 hintLevel = 0;
-                render(); // On affiche la question générée !
+                render();
 
             } catch (error) {
-                console.error("Erreur avec l'IA:", error);
-                container.innerHTML = `<div class="text-center py-10 text-red-600">Erreur de connexion au professeur IA. Rechargez la page.</div>`;
+                container.innerHTML = `<div class="text-center py-10 text-red-600">Erreur réseau.</div>`;
             }
         }
 
         async function saveDataToCloud() {
             try {
-                const docRef = doc(db, "users", currentProfile);
+                const docRef = doc(db, "users", `${currentProfileId}_${currentMatiere}`);
                 await setDoc(docRef, { currentIndex, score, lastActive: new Date() }, { merge: true });
             } catch (error) {}
         }
 
         function render() {
             if (!currentQ) return;
-            const themeColor = currentProfile === '1ere' ? 'blue' : 'green';
+            let info = catalogue[currentProfileId];
+            let c = info.couleur;
             
             let hintsHtml = '';
             if (hintLevel > 0) {
                 let listItems = '';
-                for(let i = 0; i < hintLevel; i++) {
-                    if(currentQ.hints[i]) listItems += '<li>' + currentQ.hints[i] + '</li>';
-                }
-                hintsHtml = '<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-red-700">' + listItems + '</ul>';
+                for(let i=0; i<hintLevel; i++) { if(currentQ.hints[i]) listItems += '<li>' + currentQ.hints[i] + '</li>'; }
+                hintsHtml = `<ul class="mt-3 space-y-2 list-disc list-inside text-sm text-${c}-700">${listItems}</ul>`;
             }
 
-            container.innerHTML = 
-                '<div class="mb-6 flex justify-between items-center border-b pb-4">' +
-                    '<span class="text-sm font-semibold text-' + themeColor + '-600 uppercase tracking-wider">' + currentQ.theme + '</span>' +
-                    '<span class="text-sm text-gray-500">Généré par IA ✨</span>' +
-                '</div>' +
-                '<div class="mb-8">' +
-                    '<p class="text-xs text-gray-400 mb-2">Objectif : ' + currentQ.target + '</p>' +
-                    '<h2 class="text-xl font-medium text-gray-800">' + currentQ.question + '</h2>' +
-                '</div>' +
-                '<div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>' +
-                '<div class="mb-6">' +
-                    '<input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-' + themeColor + '-500 focus:outline-none mb-4" />' +
-                    '<button onclick="checkAnswer()" id="submit-btn" class="w-full bg-' + themeColor + '-600 hover:bg-' + themeColor + '-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Valider</button>' +
-                    '<button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-red-600 hover:text-red-800">J\'ai besoin d\'un indice</button>' +
-                    hintsHtml +
-                '</div>' +
-                '<div class="text-center mt-4">' +
-                     '<button onclick="showHome()" class="text-xs text-gray-400 underline hover:text-gray-600">Quitter l\'exercice</button>' +
-                '</div>';
+            container.innerHTML = `
+                <div class="mb-6 flex justify-between items-center border-b pb-4">
+                    <span class="text-sm font-semibold text-${c}-600 uppercase tracking-wider">${currentMatiere} : ${currentQ.theme}</span>
+                </div>
+                <div class="mb-8">
+                    <p class="text-xs text-gray-400 mb-2">Objectif : ${currentQ.target}</p>
+                    <h2 class="text-xl font-medium text-gray-800 leading-relaxed">${currentQ.question}</h2>
+                </div>
+                <div id="feedback-area" class="hidden p-4 rounded-lg mb-4"></div>
+                <div class="mb-6">
+                    <input type="text" id="user-answer" placeholder="Ta réponse ici..." class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${c}-500 focus:outline-none mb-4" />
+                    <button onclick="checkAnswer()" id="submit-btn" class="w-full bg-${c}-600 hover:bg-${c}-700 text-white font-bold py-3 px-4 rounded-lg transition">Valider</button>
+                    <button onclick="showHint()" id="hint-btn" class="hidden mt-4 text-sm underline text-${c}-600">J'ai besoin d'un indice</button>
+                    ${hintsHtml}
+                </div>
+                <div class="text-center mt-4">
+                     <button onclick="showHome()" class="text-xs text-gray-400 underline">Retour à l'accueil</button>
+                </div>
+            `;
         }
 
         window.checkAnswer = function() {
@@ -171,19 +238,14 @@
                 saveDataToCloud();
                 
                 feedbackArea.className = "bg-green-50 text-green-700 p-4 rounded-lg mb-4 block";
-                feedbackArea.innerHTML = 
-                    '<p class="font-bold text-lg mb-2">Bravo ! 🎉</p>' +
-                    '<p class="text-sm mb-4">' + currentQ.explanation + '</p>' +
-                    '<button onclick="demanderQuestionIA()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Question suivante (IA)</button>';
+                feedbackArea.innerHTML = `<p class="font-bold text-lg mb-2">Bravo ! 🎉</p><p class="text-sm mb-4">${currentQ.explanation}</p><button onclick="demanderQuestionIA()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">Question suivante</button>`;
                 
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('hint-btn').style.display = 'none';
             } else {
                 feedbackArea.className = "bg-red-50 text-red-700 p-4 rounded-lg mb-4 block";
                 feedbackArea.innerHTML = '<p class="font-semibold">Ce n\'est pas tout à fait ça. Essaie encore !</p>';
-                if (hintLevel < currentQ.hints.length) {
-                    document.getElementById('hint-btn').style.display = 'block';
-                }
+                if (hintLevel < currentQ.hints.length) document.getElementById('hint-btn').style.display = 'block';
             }
         };
 
