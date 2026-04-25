@@ -23,11 +23,34 @@
 
     <script>
         // --- CONFIGURATION ---
+        // L'URL de ton serveur Firebase Cloud Functions
         const URL_SERVEUR_IA = "https://us-central1-famille-revision.cloudfunctions.net/genererExercice";
         
         const catalogue = {
-            "seconde": { nomProfil: "Seconde", code: "2222", matieres: { "Mathématiques": ["Fonctions", "Géométrie", "Probabilités"], "Physique": ["Optique", "Mécanique"] } },
-            "cm2": { nomProfil: "CM2", code: "3333", matieres: { "Mathématiques": ["Fractions", "Division", "Géométrie"], "Français": ["Conjugaison", "Grammaire"] } }
+            "terminale": { 
+                nomProfil: "Bac / Terminale", 
+                code: "4444", 
+                matieres: { 
+                    "Mathématiques": ["Dérivées", "Suites", "Probabilités"], 
+                    "Physique-Chimie": ["Cinématique", "Acides et Bases"] 
+                } 
+            },
+            "seconde": { 
+                nomProfil: "Seconde", 
+                code: "2222", 
+                matieres: { 
+                    "Mathématiques": ["Fonctions", "Géométrie", "Vecteurs"], 
+                    "Physique": ["Optique", "Mécanique"] 
+                } 
+            },
+            "cm2": { 
+                nomProfil: "CM2", 
+                code: "3333", 
+                matieres: { 
+                    "Mathématiques": ["Fractions", "Division", "Géométrie"], 
+                    "Français": ["Conjugaison", "Grammaire"] 
+                } 
+            }
         };
 
         let currentProfileId = null;
@@ -37,17 +60,16 @@
 
         const container = document.getElementById('app-container');
 
-        // --- NAVIGATION ---
         function showSelectionProfil() {
             currentProfileId = null;
             document.getElementById('user-info').classList.add('hidden');
-            let html = `<h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Qui va réviser aujourd'hui ?</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+            let html = `<h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Qui va réviser ?</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">`;
             for (let id in catalogue) {
                 html += `
                 <button onclick="verifierCode('${id}')" class="p-6 border-2 border-slate-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left group">
                     <div class="text-xl font-bold text-slate-700 group-hover:text-indigo-600">${catalogue[id].nomProfil}</div>
-                    <div class="text-sm text-slate-500">Cliquez pour accéder</div>
+                    <div class="text-sm text-slate-500">Accès protégé</div>
                 </button>`;
             }
             html += `</div>`;
@@ -55,7 +77,7 @@
         }
 
         function verifierCode(id) {
-            const codeSaisi = prompt(`Entrez le code secret pour ${catalogue[id].nomProfil} :`);
+            const codeSaisi = prompt(`Code secret pour ${catalogue[id].nomProfil} :`);
             if (codeSaisi === catalogue[id].code) {
                 currentProfileId = id;
                 document.getElementById('user-info').textContent = catalogue[id].nomProfil;
@@ -77,13 +99,12 @@
             container.innerHTML = html + `</div>`;
         }
 
-        // --- APPEL IA ---
         async function startIA(matiere) {
             currentMatiere = matiere;
             container.innerHTML = `
                 <div class="text-center py-10">
                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p class="text-xl text-slate-600 animate-pulse">L'IA prépare ton exercice de ${matiere}...</p>
+                    <p class="text-xl text-slate-600 animate-pulse">L'IA prépare ton exercice...</p>
                 </div>`;
 
             const info = catalogue[currentProfileId];
@@ -97,17 +118,17 @@
                     body: JSON.stringify({ profil: info.nomProfil, matiere: matiere, theme: theme })
                 });
 
-                if (!response.ok) throw new Error("Erreur serveur");
+                if (!response.ok) throw new Error("Erreur Serveur");
 
                 const data = await response.json();
                 
-                // Sécurité contre les "undefined" : on accepte plusieurs variantes de noms de clés
+                // --- SÉCURITÉ ANTI-UNDEFINED ---
                 currentQ = {
                     theme: data.theme || theme,
                     target: data.target || data.objectif || "Révision",
-                    question: data.question || data.enonce || data.exercice || "Désolé, l'IA n'a pas pu générer l'énoncé.",
+                    question: data.question || data.enonce || "Erreur de chargement",
                     answer: data.answer || data.reponse || "",
-                    explanation: data.explanation || data.explication || "Pas d'explication fournie.",
+                    explanation: data.explanation || data.explication || "",
                     hints: data.hints || data.indices || []
                 };
 
@@ -115,76 +136,48 @@
                 renderExercice();
             } catch (e) {
                 container.innerHTML = `<div class="text-center text-red-500 py-10">
-                    <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-                    <p>Erreur de connexion avec le professeur virtuel.</p>
-                    <button onclick="showMatieres()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Réessayer</button>
+                    <p class="mb-4">Impossible de contacter le serveur d'IA.</p>
+                    <button onclick="showMatieres()" class="bg-indigo-600 text-white px-4 py-2 rounded">Réessayer</button>
                 </div>`;
             }
         }
 
         function renderExercice() {
             let hintHtml = "";
-            if (hintLevel > 0 && currentQ.hints.length > 0) {
+            if (hintLevel > 0 && currentQ.hints.length >= hintLevel) {
                 hintHtml = `<div class="mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 text-amber-800">
-                    <strong>Indice ${hintLevel} :</strong> ${currentQ.hints[hintLevel-1]}
+                    <strong>Indice :</strong> ${currentQ.hints[hintLevel-1]}
                 </div>`;
             }
 
             container.innerHTML = `
-                <div class="mb-4 flex justify-between items-center">
-                    <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded">${currentQ.theme}</span>
-                    <button onclick="showMatieres()" class="text-slate-400 hover:text-slate-600 text-sm">Changer de matière</button>
+                <div class="mb-4 flex justify-between items-center text-sm">
+                    <span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded">${currentQ.theme}</span>
+                    <button onclick="showMatieres()" class="text-slate-400">Changer</button>
                 </div>
-                <h3 class="text-lg font-semibold text-slate-500 mb-2">Objectif : ${currentQ.target}</h3>
-                <div class="prose max-w-none mb-8 text-xl text-slate-800 leading-relaxed bg-slate-50 p-6 rounded-xl border border-slate-100">
+                <h3 class="text-lg font-semibold text-slate-500 mb-4">Objectif : ${currentQ.target}</h3>
+                <div class="text-xl text-slate-800 bg-slate-50 p-6 rounded-xl border mb-6">
                     ${currentQ.question.replace(/\n/g, '<br>')}
                 </div>
-                
                 ${hintHtml}
-
-                <div class="flex flex-wrap gap-3 mt-8">
-                    <button onclick="revelerCorrection()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition-all">
-                        <i class="fas fa-check-circle mr-2"></i>Voir la réponse
-                    </button>
-                    <button onclick="donnerIndice()" class="bg-white border-2 border-amber-400 text-amber-600 px-6 py-3 rounded-xl font-bold hover:bg-amber-50 transition-all">
-                        <i class="fas fa-lightbulb mr-2"></i>Besoin d'un indice ?
-                    </button>
-                    <button onclick="startIA('${currentMatiere}')" class="bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-300 transition-all">
-                        Suivant <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="revelerCorrection()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold">Voir la réponse</button>
+                    <button onclick="hintLevel++; renderExercice()" class="bg-white border-2 border-amber-400 text-amber-600 px-6 py-3 rounded-xl font-bold">Indice</button>
                 </div>
             `;
-        }
-
-        function donnerIndice() {
-            if (currentQ.hints && hintLevel < currentQ.hints.length) {
-                hintLevel++;
-                renderExercice();
-            } else {
-                alert("Plus d'indices disponibles ! Essaie de voir la réponse.");
-            }
         }
 
         function revelerCorrection() {
             container.innerHTML = `
                 <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-6">
-                    <h2 class="text-2xl font-bold text-green-700 mb-4"><i class="fas fa-check-double mr-2"></i>Correction</h2>
-                    <div class="mb-6">
-                        <h4 class="font-bold text-green-800 uppercase text-xs tracking-widest mb-2">La réponse :</h4>
-                        <p class="text-2xl text-slate-800 font-bold">${currentQ.answer}</p>
-                    </div>
-                    <div class="mb-8">
-                        <h4 class="font-bold text-green-800 uppercase text-xs tracking-widest mb-2">Explications :</h4>
-                        <p class="text-slate-700 leading-relaxed">${currentQ.explanation.replace(/\n/g, '<br>')}</p>
-                    </div>
-                    <button onclick="startIA('${currentMatiere}')" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg transition-all">
-                        Exercice suivant <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
+                    <h2 class="text-2xl font-bold text-green-700 mb-4">Correction</h2>
+                    <p class="text-2xl font-bold mb-4">${currentQ.answer}</p>
+                    <p class="text-slate-700 mb-6">${currentQ.explanation.replace(/\n/g, '<br>')}</p>
+                    <button onclick="startIA('${currentMatiere}')" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold">Suivant</button>
                 </div>
             `;
         }
 
-        // Lancement initial
         showSelectionProfil();
     </script>
 </body>
