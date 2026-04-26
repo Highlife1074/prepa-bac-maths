@@ -252,7 +252,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
     </div>
   </div>
   <div class="profiles-grid">
-    <div class="prof-card cm2" onclick="openLogin('cm2')">
+    <div class="prof-card cm2" data-profile="cm2">
       <div class="prof-avatar">🌟</div>
       <h2>Espace CM2</h2>
       <p class="sublevel">Mode Aventurier · 9-10 ans</p>
@@ -263,7 +263,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
       </div>
       <button class="prof-btn">Entrer dans mon espace 🔒</button>
     </div>
-    <div class="prof-card sec" onclick="openLogin('sec')">
+    <div class="prof-card sec" data-profile="sec">
       <div class="prof-avatar">🚀</div>
       <h2>Espace Seconde</h2>
       <p class="sublevel">Mode Explorateur · 15-16 ans</p>
@@ -275,7 +275,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
       </div>
       <button class="prof-btn">Entrer dans mon espace 🔒</button>
     </div>
-    <div class="prof-card pre" onclick="openLogin('pre')">
+    <div class="prof-card pre" data-profile="pre">
       <div class="prof-avatar">🎯</div>
       <h2>Espace Première</h2>
       <p class="sublevel">Mode Expert · 16-17 ans</p>
@@ -300,8 +300,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Obtiens ta clé sur <a href="https://console.anthropic.com" target="_blank" style="color:#7F77DD">console.anthropic.com</a></div>
     <div class="modal-error" id="apikey-error"></div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="document.getElementById('apikey-modal').classList.remove('open')">Annuler</button>
-      <button class="btn-ok" onclick="saveApiKey()">Sauvegarder ✓</button>
+      <button class="btn-cancel" id="apikey-cancel-btn">Annuler</button>
+      <button class="btn-ok" id="apikey-ok-btn">Sauvegarder ✓</button>
     </div>
   </div>
 </div>
@@ -315,8 +315,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <input type="password" id="pwd-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPwd()">
     <div class="modal-error" id="modal-error"></div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-      <button class="btn-ok" onclick="checkPwd()">Entrer ✓</button>
+      <button class="btn-cancel" id="pwd-cancel-btn">Annuler</button>
+      <button class="btn-ok" id="pwd-ok-btn">Entrer ✓</button>
     </div>
   </div>
 </div>
@@ -1583,6 +1583,31 @@ ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d'accueil chal
     addTutorMsg('tutor','❌ Erreur réseau: '+e.message);
   }
 }
+
+// ── Wire up all event listeners via JS (avoids onclick scope issues) ──
+document.addEventListener('DOMContentLoaded', function(){
+  // Profile cards
+  document.querySelectorAll('[data-profile]').forEach(card=>{
+    card.addEventListener('click', ()=>openLogin(card.dataset.profile));
+  });
+  // Password modal
+  const pwdOk = document.getElementById('pwd-ok-btn');
+  const pwdCancel = document.getElementById('pwd-cancel-btn');
+  const pwdInput = document.getElementById('pwd-input');
+  if(pwdOk) pwdOk.addEventListener('click', checkPwd);
+  if(pwdCancel) pwdCancel.addEventListener('click', closeModal);
+  if(pwdInput) pwdInput.addEventListener('keydown', e=>{ if(e.key==='Enter') checkPwd(); });
+  // API key modal
+  const apikeyOk = document.getElementById('apikey-ok-btn');
+  const apikeyCancel = document.getElementById('apikey-cancel-btn');
+  if(apikeyOk) apikeyOk.addEventListener('click', saveApiKey);
+  if(apikeyCancel) apikeyCancel.addEventListener('click', ()=>document.getElementById('apikey-modal').classList.remove('open'));
+  // Tutor input
+  const tutorInput = document.getElementById('tutor-input');
+  if(tutorInput) tutorInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
+  });
+});
 
 // ── Expose all functions to global scope (needed for onclick handlers) ──
 window.openLogin = openLogin;
