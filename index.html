@@ -571,7 +571,7 @@ let hintCount=0, currentQuestion='', sessionExoCount=0;
 const DEFAULT_DATA = {
   progress:{cm2:{math:0,fr:0,sci:0,hist:0,spe:0},sec:{math:0,fr:0,sci:0,hist:0,spe:0},pre:{math:0,fr:0,sci:0,hist:0,spe:0}},
   totalScore:{cm2:0,sec:0,pre:0},
-  scaffolding:{cm2:{}} // niveau par topic: 1=débutant, 2=intermédiaire, 3=avancé, 4=expert
+  scaffolding:{cm2:{},sec:{},pre:{}} // scaffold level per topic per profile: 1-4
 };
 
 function loadData(){
@@ -907,12 +907,9 @@ function startExercise(subjectId, subjectName, icon){
   currentSubject={id:subjectId,name:subjectName,icon};
   sessionExoCount++;
   questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
-  if(currentProfile==='cm2'){
-    const lvl=getScaffoldLevel();
-    document.getElementById('exo-info').innerHTML=icon+' '+subjectName+' <span style="font-size:.65rem;background:#EEEDFE;color:#3C3489;padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">'+SCAFFOLD_LABELS[lvl]+'</span>';
-  } else {
-    document.getElementById('exo-info').textContent=icon+' '+subjectName;
-  }
+  const _lvl=getScaffoldLevel();
+  const _badgeColor=currentProfile==='cm2'?'background:#EEEDFE;color:#3C3489':currentProfile==='sec'?'background:#E6F1FB;color:#185FA5':'background:#EEEDFE;color:#3C3489';
+  document.getElementById('exo-info').innerHTML=icon+' '+subjectName+' <span style="font-size:.65rem;'+_badgeColor+';padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">'+SCAFFOLD_LABELS[_lvl]+'</span>';
   showScreen('exercise');
   showLoadingState();
   generateExercise();
@@ -922,11 +919,12 @@ function nextExercise(){
   questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
   sessionExoCount++;
   showLoadingState();
-  if(currentProfile==='cm2' && currentSubject && !currentSubject.isAgent){
+  if(currentSubject && !currentSubject.isAgent){
     const lvl=getScaffoldLevel();
     const icon=currentSubject.icon||'📚';
     const name=currentSubject.name||'';
-    document.getElementById('exo-info').innerHTML=icon+' '+name+' <span style="font-size:.65rem;background:#EEEDFE;color:#3C3489;padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">'+SCAFFOLD_LABELS[lvl]+'</span>';
+    const bcolor=currentProfile==='cm2'?'background:#EEEDFE;color:#3C3489':currentProfile==='sec'?'background:#E6F1FB;color:#185FA5':'background:#EEEDFE;color:#3C3489';
+    document.getElementById('exo-info').innerHTML=icon+' '+name+' <span style="font-size:.65rem;'+bcolor+';padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">'+SCAFFOLD_LABELS[lvl]+'</span>';
   }
   if(currentSubject && currentSubject.isAgent){
     pickNextAgentTopic();
@@ -1104,40 +1102,62 @@ function renderNavButtons(){
 }
 
 function getScaffoldLevel(){
-  if(currentProfile!=='cm2') return null;
-  if(!progress.scaffolding) progress.scaffolding={cm2:{}};
-  if(!progress.scaffolding.cm2) progress.scaffolding.cm2={};
+  const prof = currentProfile || 'cm2';
+  if(!progress.scaffolding) progress.scaffolding={cm2:{},sec:{},pre:{}};
+  if(!progress.scaffolding[prof]) progress.scaffolding[prof]={};
   const topicKey = currentSubject?.topicId || currentSubject?.id || 'general';
-  return progress.scaffolding.cm2[topicKey] || 1;
+  // CM2 starts at 1, lycee starts at 2 (already has base knowledge)
+  const defaultLevel = prof==='cm2' ? 1 : 2;
+  return progress.scaffolding[prof][topicKey] || defaultLevel;
 }
 
 function updateScaffoldLevel(verdict){
-  if(currentProfile!=='cm2') return;
-  if(!progress.scaffolding) progress.scaffolding={cm2:{}};
-  if(!progress.scaffolding.cm2) progress.scaffolding.cm2={};
+  const prof = currentProfile || 'cm2';
+  if(!progress.scaffolding) progress.scaffolding={cm2:{},sec:{},pre:{}};
+  if(!progress.scaffolding[prof]) progress.scaffolding[prof]={};
   const topicKey = currentSubject?.topicId || currentSubject?.id || 'general';
-  const current = progress.scaffolding.cm2[topicKey] || 1;
-  if(verdict==='CORRECT') progress.scaffolding.cm2[topicKey] = Math.min(4, current+1);
-  else if(verdict==='INCORRECT') progress.scaffolding.cm2[topicKey] = Math.max(1, current-1);
-  // PARTIEL = no change
+  const defaultLevel = prof==='cm2' ? 1 : 2;
+  const current = progress.scaffolding[prof][topicKey] || defaultLevel;
+  if(verdict==='CORRECT') progress.scaffolding[prof][topicKey] = Math.min(4, current+1);
+  else if(verdict==='INCORRECT') progress.scaffolding[prof][topicKey] = Math.max(1, current-1);
+  // PARTIEL = no change, maintains current scaffold
 }
 
 const SCAFFOLD_LABELS = ['','🟢 Débutant','🟡 Intermédiaire','🟠 Avancé','🔴 Expert'];
+
+// Scaffold descriptions per profile
 const SCAFFOLD_DESC = {
-  1: 'Niveau 1 — Débutant : exercice très simple, une seule opération, nombres petits (max 20), contexte très imagé et encourageant. Exemple maths : 3 × 4 = ?, 15 - 8 = ?',
-  2: 'Niveau 2 — Intermédiaire : exercice simple avec 1-2 étapes, nombres jusqu'à 100, problème concret avec une légère complexité. Exemple maths : problème à 2 étapes, tables jusqu'à 9, fractions simples.',
-  3: 'Niveau 3 — Avancé : exercice plus complexe, 2-3 étapes, nombres jusqu'à 10 000, raisonnement requis. Exemple maths : problème à 3 étapes, opérations croisées, géométrie avec calcul.',
-  4: 'Niveau 4 — Expert : exercice difficile pour l'âge, logique poussée, multi-étapes, peut inclure des pièges. Exemple maths : problèmes à 4 étapes, fractions et opérations combinées, périmètre + calcul.'
+  cm2: {
+    1: 'SCAFFOLDING Niveau 1 Debutant CM2 : exercice tres simple, 1 operation, nombres <= 20, contexte tres image. Encourage beaucoup.',
+    2: 'SCAFFOLDING Niveau 2 Intermediaire CM2 : 1-2 etapes, nombres <= 100, probleme concret simple.',
+    3: 'SCAFFOLDING Niveau 3 Avance CM2 : 2-3 etapes, nombres <= 10000, raisonnement requis, geometrie avec calcul.',
+    4: 'SCAFFOLDING Niveau 4 Expert CM2 : multi-etapes complexes, fractions combinees, pieges possibles, logique poussee.'
+  },
+  sec: {
+    1: 'SCAFFOLDING Niveau 1 Rappel Seconde : revise les bases du college, exercice guidé pas à pas avec rappel de la methode, questions simples pour rebatir la confiance.',
+    2: 'SCAFFOLDING Niveau 2 Programme Seconde standard : exercice de cours classique, difficulte normale de seconde, 1-2 questions.',
+    3: 'SCAFFOLDING Niveau 3 Avance Seconde : exercice plus complexe, combine plusieurs notions, raisonnement à développer, proche du niveau Premiere.',
+    4: 'SCAFFOLDING Niveau 4 Expert Seconde : exercice de concours niveau lycee, multi-notions, démonstration attendue, difficulte maximale.'
+  },
+  pre: {
+    1: 'SCAFFOLDING Niveau 1 Rappel Premiere : revise les bases de seconde, questions guidees, rappels de cours inclus, methode détaillée attendue.',
+    2: 'SCAFFOLDING Niveau 2 Programme Premiere standard : exercice type bac classique, 3-4 questions progressives, niveau attendu en premiere.',
+    3: 'SCAFFOLDING Niveau 3 Avance Premiere : exercice difficile type bac, questions ouvertes, justifications rigoureuses exigees, proche des sujets difficiles.',
+    4: 'SCAFFOLDING Niveau 4 Expert Premiere : exercice de haut niveau, sujet de concours ou bac blanc difficile, maîtrise totale attendue, aucune aide.'
+  }
 };
 
 function getLevelDesc(){
   const p=currentProfile;
+  const lvl = getScaffoldLevel();
+  const scaffoldText = (SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
   if(p==='cm2'){
-    const lvl = getScaffoldLevel();
-    return 'CM2 (9-10 ans, niveau primaire France). '+SCAFFOLD_DESC[lvl]+' Sois encourageant, utilise des émojis et un contexte amusant (aventure, animaux, sport, jeux vidéo...).';
+    return 'CM2 (9-10 ans, primaire France). '+scaffoldText+' Sois encourageant, utilise des emojis et un contexte amusant (aventure, animaux, sport...).';
   }
-  if(p==='sec') return 'Seconde (15-16 ans, lycée France). Niveau programme de seconde, vocabulaire adapté lycéen.';
-  return 'Première (16-17 ans, lycée France). Niveau programme de première, exigence type baccalauréat.';
+  if(p==='sec'){
+    return 'Seconde (15-16 ans, lycee France). '+scaffoldText;
+  }
+  return 'Premiere (16-17 ans, lycee France). '+scaffoldText;
 }
 
 function getSubjectPrompt(){
