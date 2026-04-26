@@ -479,13 +479,35 @@ const PASSWORDS = {cm2:'Amolepro77', sec:'Gabichou77', pre:'Marinette77'};
 let ANTHROPIC_KEY = localStorage.getItem('edusmart_apikey')||'';
 // When Firebase loads the key, update our variable
 window.addEventListener('firebase-ready', ()=>{
+  // Load API key from preloaded value (set in module script)
   setTimeout(()=>{
-    if(window._preloadedApiKey && !ANTHROPIC_KEY){
+    if(window._preloadedApiKey){
       ANTHROPIC_KEY = window._preloadedApiKey;
-      showSyncBadge('🔑 Clé API chargée automatiquement');
+      localStorage.setItem('edusmart_apikey', ANTHROPIC_KEY);
+      showSyncBadge('🔑 Clé API chargée');
     }
-  }, 1000);
+  }, 800);
 });
+
+// Also try loading API key every time user opens the app
+async function ensureApiKey(){
+  if(ANTHROPIC_KEY) return; // already have it
+  // Try localStorage first
+  const cached = localStorage.getItem('edusmart_apikey');
+  if(cached && cached.startsWith('sk-ant-')){
+    ANTHROPIC_KEY = cached;
+    return;
+  }
+  // Try Firebase
+  if(window._firebaseReady){
+    await loadApiKeyFromFirebase();
+  } else {
+    // Wait for Firebase then try
+    window.addEventListener('firebase-ready', async()=>{
+      await loadApiKeyFromFirebase();
+    }, {once:true});
+  }
+}
 const PROFILES = {
   cm2:{
     name:'CM2',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
@@ -636,6 +658,11 @@ async function saveApiKeyToFirebase(key){
 }
 
 async function loadApiKeyFromFirebase(){
+  // First check localStorage (fastest)
+  const cached = localStorage.getItem('edusmart_apikey');
+  if(cached && cached.startsWith('sk-ant-')){
+    ANTHROPIC_KEY = cached;
+  }
   if(!window._firebaseReady) return;
   try{
     const db=window._db, docFn=window._fsDoc, getFn=window._fsGetDoc;
@@ -648,7 +675,7 @@ async function loadApiKeyFromFirebase(){
         showSyncBadge('🔑 Clé API chargée');
       }
     }
-  }catch(e){}
+  }catch(e){ console.log('Firebase key load error:', e); }
 }
 
 async function loadFromFirebase(profileKey){
@@ -790,6 +817,7 @@ async function checkPwd(){
     document.getElementById('modal-error').textContent='';
     showSyncBadge('🔄 Chargement...');
     await loadFromFirebase(currentPwd);
+    await loadApiKeyFromFirebase(); // load API key too
     showDashboard();
   } else {
     document.getElementById('modal-error').textContent='❌ Mot de passe incorrect, réessaie !';
@@ -833,7 +861,7 @@ function showDashboard(){
     card.className='subj-card';
     const pct=Math.min(100,progress[currentProfile][s.id]||0);
     card.innerHTML=`<div class="subj-icon">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p><div style="margin-top:.4rem;font-size:.7rem;font-weight:700;color:var(--muted)">${pct}% maîtrisé</div>`;
-    card.onclick=()=>showSubjectPicker(s);
+    card.addEventListener('click',()=>showSubjectPicker(s));
     grid.appendChild(card);
   });
   // Progress bars
@@ -853,6 +881,12 @@ function showSubjectPicker(subjectObj){
   isAgentMode = false;
   document.getElementById('picker-title').innerHTML =
     subjectObj.icon + ' ' + subjectObj.name;
+  // Show/hide agent+tutor banners based on whether topics exist
+  const agentBanner = document.querySelector('.agent-banner');
+  const tutorBanner = document.querySelector('.tutor-banner');
+  if(agentBanner) agentBanner.style.display = (subjectObj.topics && subjectObj.topics.length) ? '' : 'none';
+  if(tutorBanner) tutorBanner.style.display = '';
+
   // Build topic cards
   const grid = document.getElementById('topics-grid');
   grid.innerHTML = '';
@@ -869,7 +903,7 @@ function showSubjectPicker(subjectObj){
         ? '<span class="topic-score weak">⚠️ À retravailler</span>'
         : '<span class="topic-score ok">✓ '+sc+'%</span>';
     card.innerHTML = `<div class="topic-emoji">${t.e}</div><div class="topic-info"><div class="topic-name">${t.n}</div><div class="topic-sub">${t.d}</div>${scoreLabel}</div>`;
-    card.onclick = () => startExerciseOnTopic(subjectObj, t);
+    card.addEventListener('click', () => startExerciseOnTopic(subjectObj, t));
     grid.appendChild(card);
   });
   showScreen('subject-picker');
@@ -987,8 +1021,10 @@ function updateStepBar(){
 
 // ── Generate full exercise as JSON ────────────────────────
 async function generateExercise(){
+  // Try to load API key if missing
+  if(!ANTHROPIC_KEY) await ensureApiKey();
   if(!ANTHROPIC_KEY){
-    document.getElementById('q-text').textContent="⚠️ Clé API non configurée. Retourne à l'accueil et clique sur Configurer la clé API.";
+    document.getElementById('q-text').innerHTML='<div style="padding:1rem;color:#E24B4A">⚠️ Clé API non configurée.<br><br><button onclick="showApiKeyModal()" style="padding:8px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">🔑 Configurer maintenant</button></div>';
     return;
   }
   const levelDesc=getLevelDesc();
