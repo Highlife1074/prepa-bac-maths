@@ -387,11 +387,39 @@ mjx-container { overflow-x: auto; max-width: 100% }
       </div>
       <div class="agent-arrow">→</div>
     </div>
+    <!-- TUTOR BANNER -->
+    <div class="tutor-banner" onclick="startTutorMode()">
+      <div class="agent-icon">🎓</div>
+      <div class="agent-text">
+        <div class="agent-title">Tuteur IA Personnalisé</div>
+        <div class="agent-desc">Un vrai tuteur qui dialogue avec toi, diagnostique ton niveau, explique, questionne et s'adapte en temps réel avec scaffolding, Socrate et Feynman</div>
+      </div>
+      <div class="agent-arrow">→</div>
+    </div>
     <!-- TOPIC LIST -->
     <div style="margin-bottom:.6rem">
       <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.8rem">— Ou choisis un sujet précis —</div>
     </div>
     <div id="topics-grid" class="topics-grid"></div>
+  </div>
+</div>
+
+<!-- TUTOR SCREEN -->
+<div id="tutor" class="screen">
+  <div class="exo-header">
+    <button class="exo-back" onclick="goToDash()">← Retour</button>
+    <span class="exo-info" id="tutor-info">Tuteur IA</span>
+    <span class="exo-pts" id="tutor-level-badge" style="font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:99px"></span>
+  </div>
+  <div class="tutor-body" id="tutor-body">
+    <div id="tutor-messages"></div>
+    <div class="tutor-typing" id="tutor-typing" style="display:none">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+  </div>
+  <div class="tutor-input-bar">
+    <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorMessage()}"></textarea>
+    <button class="tutor-send" onclick="sendTutorMessage()">→</button>
   </div>
 </div>
 
@@ -1364,6 +1392,223 @@ function showAllFeedbacks(raw,isCM2){
   updateStepBar();
   document.querySelector('.exo-body').scrollTo({top:0,behavior:'smooth'});
 }
+
+// ══════════════════════════════════════════════════════════
+// TUTEUR IA PERSONNALISÉ — Agent pédagogique conversationnel
+// ══════════════════════════════════════════════════════════
+
+let tutorHistory = [];       // conversation history
+let tutorSubject = null;     // subject being tutored
+let tutorPhase = 'diagnostic'; // diagnostic → teaching → practice → consolidation
+let tutorExchangeCount = 0;
+let tutorScaffoldLvl = 1;
+
+const TUTOR_METHODS = {
+  socrate: {label:'Socrate', badge:'badge-socrate', desc:'questionne pour faire trouver'},
+  feynman: {label:'Feynman', badge:'badge-feynman', desc:'explique simplement puis teste'},
+  scaffold: {label:'Scaffolding', badge:'badge-scaffold', desc:'guidage progressif'},
+  recall: {label:'Rappel espacé', badge:'badge-recall', desc:'réactivation de la mémoire'}
+};
+
+function startTutorMode(){
+  if(!currentSubjectObj) return;
+  tutorSubject = currentSubjectObj;
+  tutorHistory = [];
+  tutorPhase = 'diagnostic';
+  tutorExchangeCount = 0;
+  tutorScaffoldLvl = getScaffoldLevel();
+
+  // Set header
+  const color = currentProfile==='cm2'?'#1D9E75':currentProfile==='sec'?'#378ADD':'#7F77DD';
+  document.getElementById('tutor-info').textContent = '🎓 ' + tutorSubject.name;
+  const badge = document.getElementById('tutor-level-badge');
+  badge.textContent = SCAFFOLD_LABELS[tutorScaffoldLvl];
+  badge.style.cssText = 'background:'+color+'22;color:'+color+';font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:99px';
+
+  // Clear messages
+  document.getElementById('tutor-messages').innerHTML = '';
+  document.getElementById('tutor-input').value = '';
+
+  showScreen('tutor');
+
+  // First message from tutor: diagnostic
+  addTutorSystemMsg('Session démarrée · ' + tutorSubject.name + ' · ' + SCAFFOLD_LABELS[tutorScaffoldLvl]);
+  callTutor('START_SESSION');
+}
+
+function addTutorMsg(role, text, method){
+  const msgs = document.getElementById('tutor-messages');
+  const div = document.createElement('div');
+  div.className = 'tutor-msg ' + role;
+
+  if(role === 'tutor' && method){
+    const m = TUTOR_METHODS[method];
+    const badge = m ? `<span class="tutor-method-badge ${m.badge}">${m.label}</span>` : '';
+    div.innerHTML = (typeof marked !== 'undefined' ? marked.parse(text) : text) + badge;
+  } else if(role === 'tutor'){
+    div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
+  } else {
+    div.textContent = text;
+  }
+
+  msgs.appendChild(div);
+  if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([div]);
+  msgs.scrollTop = msgs.scrollHeight;
+  document.querySelector('.tutor-body').scrollTo({top:99999,behavior:'smooth'});
+}
+
+function addTutorSystemMsg(text){
+  const msgs = document.getElementById('tutor-messages');
+  const div = document.createElement('div');
+  div.className = 'tutor-msg system';
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function setTutorTyping(show){
+  document.getElementById('tutor-typing').style.display = show ? 'flex' : 'none';
+  // Move typing indicator inside body
+  const body = document.getElementById('tutor-messages');
+  const typing = document.getElementById('tutor-typing');
+  if(show){ body.appendChild(typing); body.scrollTop = body.scrollHeight; }
+}
+
+async function sendTutorMessage(){
+  const input = document.getElementById('tutor-input');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  addTutorMsg('user', text);
+  tutorHistory.push({role:'user', content:text});
+  tutorExchangeCount++;
+  await callTutor(text);
+}
+
+async function callTutor(userMsg){
+  if(!ANTHROPIC_KEY){
+    addTutorMsg('tutor', "⚠️ Clé API non configurée. Retourne à l'accueil.");
+    return;
+  }
+
+  setTutorTyping(true);
+
+  const lvl = tutorScaffoldLvl;
+  const prof = currentProfile;
+  const isCM2 = prof === 'cm2';
+  const levelName = prof==='cm2'?'CM2 (9-10 ans)':prof==='sec'?'Seconde (15-16 ans)':'Première (16-17 ans)';
+
+  // Build topic context
+  const topicScores = (progress[prof] && progress[prof][tutorSubject.id+'_topics']) || {};
+  const weakTopics = (tutorSubject.topics||[]).filter(t=>(topicScores[t.id]||0)<40).map(t=>t.n).join(', ') || 'non évalué';
+  const strongTopics = (tutorSubject.topics||[]).filter(t=>(topicScores[t.id]||0)>=60).map(t=>t.n).join(', ') || 'aucun encore';
+
+  const systemPrompt = `Tu es un tuteur IA expert en pédagogie pour un élève de ${levelName} en ${tutorSubject.name}.
+Niveau actuel de l'élève : ${SCAFFOLD_LABELS[lvl]} (${lvl}/4).
+Points faibles identifiés : ${weakTopics}.
+Points maîtrisés : ${strongTopics}.
+
+MÉTHODES PÉDAGOGIQUES À UTILISER (varie selon le moment) :
+1. SOCRATE : pose des questions qui font réfléchir au lieu de donner la réponse. Commence par "Et si..." ou "Pourquoi selon toi...". Indique [socrate] en fin de message.
+2. FEYNMAN : explique un concept très simplement avec une analogie du quotidien, puis demande à l'élève de réexpliquer avec ses propres mots. Indique [feynman].
+3. SCAFFOLDING : commence par une version très simple, puis complexifie progressivement. Donne un échafaudage (étapes, formule partielle) puis retire-le. Indique [scaffold].
+4. RAPPEL ESPACÉ : réintroduis des notions vues précédemment pour consolider. Indique [recall].
+
+PHASES DE LA SESSION (phase actuelle : ${tutorPhase}) :
+- diagnostic : 2-3 questions courtes pour cerner le niveau réel sur ce sujet
+- teaching : explique et illustre la notion avec la méthode la plus adaptée
+- practice : exercices progressifs avec feedback immédiat et encouragements
+- consolidation : synthèse + question de vérification finale
+
+RÈGLES ABSOLUES :
+- Jamais plus de 3-4 phrases par message pour ne pas surcharger
+- Toujours terminer par UNE question ou UNE demande d'action
+- ${isCM2 ? "Langage simple, émojis, analogies avec la vie d'enfant, très encourageant" : "Langage lycéen, rigoureux mais bienveillant, exige les justifications"}
+- LaTeX pour les maths : $x^2$, $\frac{a}{b}$ etc. Pour CM2 : × ÷ − directement
+- Après chaque réponse de l'élève, évalue subtilement et adapte la difficulté
+- Indique la méthode utilisée entre crochets à la fin : [socrate], [feynman], [scaffold] ou [recall]
+- Si l'élève répond correctement 2 fois de suite → monte la difficulté
+- Si l'élève se trompe → reviens en arrière, reformule plus simplement
+
+${userMsg === 'START_SESSION' ? 'Lance la session avec un message d'accueil chaleureux (2 lignes max) et ta première question de diagnostic sur ' + tutorSubject.name + '.' : ''}`;
+
+  // Build messages for API
+  const messages = userMsg === 'START_SESSION'
+    ? [{role:'user', content:'Lance la session.'}]
+    : tutorHistory.slice(-12); // keep last 12 exchanges for context
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:600,system:systemPrompt,messages})
+    });
+    const data = await resp.json();
+    setTutorTyping(false);
+
+    if(!resp.ok){ addTutorMsg('tutor','⚠️ Erreur API '+resp.status); return; }
+
+    let text = data.content?.[0]?.text || '';
+
+    // Extract method badge
+    let method = null;
+    const methodMatch = text.match(/\[(socrate|feynman|scaffold|recall)\]/i);
+    if(methodMatch){
+      method = methodMatch[1].toLowerCase();
+      text = text.replace(/\[(socrate|feynman|scaffold|recall)\]/gi,'').trim();
+    }
+
+    // Auto-advance phase
+    tutorExchangeCount++;
+    if(tutorExchangeCount === 3) tutorPhase = 'teaching';
+    else if(tutorExchangeCount === 7) tutorPhase = 'practice';
+    else if(tutorExchangeCount === 12) tutorPhase = 'consolidation';
+
+    tutorHistory.push({role:'assistant', content:text});
+    addTutorMsg('tutor', text, method);
+
+    // Update scaffold level based on flow
+    if(tutorExchangeCount > 4){
+      const lastUserMsg = tutorHistory.filter(m=>m.role==='user').slice(-1)[0]?.content||'';
+      // Simple heuristic: if tutor asked for explanation and user gave long answer → good sign
+      if(lastUserMsg.length > 80) updateScaffoldLevel('CORRECT');
+    }
+
+    // Update badge
+    tutorScaffoldLvl = getScaffoldLevel();
+    document.getElementById('tutor-level-badge').textContent = SCAFFOLD_LABELS[tutorScaffoldLvl];
+
+  }catch(e){
+    setTutorTyping(false);
+    addTutorMsg('tutor','❌ Erreur réseau: '+e.message);
+  }
+}
+
+// ── Expose all functions to global scope (needed for onclick handlers) ──
+window.openLogin = openLogin;
+window.closeModal = closeModal;
+window.checkPwd = checkPwd;
+window.showApiKeyModal = showApiKeyModal;
+window.saveApiKey = saveApiKey;
+window.showExportModal = showExportModal;
+window.copyExportCode = copyExportCode;
+window.showImportModal = showImportModal;
+window.doImport = doImport;
+window.resetProgress = resetProgress;
+window.goHome = goHome;
+window.goToDash = goToDash;
+window.goToPickerBack = goToPickerBack;
+window.goToDashFull = goToDashFull;
+window.startExercise = startExercise;
+window.startExerciseOnTopic = startExerciseOnTopic;
+window.startAgentMode = startAgentMode;
+window.startTutorMode = startTutorMode;
+window.nextExercise = nextExercise;
+window.getHint = getHint;
+window.submitAnswer = submitAnswer;
+window.goToPrevQuestion = goToPrevQuestion;
+window.sendTutorMessage = sendTutorMessage;
+window.renderMarkdownMath = renderMarkdownMath;
 
 </script>
 </body>
