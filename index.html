@@ -1,184 +1,1250 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Famille Révision - IA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSmart — Plateforme d'apprentissage IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script>
+window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']],processEscapes:true},options:{skipHtmlTags:['script','noscript','style','textarea']},startup:{typeset:false}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="module">
+// ── Firebase init ──────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCFikMYsV7HHQNPVWpYuNSnOLPfMiT7iec",
+  authDomain: "edusmart-3f36e.firebaseapp.com",
+  projectId: "edusmart-3f36e",
+  storageBucket: "edusmart-3f36e.firebasestorage.app",
+  messagingSenderId: "207706746399",
+  appId: "1:207706746399:web:2f5e0118495a81865c2f2a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Expose to global scope for use in main script
+window._db = db;
+window._fsDoc = doc;
+window._fsGetDoc = getDoc;
+window._fsSetDoc = setDoc;
+window._firebaseReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cm2-color:#1D9E75;--cm2-light:#E1F5EE;--cm2-mid:#9FE1CB;
+  --sec-color:#378ADD;--sec-light:#E6F1FB;--sec-mid:#B5D4F4;
+  --pre-color:#7F77DD;--pre-light:#EEEDFE;--pre-mid:#CECBF6;
+  --bg:#F7F6F2;--card:#FFFFFF;--text:#1a1a1a;--muted:#6b6b6b;--border:#e8e6e0;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ===== SCREENS ===== */
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* ===== HOME ===== */
+#home{background:var(--bg)}
+.home-header{text-align:center;padding:3rem 1rem 2rem}
+.home-header .logo{font-family:'Baloo 2',cursive;font-size:2.4rem;font-weight:800;color:var(--text);letter-spacing:-1px}
+.home-header .logo span{color:#7F77DD}
+.home-header p{color:var(--muted);font-size:1rem;margin-top:.4rem}
+.profiles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;max-width:900px;margin:0 auto;padding:0 1.5rem 3rem}
+.prof-card{background:var(--card);border-radius:20px;padding:2rem;cursor:pointer;border:2px solid var(--border);transition:all .25s;position:relative;overflow:hidden}
+.prof-card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.prof-card.cm2::before{background:var(--cm2-color)}
+.prof-card.sec::before{background:var(--sec-color)}
+.prof-card.pre::before{background:var(--pre-color)}
+.prof-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,.08)}
+.prof-avatar{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1rem}
+.prof-card.cm2 .prof-avatar{background:var(--cm2-light)}
+.prof-card.sec .prof-avatar{background:var(--sec-light)}
+.prof-card.pre .prof-avatar{background:var(--pre-light)}
+.prof-card h2{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:700;text-align:center;margin-bottom:.3rem}
+.prof-card .sublevel{text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+.prof-subjects{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:1.2rem}
+.subj{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:99px}
+.subj.math{background:#E1F5EE;color:#0F6E56}
+.subj.fr{background:#EEEDFE;color:#3C3489}
+.subj.hist{background:#FAEEDA;color:#854F0B}
+.subj.sci{background:#E6F1FB;color:#0C447C}
+.prof-btn{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;color:var(--text);transition:all .2s}
+.prof-card.cm2 .prof-btn:hover{background:var(--cm2-light);border-color:var(--cm2-color);color:var(--cm2-color)}
+.prof-card.sec .prof-btn:hover{background:var(--sec-light);border-color:var(--sec-color);color:var(--sec-color)}
+.prof-card.pre .prof-btn:hover{background:var(--pre-light);border-color:var(--pre-color);color:var(--pre-color)}
+
+/* ===== PASSWORD MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:2rem;width:340px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.15)}
+.modal h3{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:700;margin-bottom:.5rem}
+.modal p{font-size:.85rem;color:var(--muted);margin-bottom:1.2rem}
+.modal input{width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-size:1rem;text-align:center;letter-spacing:2px;outline:none;background:var(--bg)}
+.modal input:focus{border-color:#7F77DD}
+.modal-btns{display:flex;gap:.6rem;margin-top:1rem}
+.modal-btns button{flex:1;padding:10px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;border:1.5px solid var(--border)}
+.btn-cancel{background:transparent;color:var(--muted)}
+.btn-ok{background:#7F77DD;color:#fff;border-color:#7F77DD}
+.btn-ok:hover{background:#534AB7}
+.modal-error{color:#E24B4A;font-size:.8rem;margin-top:.5rem;min-height:1.2rem}
+
+/* ===== DASHBOARD ===== */
+.dash-header{padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;border-bottom:1.5px solid var(--border);background:var(--card)}
+.dash-back{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:6px 10px;border-radius:8px;color:var(--muted)}
+.dash-back:hover{background:var(--bg)}
+.dash-title{font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:700}
+.dash-score{margin-left:auto;background:var(--bg);padding:4px 14px;border-radius:99px;font-size:.85rem;font-weight:700}
+.dash-body{max-width:800px;margin:0 auto;padding:1.5rem}
+.dash-welcome{background:var(--card);border-radius:16px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;border:1.5px solid var(--border)}
+.dash-welcome h2{font-family:'Baloo 2',cursive;font-size:1.2rem;margin-bottom:.3rem}
+.dash-welcome p{font-size:.85rem;color:var(--muted)}
+.subjects-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.subj-card{background:var(--card);border-radius:14px;padding:1.2rem;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;text-align:center}
+.subj-card:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,.07)}
+.subj-icon{font-size:1.8rem;margin-bottom:.5rem}
+.subj-card h3{font-weight:800;font-size:.95rem;margin-bottom:.2rem}
+.subj-card p{font-size:.75rem;color:var(--muted)}
+.progress-section{background:var(--card);border-radius:14px;padding:1.2rem;border:1.5px solid var(--border)}
+.progress-section h3{font-weight:800;font-size:.9rem;margin-bottom:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.prog-item{margin-bottom:.7rem}
+.prog-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px;font-weight:700}
+.prog-bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .8s ease}
+
+/* ===== EXERCISE SCREEN - FULL PAGE ===== */
+#exercise{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#exercise.active{display:flex}
+
+/* Top bar */
+.exo-header{flex-shrink:0;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.8rem;border-bottom:1.5px solid var(--border);background:var(--card);z-index:2}
+.exo-back{background:none;border:none;cursor:pointer;font-size:.9rem;padding:6px 12px;border-radius:8px;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:700}
+.exo-back:hover{background:var(--bg)}
+.exo-info{font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700}
+.exo-pts{margin-left:auto;font-size:.8rem;font-weight:700;color:var(--muted);background:var(--bg);padding:3px 12px;border-radius:99px}
+
+/* Scrollable content area */
+.exo-body{flex:1;overflow-y:auto;padding:2rem 1.5rem;max-width:780px;width:100%;margin:0 auto;box-sizing:border-box}
+
+/* Question block - prominent */
+.exo-card{background:var(--card);border-radius:20px;padding:2rem;border:1.5px solid var(--border);margin-bottom:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.exo-card .label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.exo-question{font-size:1.05rem;line-height:1.85;font-weight:500}
+.exo-loading{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem;padding:.5rem 0}
+.dot-anim span{display:inline-block;animation:dotBounce .8s infinite}
+.dot-anim span:nth-child(2){animation-delay:.15s}
+.dot-anim span:nth-child(3){animation-delay:.3s}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* Answer block */
+.answer-block{background:var(--card);border-radius:20px;padding:1.5rem;border:1.5px solid var(--border);margin-bottom:1.5rem}
+.answer-block .label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.8rem}
+.answer-area{width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-size:1rem;resize:vertical;min-height:120px;background:var(--bg);outline:none;transition:border-color .2s;line-height:1.6}
+.answer-area:focus{border-color:#7F77DD;background:#fff}
+.exo-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem}
+.btn-hint{padding:10px 20px;border-radius:10px;border:1.5px solid var(--border);background:transparent;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.btn-hint:hover{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489}
+.btn-submit{padding:10px 26px;border-radius:10px;border:none;background:#7F77DD;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;cursor:pointer;transition:background .2s}
+.btn-submit:hover{background:#534AB7}
+.btn-submit:disabled{background:#ccc;cursor:not-allowed}
+
+/* Feedback block */
+.feedback-card{border-radius:20px;padding:1.5rem;margin-bottom:1.5rem;border:1.5px solid;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.feedback-card.correct{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.feedback-card.partial{background:#FAEEDA;border-color:#BA7517;color:#633806}
+.feedback-card.incorrect{background:#FCEBEB;border-color:#E24B4A;color:#501313}
+.feedback-title{font-weight:800;font-size:1rem;margin-bottom:.6rem}
+.feedback-text{font-size:.92rem;line-height:1.7}
+
+/* Hint block */
+.hint-card{background:#EEEDFE;border-radius:14px;padding:1.1rem 1.3rem;margin-bottom:.8rem;border:1.5px solid #AFA9EC;font-size:.9rem;color:#26215C;line-height:1.7;animation:fadeUp .3s ease}
+
+/* Next button - full width prominent */
+.btn-next-wrap{margin-top:.5rem}
+.btn-next{width:100%;padding:14px;border-radius:14px;border:none;background:#1D9E75;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;transition:background .2s;letter-spacing:.3px}
+.btn-next:hover{background:#0F6E56}
+
+
+/* Markdown & MathJax rendering */
+.exo-question p, .feedback-text p, .hint-card p { margin-bottom:.6rem; line-height:1.7 }
+.exo-question p:last-child, .feedback-text p:last-child { margin-bottom:0 }
+.exo-question strong, .feedback-text strong { font-weight:800 }
+.exo-question ol, .exo-question ul { margin:.5rem 0 .5rem 1.4rem; }
+.exo-question li { margin-bottom:.35rem; line-height:1.7 }
+.feedback-text ol, .feedback-text ul { margin:.4rem 0 .4rem 1.4rem }
+.feedback-text li { margin-bottom:.25rem; line-height:1.6 }
+.hint-card p { margin-bottom:.3rem }
+.MJX-TEX { font-size: 1.05em !important }
+mjx-container { overflow-x: auto; max-width: 100% }
+
+/* ===== SUBJECT PICKER ===== */
+.agent-banner{background:linear-gradient(135deg,#534AB7,#7F77DD);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1.5rem;transition:transform .2s,box-shadow .2s;color:#fff}
+.agent-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(83,74,183,.35)}
+.agent-icon{font-size:2rem;flex-shrink:0}
+.agent-text{flex:1}
+.agent-title{font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;margin-bottom:.2rem}
+.agent-desc{font-size:.78rem;opacity:.88;line-height:1.4}
+.agent-arrow{font-size:1.4rem;opacity:.8;flex-shrink:0}
+.topics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin-bottom:1.5rem}
+.topic-card{background:var(--card);border-radius:14px;padding:1rem 1.1rem;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:.7rem}
+.topic-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.07)}
+.topic-card.weak{border-color:#E24B4A;background:#FCEBEB}
+.topic-card.strong{border-color:#1D9E75}
+.topic-emoji{font-size:1.3rem;flex-shrink:0;margin-top:.1rem}
+.topic-info{flex:1;min-width:0}
+.topic-name{font-weight:800;font-size:.88rem;color:var(--text);margin-bottom:.15rem}
+.topic-sub{font-size:.73rem;color:var(--muted);line-height:1.4}
+.topic-score{font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:99px;margin-top:.3rem;display:inline-block}
+.topic-score.weak{background:#FCEBEB;color:#A32D2D}
+.topic-score.ok{background:#E1F5EE;color:#0F6E56}
+.topic-score.new{background:var(--bg);color:var(--muted)}
+
+/* Agent mode badge */
+.agent-mode-badge{background:#534AB7;color:#fff;font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:99px;margin-left:.5rem}
+
+/* CM2 special fun styles */
+.cm2-mode .exo-question{font-size:1.05rem}
+.stars-display{display:flex;gap:4px;margin-bottom:.5rem;font-size:1.2rem}
+
+/* Score animation */
+.score-pop{animation:scorePop .4s ease}
+@keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+/* Responsive */
+@media(max-width:500px){
+  .profiles-grid{grid-template-columns:1fr}
+  .subjects-grid{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans">
+<body>
 
-    <header class="bg-indigo-600 text-white shadow-lg p-4 mb-6">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold"><i class="fas fa-graduation-cap mr-2"></i>Famille Révision</h1>
-            <div id="user-info" class="hidden text-sm bg-indigo-700 px-3 py-1 rounded-full"></div>
+<!-- HOME SCREEN -->
+<div id="home" class="screen active">
+  <div class="home-header">
+    <div class="logo">Edu<span>Smart</span> ✨</div>
+    <p>Choisis ton espace pour commencer à apprendre !</p>
+    <div style="margin-top:.8rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+      <button onclick="showApiKeyModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔑 Configurer la clé API</button>
+      <button onclick="showExportModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📤 Exporter la progression</button>
+      <button onclick="showImportModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📥 Importer la progression</button>
+      <button onclick="resetProgress()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔄 Réinitialiser</button>
+    </div>
+  </div>
+  <div class="profiles-grid">
+    <div class="prof-card cm2" onclick="openLogin('cm2')">
+      <div class="prof-avatar">🌟</div>
+      <h2>Espace CM2</h2>
+      <p class="sublevel">Mode Aventurier · 9-10 ans</p>
+      <div class="prof-subjects">
+        <span class="subj math">Maths</span>
+        <span class="subj fr">Français</span>
+        <span class="subj sci">Sciences</span>
+      </div>
+      <button class="prof-btn">Entrer dans mon espace 🔒</button>
+    </div>
+    <div class="prof-card sec" onclick="openLogin('sec')">
+      <div class="prof-avatar">🚀</div>
+      <h2>Espace Seconde</h2>
+      <p class="sublevel">Mode Explorateur · 15-16 ans</p>
+      <div class="prof-subjects">
+        <span class="subj math">Maths</span>
+        <span class="subj fr">Français</span>
+        <span class="subj hist">Histoire</span>
+        <span class="subj sci">Sciences</span>
+      </div>
+      <button class="prof-btn">Entrer dans mon espace 🔒</button>
+    </div>
+    <div class="prof-card pre" onclick="openLogin('pre')">
+      <div class="prof-avatar">🎯</div>
+      <h2>Espace Première</h2>
+      <p class="sublevel">Mode Expert · 16-17 ans</p>
+      <div class="prof-subjects">
+        <span class="subj math">Maths</span>
+        <span class="subj fr">Français</span>
+        <span class="subj hist">Histoire</span>
+        <span class="subj sci">Spécialités</span>
+      </div>
+      <button class="prof-btn">Entrer dans mon espace 🔒</button>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apikey-modal">
+  <div class="modal">
+    <div style="font-size:2rem;margin-bottom:.5rem">🔑</div>
+    <h3>Clé API Anthropic</h3>
+    <p>Pour que l'IA fonctionne, entre ta clé API Anthropic. Elle sera sauvegardée sur cet appareil.</p>
+    <input type="password" id="apikey-input" placeholder="sk-ant-..." style="letter-spacing:0;font-size:.85rem">
+    <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Obtiens ta clé sur <a href="https://console.anthropic.com" target="_blank" style="color:#7F77DD">console.anthropic.com</a></div>
+    <div class="modal-error" id="apikey-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="document.getElementById('apikey-modal').classList.remove('open')">Annuler</button>
+      <button class="btn-ok" onclick="saveApiKey()">Sauvegarder ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div id="modal-emoji" style="font-size:2rem;margin-bottom:.5rem">🔒</div>
+    <h3 id="modal-title">Accès sécurisé</h3>
+    <p id="modal-desc">Entre ton mot de passe pour accéder à ton espace</p>
+    <input type="password" id="pwd-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPwd()">
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-ok" onclick="checkPwd()">Entrer ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <div style="font-size:2rem;margin-bottom:.5rem">📤</div>
+    <h3>Exporter la progression</h3>
+    <p>Copie ce code et garde-le précieusement. Il te permettra de restaurer la progression sur n'importe quel appareil ou après une mise en ligne.</p>
+    <textarea id="export-code" readonly style="width:100%;height:90px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:monospace;font-size:.75rem;background:var(--bg);resize:none;margin-top:.5rem"></textarea>
+    <div class="modal-btns" style="margin-top:.8rem">
+      <button class="btn-cancel" onclick="document.getElementById('export-modal').classList.remove('open')">Fermer</button>
+      <button class="btn-ok" onclick="copyExportCode()">📋 Copier</button>
+    </div>
+    <div id="export-copy-msg" style="font-size:.78rem;color:#1D9E75;margin-top:.4rem;min-height:1rem;text-align:center"></div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div style="font-size:2rem;margin-bottom:.5rem">📥</div>
+    <h3>Importer la progression</h3>
+    <p>Colle ton code de sauvegarde ci-dessous pour restaurer la progression.</p>
+    <textarea id="import-code" placeholder="Colle ton code ici..." style="width:100%;height:90px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:monospace;font-size:.75rem;background:var(--bg);resize:none;margin-top:.5rem;outline:none"></textarea>
+    <div class="modal-error" id="import-error"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="document.getElementById('import-modal').classList.remove('open')">Annuler</button>
+      <button class="btn-ok" onclick="doImport()">Importer ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div id="dashboard" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" onclick="goHome()">← Accueil</button>
+    <span class="dash-title" id="dash-title">Mon Espace</span>
+    <span class="dash-score" id="dash-score">⭐ 0 pts</span>
+  </div>
+  <div class="dash-body">
+    <div class="dash-welcome">
+      <h2 id="dash-welcome-title">Bonjour !</h2>
+      <p id="dash-welcome-sub"></p>
+    </div>
+    <div class="subjects-grid" id="subjects-grid"></div>
+    <div class="progress-section">
+      <h3>Ma progression</h3>
+      <div id="progress-bars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SUBJECT PICKER SCREEN -->
+<div id="subject-picker" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" onclick="goToDash()">← Retour</button>
+    <span class="dash-title" id="picker-title">Choisir un sujet</span>
+  </div>
+  <div class="dash-body">
+    <!-- AI AGENT BANNER -->
+    <div class="agent-banner" onclick="startAgentMode()">
+      <div class="agent-icon">🤖</div>
+      <div class="agent-text">
+        <div class="agent-title">IA Learning Agent</div>
+        <div class="agent-desc">L'IA détecte tes points faibles et cible ses questions pour te faire progresser sur toute la matière</div>
+      </div>
+      <div class="agent-arrow">→</div>
+    </div>
+    <!-- TOPIC LIST -->
+    <div style="margin-bottom:.6rem">
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.8rem">— Ou choisis un sujet précis —</div>
+    </div>
+    <div id="topics-grid" class="topics-grid"></div>
+  </div>
+</div>
+
+<!-- EXERCISE SCREEN -->
+<div id="exercise" class="screen">
+  <div class="exo-header">
+    <button class="exo-back" onclick="goToDash()">← Retour</button>
+    <span class="exo-info" id="exo-info">Exercice</span>
+    <div id="step-bar" style="display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:.5rem"></div>
+    <span class="exo-pts" id="exo-pts"></span>
+  </div>
+  <div class="exo-body">
+
+    <!-- QUESTION CARD -->
+    <div class="exo-card" id="question-card">
+      <div class="label" id="q-label">
+        <span id="q-label-icon"></span>
+        <span id="q-label-text">Chargement...</span>
+      </div>
+      <div class="exo-question" id="q-text">
+        <div class="exo-loading">
+          <span>L'IA prépare ton exercice</span>
+          <span class="dot-anim"><span>.</span><span>.</span><span>.</span></span>
         </div>
-    </header>
+      </div>
+    </div>
 
-    <main class="container mx-auto px-4 max-w-4xl">
-        <div id="app-container" class="bg-white rounded-2xl shadow-xl p-6 min-h-[400px]">
-            </div>
-    </main>
+    <!-- HINTS -->
+    <div id="hint-zone"></div>
 
-    <script>
-        // --- CONFIGURATION ---
-        // L'URL de ton serveur Firebase Cloud Functions
-        const URL_SERVEUR_IA = "https://genererexercice-fqjtknryra-uc.a.run.app";
-        
-        const catalogue = {
-            "terminale": { 
-                nomProfil: "Bac / Terminale", 
-                code: "4444", 
-                matieres: { 
-                    "Mathématiques": ["Dérivées", "Suites", "Probabilités"], 
-                    "Physique-Chimie": ["Cinématique", "Acides et Bases"] 
-                } 
-            },
-            "seconde": { 
-                nomProfil: "Seconde", 
-                code: "2222", 
-                matieres: { 
-                    "Mathématiques": ["Fonctions", "Géométrie", "Vecteurs"], 
-                    "Physique": ["Optique", "Mécanique"] 
-                } 
-            },
-            "cm2": { 
-                nomProfil: "CM2", 
-                code: "3333", 
-                matieres: { 
-                    "Mathématiques": ["Fractions", "Division", "Géométrie"], 
-                    "Français": ["Conjugaison", "Grammaire"] 
-                } 
-            }
-        };
+    <!-- NAV PREV -->
+    <div id="nav-zone" style="margin-bottom:.5rem"></div>
 
-        let currentProfileId = null;
-        let currentMatiere = null;
-        let currentQ = null;
-        let hintLevel = 0;
+    <!-- ANSWER BLOCK -->
+    <div class="answer-block" id="answer-zone" style="display:none">
+      <div class="label">✏️ Ta réponse</div>
+      <textarea class="answer-area" id="answer-input" placeholder="Écris ta réponse ici..."></textarea>
+      <div class="exo-actions">
+        <button class="btn-hint" id="hint-btn" onclick="getHint()">💡 Un indice</button>
+        <button class="btn-submit" id="submit-btn" onclick="submitAnswer()">Valider →</button>
+      </div>
+    </div>
 
-        const container = document.getElementById('app-container');
+    <!-- FEEDBACK -->
+    <div id="feedback-zone"></div>
 
-        function showSelectionProfil() {
-            currentProfileId = null;
-            document.getElementById('user-info').classList.add('hidden');
-            let html = `<h2 class="text-2xl font-bold mb-6 text-center text-slate-800">Qui va réviser ?</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">`;
-            for (let id in catalogue) {
-                html += `
-                <button onclick="verifierCode('${id}')" class="p-6 border-2 border-slate-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left group">
-                    <div class="text-xl font-bold text-slate-700 group-hover:text-indigo-600">${catalogue[id].nomProfil}</div>
-                    <div class="text-sm text-slate-500">Accès protégé</div>
-                </button>`;
-            }
-            html += `</div>`;
-            container.innerHTML = html;
+    <!-- NEXT BUTTON -->
+    <div class="btn-next-wrap" id="next-zone" style="display:none">
+      <button class="btn-next" onclick="nextExercise()">➡️ Nouvel exercice</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PASSWORDS = {cm2:'Amolepro77', sec:'Gabichou77', pre:'Marinette77'};
+let ANTHROPIC_KEY = localStorage.getItem('edusmart_apikey')||'';
+const PROFILES = {
+  cm2:{
+    name:'CM2',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
+    welcome:'Super ! Prêt(e) pour une nouvelle aventure ?',
+    sub:'Choisis une matière et laisse l\'IA créer des exercices juste pour toi !',
+    subjects:[
+      {id:'math',icon:'➕',name:'Mathématiques',desc:'Tables, fractions, problèmes',topics:[
+        {id:'tables',e:'✖️',n:'Tables de multiplication',d:'Tables de 1 à 12'},
+        {id:'calcul',e:'🔢',n:'Calcul posé',d:'Addition, soustraction, retenue'},
+        {id:'fractions',e:'🍕',n:'Fractions simples',d:'Moitié, tiers, quart'},
+        {id:'problemes',e:'🧩',n:'Problèmes',d:'Problèmes à 1-2 étapes'},
+        {id:'geometrie',e:'📐',n:'Géométrie',d:'Périmètre, formes, angles'},
+        {id:'mesures',e:'📏',n:'Mesures',d:'Longueurs, masses, durées'},
+      ]},
+      {id:'fr',icon:'✍️',name:'Français',desc:'Orthographe, conjugaison, dictée',topics:[
+        {id:'conjugaison',e:'🔤',n:'Conjugaison',d:'Présent, passé composé, futur'},
+        {id:'accord',e:'✅',n:'Accords',d:'Sujet-verbe, adjectif-nom'},
+        {id:'vocabulaire',e:'📚',n:'Vocabulaire',d:'Synonymes, antonymes, familles'},
+        {id:'grammaire',e:'🔍',n:'Grammaire',d:'Nature et fonction des mots'},
+        {id:'orthographe',e:'🖊️',n:'Orthographe',d:'Mots invariables, homophones'},
+      ]},
+      {id:'sci',icon:'🔬',name:'Sciences',desc:'Nature, corps humain, animaux',topics:[
+        {id:'corps',e:'🫀',n:'Corps humain',d:'Organes et fonctions'},
+        {id:'animaux',e:'🐾',n:'Animaux',d:'Classification, alimentation'},
+        {id:'plantes',e:'🌱',n:'Plantes',d:'Photosynthèse, parties'},
+        {id:'matiere',e:'💧',n:'Matière',d:'États solide, liquide, gaz'},
+        {id:'environnement',e:'🌍',n:'Environnement',d:'Écosystèmes, météo'},
+      ]},
+    ]
+  },
+  sec:{
+    name:'Seconde',emoji:'🚀',color:'var(--sec-color)',light:'var(--sec-light)',
+    welcome:'Bienvenue dans ton espace Seconde !',
+    sub:'Des exercices progressifs générés par IA pour booster tes résultats.',
+    subjects:[
+      {id:'math',icon:'📐',name:'Mathématiques',desc:'Algèbre, fonctions, géométrie',topics:[
+        {id:'equations',e:'⚖️',n:'Équations',d:'1er et 2nd degré'},
+        {id:'fonctions',e:'📈',n:'Fonctions',d:'Affines, polynômes, courbes'},
+        {id:'geometrie',e:'📐',n:'Géométrie',d:'Vecteurs, droites, triangles'},
+        {id:'stats',e:'📊',n:'Statistiques',d:'Moyenne, médiane, fréquences'},
+        {id:'trigo',e:'📐',n:'Trigonométrie',d:'Sin, cos, tan dans le triangle'},
+        {id:'proba',e:'🎲',n:'Probabilités',d:'Dénombrement, événements'},
+      ]},
+      {id:'fr',icon:'📖',name:'Français',desc:'Grammaire, textes, expression',topics:[
+        {id:'grammaire',e:'🔍',n:'Grammaire',d:'Propositions, syntaxe, analyse'},
+        {id:'conjugaison',e:'🔤',n:'Conjugaison',d:'Tous les temps et modes'},
+        {id:'figures',e:'🎨',n:'Figures de style',d:'Métaphore, oxymore, anaphore...'},
+        {id:'lecture',e:'📖',n:'Lecture analytique',d:'Analyse d\'extraits littéraires'},
+        {id:'expression',e:'✍️',n:'Expression écrite',d:'Rédaction et argumentation'},
+      ]},
+      {id:'hist',icon:'🗺️',name:'Histoire-Géo',desc:'Chronologie, cartes, analyses',topics:[
+        {id:'antiquite',e:'🏛️',n:'Antiquité',d:'Grèce, Rome, Méditerranée'},
+        {id:'medievale',e:'⚔️',n:'Moyen Âge',d:'Féodalité, Église, croisades'},
+        {id:'renaissance',e:'🎭',n:'Renaissance',d:'Humanisme, arts, découvertes'},
+        {id:'geo_physique',e:'🌍',n:'Géo physique',d:'Reliefs, climats, biomes'},
+        {id:'geo_humaine',e:'🏙️',n:'Géo humaine',d:'Population, villes, migrations'},
+      ]},
+      {id:'sci',icon:'⚗️',name:'Sciences',desc:'Physique-Chimie, SVT',topics:[
+        {id:'mecanique',e:'⚙️',n:'Mécanique',d:'Forces, vitesse, mouvement'},
+        {id:'optique',e:'🔦',n:'Optique',d:'Lumière, lentilles, couleurs'},
+        {id:'chimie',e:'⚗️',n:'Chimie',d:'Atomes, molécules, réactions'},
+        {id:'cellule',e:'🔬',n:'Cellule & génétique',d:'ADN, division, hérédité'},
+        {id:'ecosysteme',e:'🌿',n:'Écosystèmes',d:'Biodiversité, chaînes alimentaires'},
+      ]},
+    ]
+  },
+  pre:{
+    name:'Première',emoji:'🎯',color:'var(--pre-color)',light:'var(--pre-light)',
+    welcome:'Espace Première — Niveau expert',
+    sub:'Entraînement type bac, correction exigeante et fiches de révision.',
+    subjects:[
+      {id:'math',icon:'∑',name:'Mathématiques',desc:'Suites, dérivées, probabilités',topics:[
+        {id:'suites',e:'∞',n:'Suites',d:'Arithmétiques, géométriques, limites'},
+        {id:'derivees',e:'∂',n:'Dérivation',d:'Calcul, tableaux de variations'},
+        {id:'integrales',e:'∫',n:'Intégration',d:'Primitives, calcul d\'aires'},
+        {id:'proba',e:'🎲',n:'Probabilités',d:'Loi binomiale, conditionnelles'},
+        {id:'trigo',e:'〰️',n:'Trigonométrie',d:'Cercle trigonométrique, formules'},
+        {id:'complexes',e:'ℂ',n:'Nombres complexes',d:'Forme algébrique, module, argument'},
+      ]},
+      {id:'fr',icon:'📝',name:'Français',desc:'Dissertation, commentaire composé',topics:[
+        {id:'peau',e:'📕',n:'La Peau de chagrin',d:'Balzac — roman, désir, pacte'},
+        {id:'menteur',e:'🎭',n:'Le Menteur',d:'Corneille — comédie classique'},
+        {id:'boetie',e:'✊',n:'Discours servitude',d:'La Boétie — essai, liberté'},
+        {id:'forets',e:'🌲',n:'Mes forêts',d:'Hélène Dorion — poésie contemporaine'},
+        {id:'methodo',e:'📋',n:'Méthodologie',d:'Dissertation, commentaire composé'},
+        {id:'grammaire',e:'🔍',n:'Grammaire bac',d:'Analyse grammaticale avancée'},
+      ]},
+      {id:'hist',icon:'📜',name:'Histoire-Géo',desc:'Analyse de docs, géopolitique',topics:[
+        {id:'guerres',e:'⚔️',n:'Guerres mondiales',d:'WWI, WWII, causes et bilans'},
+        {id:'decolonisation',e:'🌍',n:'Décolonisation',d:'Indépendances, nouveaux États'},
+        {id:'guerre_froide',e:'☢️',n:'Guerre froide',d:'Blocs, crises, chute du mur'},
+        {id:'geo_monde',e:'🗺️',n:'Géopolitique',d:'Mondialisation, puissances, conflits'},
+        {id:'france',e:'🇫🇷',n:'France contemporaine',d:'Ve République, société française'},
+      ]},
+      {id:'spe',icon:'🔭',name:'Spécialités',desc:'Exercices de spécialité',topics:[
+        {id:'phys_chimie',e:'⚗️',n:'Physique-Chimie',d:'Mécanique, optique, chimie organique'},
+        {id:'svt',e:'🧬',n:'SVT',d:'Génétique, évolution, neurosciences'},
+        {id:'info',e:'💻',n:'NSI',d:'Algorithmes, programmation Python'},
+        {id:'eco',e:'📊',n:'SES',d:'Économie, sociologie, science politique'},
+        {id:'philo',e:'🤔',n:'Philosophie',d:'Notions, auteurs, dissertations'},
+      ]},
+    ]
+  }
+};
+
+let currentProfile=null, currentSubject=null, currentPwd=null;
+let hintCount=0, currentQuestion='', sessionExoCount=0;
+
+// Load from localStorage or start fresh
+// ── Data layer: localStorage + Firebase sync ──────────────
+const DEFAULT_DATA = {
+  progress:{cm2:{math:0,fr:0,sci:0,hist:0,spe:0},sec:{math:0,fr:0,sci:0,hist:0,spe:0},pre:{math:0,fr:0,sci:0,hist:0,spe:0}},
+  totalScore:{cm2:0,sec:0,pre:0}
+};
+
+function loadData(){
+  try{
+    const saved=localStorage.getItem('edusmart_data');
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveData(){
+  try{localStorage.setItem('edusmart_data',JSON.stringify({progress,totalScore}));}catch(e){}
+  if(window._firebaseReady && window._currentProfileKey){
+    syncToFirebase(window._currentProfileKey);
+  }
+}
+
+async function syncToFirebase(profileKey){
+  try{
+    const db=window._db, docFn=window._fsDoc, setFn=window._fsSetDoc;
+    await setFn(docFn(db,'edusmart',profileKey),{progress,totalScore,updatedAt:Date.now()});
+    showSyncBadge('✅ Sauvegardé');
+  }catch(e){ showSyncBadge('⚠️ Sync échouée'); }
+}
+
+async function loadFromFirebase(profileKey){
+  if(!window._firebaseReady) return false;
+  try{
+    const db=window._db, docFn=window._fsDoc, getFn=window._fsGetDoc;
+    const snap = await getFn(docFn(db,'edusmart',profileKey));
+    if(snap.exists()){
+      const d=snap.data();
+      // Merge: keep most recent (firebase wins if score higher)
+      if(d.totalScore && d.progress){
+        // Take whichever has higher total across all profiles
+        const fbTotal=(d.totalScore.cm2||0)+(d.totalScore.sec||0)+(d.totalScore.pre||0);
+        const lcTotal=(totalScore.cm2||0)+(totalScore.sec||0)+(totalScore.pre||0);
+        if(fbTotal>=lcTotal){
+          progress=d.progress;
+          totalScore=d.totalScore;
+          saveData(); // sync back to localStorage
         }
+        return true;
+      }
+    }
+    return false;
+  }catch(e){ return false; }
+}
 
-        function verifierCode(id) {
-            const codeSaisi = prompt(`Code secret pour ${catalogue[id].nomProfil} :`);
-            if (codeSaisi === catalogue[id].code) {
-                currentProfileId = id;
-                document.getElementById('user-info').textContent = catalogue[id].nomProfil;
-                document.getElementById('user-info').classList.remove('hidden');
-                showMatieres();
-            } else {
-                alert("Code incorrect !");
-            }
+function showSyncBadge(msg){
+  let badge=document.getElementById('sync-badge');
+  if(!badge){
+    badge=document.createElement('div');
+    badge.id='sync-badge';
+    badge.style.cssText='position:fixed;bottom:1rem;right:1rem;background:#1a1a1a;color:#fff;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:99px;z-index:999;opacity:0;transition:opacity .3s;font-family:Nunito,sans-serif';
+    document.body.appendChild(badge);
+  }
+  badge.textContent=msg;
+  badge.style.opacity='1';
+  clearTimeout(badge._t);
+  badge._t=setTimeout(()=>badge.style.opacity='0',2500);
+}
+
+let {progress, totalScore}=loadData();
+
+function showApiKeyModal(){
+  document.getElementById('apikey-input').value=ANTHROPIC_KEY||'';
+  document.getElementById('apikey-error').textContent='';
+  document.getElementById('apikey-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('apikey-input').focus(),100);
+}
+function saveApiKey(){
+  const key=document.getElementById('apikey-input').value.trim();
+  if(!key.startsWith('sk-ant-')){
+    document.getElementById('apikey-error').textContent='❌ La clé doit commencer par sk-ant-';
+    return;
+  }
+  ANTHROPIC_KEY=key;
+  localStorage.setItem('edusmart_apikey',key);
+  document.getElementById('apikey-modal').classList.remove('open');
+}
+function resetProgress(){
+  if(!confirm('Réinitialiser toute la progression ? Les scores seront perdus sur tous les appareils.')) return;
+  progress=JSON.parse(JSON.stringify({cm2:{math:0,fr:0,sci:0,hist:0,spe:0},sec:{math:0,fr:0,sci:0,hist:0,spe:0},pre:{math:0,fr:0,sci:0,hist:0,spe:0}}));
+  totalScore={cm2:0,sec:0,pre:0};
+  saveData();
+  ['cm2','sec','pre'].forEach(k=>{if(window._firebaseReady) syncToFirebase(k);});
+  alert('Progression réinitialisée !');
+}
+// ── Export / Import progression ───────────────────────────
+function showExportModal(){
+  const data = {progress, totalScore, v:1};
+  const json = JSON.stringify(data);
+  // Base64 encode for a compact portable string
+  const code = btoa(unescape(encodeURIComponent(json)));
+  document.getElementById('export-code').value = code;
+  document.getElementById('export-copy-msg').textContent = '';
+  document.getElementById('export-modal').classList.add('open');
+}
+
+function copyExportCode(){
+  const ta = document.getElementById('export-code');
+  ta.select();
+  try{
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      document.getElementById('export-copy-msg').textContent = '✅ Code copié !';
+    }).catch(()=> fallbackCopy(ta));
+  } catch(e){ fallbackCopy(ta); }
+}
+
+function fallbackCopy(ta){
+  document.execCommand('copy');
+  document.getElementById('export-copy-msg').textContent = '✅ Code copié !';
+}
+
+function showImportModal(){
+  document.getElementById('import-code').value = '';
+  document.getElementById('import-error').textContent = '';
+  document.getElementById('import-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('import-code').focus(), 100);
+}
+
+function doImport(){
+  const code = document.getElementById('import-code').value.trim();
+  if(!code){ document.getElementById('import-error').textContent = '❌ Colle un code valide.'; return; }
+  try{
+    const json = decodeURIComponent(escape(atob(code)));
+    const data = JSON.parse(json);
+    if(!data.progress || !data.totalScore) throw new Error('Format invalide');
+    progress = data.progress;
+    totalScore = data.totalScore;
+    saveData();
+    document.getElementById('import-modal').classList.remove('open');
+    alert('✅ Progression importée avec succès !');
+  } catch(e){
+    document.getElementById('import-error').textContent = '❌ Code invalide ou corrompu.';
+  }
+}
+
+function openLogin(profile){
+  currentPwd=profile;
+  const p=PROFILES[profile];
+  document.getElementById('modal-emoji').textContent=p.emoji;
+  document.getElementById('modal-title').textContent='Espace '+p.name;
+  document.getElementById('modal-desc').textContent='Entre ton mot de passe pour accéder à ton espace';
+  document.getElementById('pwd-input').value='';
+  document.getElementById('modal-error').textContent='';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('pwd-input').focus(),100);
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+async function checkPwd(){
+  const val=document.getElementById('pwd-input').value;
+  if(val===PASSWORDS[currentPwd]){
+    closeModal();
+    currentProfile=currentPwd;
+    window._currentProfileKey = currentPwd; // for firebase sync
+    // Try to load from Firebase (non-blocking)
+    const btn=document.getElementById('pwd-input');
+    document.getElementById('modal-error').textContent='';
+    showSyncBadge('🔄 Chargement...');
+    await loadFromFirebase(currentPwd);
+    showDashboard();
+  } else {
+    document.getElementById('modal-error').textContent='❌ Mot de passe incorrect, réessaie !';
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){currentProfile=null;window._currentProfileKey=null;showScreen('home')}
+function goToDash(){
+  if(currentSubjectObj) showScreen('subject-picker');
+  else showScreen('dashboard');
+}
+function goToDashFull(){currentSubjectObj=null;showScreen('dashboard');}
+
+let currentSubjectObj = null; // full subject object with topics
+let isAgentMode = false;
+let agentWeakTopics = [];
+
+function showDashboard(){
+  const p=PROFILES[currentProfile];
+  document.getElementById('dash-title').textContent=p.emoji+' Espace '+p.name;
+  document.getElementById('dash-score').textContent='⭐ '+totalScore[currentProfile]+' pts';
+  document.getElementById('dash-welcome-title').textContent=p.welcome;
+  document.getElementById('dash-welcome-sub').textContent=p.sub;
+  // Subjects → click opens topic picker
+  const grid=document.getElementById('subjects-grid');
+  grid.innerHTML='';
+  p.subjects.forEach(s=>{
+    const card=document.createElement('div');
+    card.className='subj-card';
+    const pct=Math.min(100,progress[currentProfile][s.id]||0);
+    card.innerHTML=`<div class="subj-icon">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p><div style="margin-top:.4rem;font-size:.7rem;font-weight:700;color:var(--muted)">${pct}% maîtrisé</div>`;
+    card.onclick=()=>showSubjectPicker(s);
+    grid.appendChild(card);
+  });
+  // Progress bars
+  const pb=document.getElementById('progress-bars');
+  pb.innerHTML='';
+  p.subjects.forEach(s=>{
+    const pct=Math.min(100,progress[currentProfile][s.id]||0);
+    const color=currentProfile==='cm2'?'#1D9E75':currentProfile==='sec'?'#378ADD':'#7F77DD';
+    pb.innerHTML+=`<div class="prog-item"><div class="prog-label"><span>${s.name}</span><span>${pct}%</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+  });
+  showScreen('dashboard');
+}
+
+// ── Show topic picker for a subject ───────────────────────
+function showSubjectPicker(subjectObj){
+  currentSubjectObj = subjectObj;
+  isAgentMode = false;
+  document.getElementById('picker-title').innerHTML =
+    subjectObj.icon + ' ' + subjectObj.name;
+  // Build topic cards
+  const grid = document.getElementById('topics-grid');
+  grid.innerHTML = '';
+  const topicScores = (progress[currentProfile] && progress[currentProfile][subjectObj.id+'_topics']) || {};
+  (subjectObj.topics||[]).forEach(t => {
+    const sc = topicScores[t.id] || 0;
+    const isWeak = sc > 0 && sc < 40;
+    const isStrong = sc >= 60;
+    const card = document.createElement('div');
+    card.className = 'topic-card' + (isWeak?' weak':isStrong?' strong':'');
+    const scoreLabel = sc===0
+      ? '<span class="topic-score new">Nouveau</span>'
+      : isWeak
+        ? '<span class="topic-score weak">⚠️ À retravailler</span>'
+        : '<span class="topic-score ok">✓ '+sc+'%</span>';
+    card.innerHTML = `<div class="topic-emoji">${t.e}</div><div class="topic-info"><div class="topic-name">${t.n}</div><div class="topic-sub">${t.d}</div>${scoreLabel}</div>`;
+    card.onclick = () => startExerciseOnTopic(subjectObj, t);
+    grid.appendChild(card);
+  });
+  showScreen('subject-picker');
+}
+
+// ── Start exercise on a specific topic ────────────────────
+function startExerciseOnTopic(subjectObj, topic){
+  isAgentMode = false;
+  currentSubject = {id: subjectObj.id, name: subjectObj.name + ' — ' + topic.n, icon: subjectObj.icon, topicId: topic.id, topicName: topic.n, topicDesc: topic.d};
+  sessionExoCount++;
+  document.getElementById('exo-info').textContent = subjectObj.icon + ' ' + topic.n;
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
+
+// ── Start IA Learning Agent mode ──────────────────────────
+function startAgentMode(){
+  if(!currentSubjectObj) return;
+  isAgentMode = true;
+  // Find weak topics (score < 40) or untried (score = 0), sorted by weakness
+  const topicScores = (progress[currentProfile] && progress[currentProfile][currentSubjectObj.id+'_topics']) || {};
+  const topics = currentSubjectObj.topics || [];
+  // Score: untried=50 (medium priority), weak<40=high priority, ok>=40=low priority
+  agentWeakTopics = [...topics].sort((a,b)=>{
+    const sa = topicScores[a.id]||0, sb = topicScores[b.id]||0;
+    const pa = sa===0?50:(sa<40?100-sa:sa-40);
+    const pb2 = sb===0?50:(sb<40?100-sb:sb-40);
+    return pb2-pa;
+  });
+  pickNextAgentTopic();
+}
+
+function pickNextAgentTopic(){
+  if(!agentWeakTopics.length){ goToDash(); return; }
+  const topic = agentWeakTopics[0]; // always work on the most needed
+  currentSubject = {
+    id: currentSubjectObj.id,
+    name: currentSubjectObj.name + ' — ' + topic.n,
+    icon: '🤖',
+    topicId: topic.id,
+    topicName: topic.n,
+    topicDesc: topic.d,
+    isAgent: true
+  };
+  sessionExoCount++;
+  const badge = '<span class="agent-mode-badge">Agent IA</span>';
+  document.getElementById('exo-info').innerHTML = '🤖 ' + topic.n + badge;
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
+
+// ── Wizard state ──────────────────────────────────────────
+let questions=[];      // [{context, question, index}]
+let currentQIdx=0;     // which question we're on
+let answers=[];        // answers collected per question
+let hintsPerQ=[];      // hint counts per question
+let feedbacks=[];      // correction per question (after final submit)
+let exoContext='';     // shared context/énoncé for the exercise
+
+function startExercise(subjectId, subjectName, icon){
+  currentSubject={id:subjectId,name:subjectName,icon};
+  sessionExoCount++;
+  questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
+  document.getElementById('exo-info').textContent=icon+' '+subjectName;
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
+
+function nextExercise(){
+  questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
+  sessionExoCount++;
+  showLoadingState();
+  if(currentSubject && currentSubject.isAgent){
+    pickNextAgentTopic();
+  } else {
+    generateExercise();
+  }
+}
+
+function showLoadingState(){
+  document.getElementById('hint-zone').innerHTML='';
+  document.getElementById('feedback-zone').innerHTML='';
+  document.getElementById('answer-zone').style.display='none';
+  document.getElementById('next-zone').style.display='none';
+  document.getElementById('q-label-icon').textContent='';
+  document.getElementById('q-label-text').textContent='Chargement...';
+  document.getElementById('q-text').innerHTML=`<div class="exo-loading"><span>L'IA prépare ton exercice</span><span class="dot-anim"><span>.</span><span>.</span><span>.</span></span></div>`;
+  updateStepBar();
+}
+
+// ── Step bar (breadcrumb dots) ─────────────────────────────
+function updateStepBar(){
+  const bar=document.getElementById('step-bar');
+  if(!bar) return;
+  if(!questions.length){bar.innerHTML='';return;}
+  bar.innerHTML=questions.map((q,i)=>{
+    let cls='step-dot';
+    if(i<currentQIdx) cls+=' done';
+    else if(i===currentQIdx) cls+=' active';
+    return `<div class="${cls}" title="Question ${i+1}"></div>`;
+  }).join('<div class="step-line"></div>');
+}
+
+// ── Generate full exercise as JSON ────────────────────────
+async function generateExercise(){
+  if(!ANTHROPIC_KEY){
+    document.getElementById('q-text').textContent="⚠️ Clé API non configurée. Retourne à l'accueil et clique sur Configurer la clé API.";
+    return;
+  }
+  const levelDesc=getLevelDesc();
+  const isCM2=currentProfile==='cm2';
+  const nQuestions=isCM2?1:Math.floor(Math.random()*2)+3;
+  // Build topic-aware subject prompt
+  const basePrompt = getSubjectPrompt();
+  const topicExtra = currentSubject.topicName
+    ? 'SUJET PRÉCIS à traiter : ' + currentSubject.topicName + ' (' + (currentSubject.topicDesc||'') + '). Cible UNIQUEMENT ce sujet, ne mélange pas avec d\'autres notions.'
+    : '';
+  const agentExtra = currentSubject.isAgent
+    ? 'Mode Agent IA : l\'élève a des lacunes sur ce sujet. Commence par une question de diagnostic simple pour évaluer son niveau, puis adapte la difficulté.'
+    : '';
+  const subjectPrompt = [basePrompt, topicExtra, agentExtra].filter(Boolean).join('\n');
+
+  const systemPrompt=`Tu es un professeur expert qui crée des exercices complets et rigoureux pour des élèves français.
+Niveau : ${levelDesc}. Matière : ${currentSubject.name}.
+Spécificité : ${subjectPrompt}
+
+RÈGLES CRITIQUES :
+1. Chaque question doit être COMPLÈTE et AUTO-SUFFISANTE : elle contient TOUTES les informations pour être résolue. Ne jamais écrire "montrer que pour tout :" sans donner ce quil faut montrer, ni "en déduire le signe de" sans préciser de quoi.
+2. Le champ "context" contient lintégralité de lénoncé de base : définition complète de la fonction/suite/texte avec son domaine et sa formule.
+3. Les questions référencent le contexte et sont PROGRESSIVES : calcul direct → analyse → conclusion rigoureuse.
+4. LaTeX : $...$ pour les maths en ligne (ex: $f(x) = \\frac{2x+3}{x+2}$), $$...$$ pour les formules centrées. Toujours fermer les balises LaTeX. Toujours définir les variables utilisées.
+5. JAMAIS de phrase tronquée, JAMAIS de variable non définie, JAMAIS de "selon les valeurs de" sans préciser lesquelles.
+
+SECURITE JSON : Dans les valeurs du JSON, n'utilise JAMAIS de guillemets droits (") non echappes. Remplace les guillemets de citation par des guillemets typographiques ou des chevrons. Echappe les apostrophes avec \' si necessaire. Pas de retour a la ligne reels dans les valeurs - utilise \n.
+FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
+{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).","questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
+
+Génère ${nQuestions} question(s). Pour CM2 : 1 question simple et amusante. Pour lycée : 3-4 questions progressives type bac.
+Ne donne PAS les réponses.`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1200,system:systemPrompt,
+        messages:[{role:'user',content:'Génère un exercice de '+currentSubject.name+'.'}]})
+    });
+    const data=await resp.json();
+    if(!resp.ok){ document.getElementById('q-text').textContent='⚠️ Erreur API ('+resp.status+'): '+(data.error?.message||''); return; }
+    const raw=data.content?.[0]?.text||'';
+    let parsed;
+    try{
+      // Strip markdown code fences
+      let clean=raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+      // Try direct parse first
+      try{ parsed=JSON.parse(clean); }
+      catch(e1){
+        // Fallback: extract with regex - find context and questions manually
+        const ctxMatch=clean.match(/"context"\s*:\s*"((?:[^"\\]|\\.)*)"/s);
+        const qMatches=[...clean.matchAll(/"q"\s*:\s*"((?:[^"\\]|\\.)*)"/gs)];
+        if(qMatches.length>0){
+          parsed={
+            context: ctxMatch ? ctxMatch[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : '',
+            questions: qMatches.map(m=>({q:m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"')}))
+          };
+        } else {
+          // Last resort: ask the AI differently - use raw text as single question
+          const lines=raw.replace(/```json|```/g,'').split('\n').filter(l=>l.trim()&&!l.includes('{')&&!l.includes('}')&&!l.includes('"context"')&&!l.includes('"questions"'));
+          parsed={context:'',questions:[{q:raw.replace(/```json|```/g,'').replace(/["{}\[\]]/g,'').replace(/context:|questions:|"q":/g,'').trim().slice(0,500)}]};
         }
+      }
+    }catch(e){
+      document.getElementById('q-text').textContent='⚠️ Impossible de générer cet exercice. Réessaie.';
+      document.getElementById('answer-zone').style.display='none';
+      return;
+    }
+    if(!parsed||!parsed.questions||!parsed.questions.length){
+      document.getElementById('q-text').textContent='⚠️ Exercice vide reçu. Clique sur Exercice suivant pour réessayer.';
+      document.getElementById('next-zone').style.display='block';
+      return;
+    }
+    exoContext=parsed.context||'';
+    questions=(parsed.questions||[]).map((q,i)=>({q:q.q||String(q),idx:i}));
+    answers=new Array(questions.length).fill('');
+    hintsPerQ=new Array(questions.length).fill(0);
+    feedbacks=new Array(questions.length).fill(null);
+    currentQIdx=0;
+    updateStepBar();
+    showCurrentQuestion();
+  }catch(e){
+    document.getElementById('q-text').textContent='❌ Erreur réseau: '+e.message;
+  }
+}
 
-        function showMatieres() {
-            let info = catalogue[currentProfileId];
-            let html = `<button onclick="showSelectionProfil()" class="text-indigo-600 mb-4 inline-block"><i class="fas fa-arrow-left"></i> Retour</button>
-                        <h2 class="text-2xl font-bold mb-6 text-slate-800">Choisis ta matière :</h2>
-                        <div class="grid grid-cols-2 gap-4">`;
-            for (let m in info.matieres) {
-                html += `<button onclick="startIA('${m}')" class="p-4 bg-slate-100 rounded-lg hover:bg-indigo-600 hover:text-white font-semibold transition-colors">${m}</button>`;
-            }
-            container.innerHTML = html + `</div>`;
-        }
+// ── Display current question ───────────────────────────────
+function showCurrentQuestion(){
+  const q=questions[currentQIdx];
+  const total=questions.length;
+  document.getElementById('hint-zone').innerHTML='';
+  document.getElementById('feedback-zone').innerHTML='';
+  document.getElementById('next-zone').style.display='none';
 
-        async function startIA(matiere) {
-            currentMatiere = matiere;
-            container.innerHTML = `
-                <div class="text-center py-10">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p class="text-xl text-slate-600 animate-pulse">L'IA prépare ton exercice...</p>
-                </div>`;
+  // Label
+  document.getElementById('q-label-icon').textContent=currentSubject.icon+' ';
+  document.getElementById('q-label-text').textContent=`Question ${currentQIdx+1} / ${total}`;
+  document.getElementById('exo-pts').textContent=`Q${currentQIdx+1}/${total}`;
 
-            const info = catalogue[currentProfileId];
-            const themes = info.matieres[matiere];
-            const theme = themes[Math.floor(Math.random() * themes.length)];
+  // Build question text: context (if q1) + question
+  let fullText='';
+  if(currentQIdx===0 && exoContext) fullText=exoContext+'\n\n';
+  fullText+='**'+( total>1?'Question '+(currentQIdx+1)+' :'+' ':'')+'**'+q.q;
+  renderMarkdownMath(fullText,'q-text');
 
-            try {
-                const response = await fetch(URL_SERVEUR_IA, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ profil: info.nomProfil, matiere: matiere, theme: theme })
-                });
+  // Show answer zone with previous answer if any
+  const az=document.getElementById('answer-zone');
+  az.style.display='block';
+  document.getElementById('answer-input').value=answers[currentQIdx]||'';
+  document.getElementById('answer-input').focus();
 
-                if (!response.ok) throw new Error("Erreur Serveur");
+  // Hint button
+  const hintBtn=document.getElementById('hint-btn');
+  hintBtn.textContent='💡 Un indice';
+  hintBtn.disabled=false;
 
-                const data = await response.json();
-                
-                // --- SÉCURITÉ ANTI-UNDEFINED ---
-                currentQ = {
-                    theme: data.theme || theme,
-                    target: data.target || data.objectif || "Révision",
-                    question: data.question || data.enonce || "Erreur de chargement",
-                    answer: data.answer || data.reponse || "",
-                    explanation: data.explanation || data.explication || "",
-                    hints: data.hints || data.indices || []
-                };
+  // Submit button
+  const isLast=currentQIdx===total-1;
+  const subBtn=document.getElementById('submit-btn');
+  subBtn.disabled=false;
+  subBtn.textContent=isLast?'Corriger tout →':'Répondre et continuer →';
 
-                hintLevel = 0;
-                renderExercice();
-            } catch (e) {
-                container.innerHTML = `<div class="text-center text-red-500 py-10">
-                    <p class="mb-4">Impossible de contacter le serveur d'IA.</p>
-                    <button onclick="showMatieres()" class="bg-indigo-600 text-white px-4 py-2 rounded">Réessayer</button>
-                </div>`;
-            }
-        }
+  // Nav buttons
+  renderNavButtons();
+  updateStepBar();
 
-        function renderExercice() {
-            let hintHtml = "";
-            if (hintLevel > 0 && currentQ.hints.length >= hintLevel) {
-                hintHtml = `<div class="mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 text-amber-800">
-                    <strong>Indice :</strong> ${currentQ.hints[hintLevel-1]}
-                </div>`;
-            }
+  // Scroll to top
+  document.querySelector('.exo-body').scrollTo({top:0,behavior:'smooth'});
+}
 
-            container.innerHTML = `
-                <div class="mb-4 flex justify-between items-center text-sm">
-                    <span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded">${currentQ.theme}</span>
-                    <button onclick="showMatieres()" class="text-slate-400">Changer</button>
-                </div>
-                <h3 class="text-lg font-semibold text-slate-500 mb-4">Objectif : ${currentQ.target}</h3>
-                <div class="text-xl text-slate-800 bg-slate-50 p-6 rounded-xl border mb-6">
-                    ${currentQ.question.replace(/\n/g, '<br>')}
-                </div>
-                ${hintHtml}
-                <div class="flex gap-3 mt-6">
-                    <button onclick="revelerCorrection()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold">Voir la réponse</button>
-                    <button onclick="hintLevel++; renderExercice()" class="bg-white border-2 border-amber-400 text-amber-600 px-6 py-3 rounded-xl font-bold">Indice</button>
-                </div>
-            `;
-        }
+function renderNavButtons(){
+  const nz=document.getElementById('nav-zone');
+  if(!nz) return;
+  const hasPrev=currentQIdx>0;
+  nz.innerHTML=hasPrev
+    ?`<button class="btn-prev" onclick="goToPrevQuestion()">← Question précédente</button>`
+    :'';
+}
 
-        function revelerCorrection() {
-            container.innerHTML = `
-                <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-6">
-                    <h2 class="text-2xl font-bold text-green-700 mb-4">Correction</h2>
-                    <p class="text-2xl font-bold mb-4">${currentQ.answer}</p>
-                    <p class="text-slate-700 mb-6">${currentQ.explanation.replace(/\n/g, '<br>')}</p>
-                    <button onclick="startIA('${currentMatiere}')" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold">Suivant</button>
-                </div>
-            `;
-        }
+function getLevelDesc(){
+  const p=currentProfile;
+  if(p==='cm2') return 'CM2 (9-10 ans, niveau primaire France). Utilise un langage simple, encourageant et ludique. Ajoute un contexte amusant (aventure, animaux, sport...).';
+  if(p==='sec') return 'Seconde (15-16 ans, lycée France). Niveau programme de seconde, vocabulaire adapté lycéen.';
+  return 'Première (16-17 ans, lycée France). Niveau programme de première, exigence type baccalauréat.';
+}
 
-        showSelectionProfil();
-    </script>
+function getSubjectPrompt(){
+  const s=currentSubject.id;
+  const p=currentProfile;
+  const subjectMap={
+    math:{cm2:'Maths CM2 - exercices courts et ciblés sur UNE notion : tables de multiplication (trouver 5 résultats), addition/soustraction avec retenue (3 calculs posés), problème à 1-2 étapes maximum avec contexte amusant (pas plus de 3 lignes d\'énoncé), fraction simple (comparer ou colorier), géométrie (reconnaître une forme, calculer un périmètre simple). INTERDIT : problèmes à plus de 3 étapes, énoncés de plus de 4 lignes, plusieurs notions mélangées.',
+      sec:'Algèbre (équations 1er/2nd degré), fonctions affines/polynômes, géométrie dans le plan et l\'espace, statistiques descriptives, trigonométrie. Propose un exercice complet avec une ou deux questions.',
+      pre:'Suites numériques, dérivées, intégrales, probabilités conditionnelles, géométrie dans l\'espace. Exercice de niveau baccalauréat avec justification attendue.'},
+    fr:{cm2:'Orthographe et grammaire CM2 : accord sujet-verbe, accord adjectif, conjugaison (présent, passé composé, imparfait, futur), nature des mots, vocabulaire, antonymes, synonymes. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
+      sec:'Grammaire (propositions subordonnées, syntaxe), conjugaison (tous temps), vocabulaire, rédaction courte, analyse d\'un court extrait littéraire. Pose une question ouverte sur un texte ou un exercice de rédaction guidée.',
+      pre:'Français Première - oeuvres au programme de cette élève : (1) La Peau de chagrin de Balzac (roman, realisme, pacte faustien, critique sociale), (2) Le Menteur de Corneille (comedie classique, mensonge et honneur), (3) Discours de la servitude volontaire de La Boetie (essai humaniste, liberte, tyrannie), (4) Mes forets de Helene Dorion (poesie contemporaine, nature, memoire, identite). Varie entre ces oeuvres a chaque exercice. Types : dissertation (problematique + plan detaille), commentaire compose d un extrait fourni, question de grammaire sur un passage, analyse lineaire guidee, question sur le parcours associe. Niveau exigence baccalaureat.'},
+    hist:{cm2:'Histoire naturelle, découvertes scientifiques simples, géographie de base de la France.',
+      sec:'Programme seconde : Méditerranée antique, monde médiéval, Renaissance, géographie physique et humaine.',
+      pre:'Programme première : XXe siècle, guerres mondiales, décolonisation, géopolitique contemporaine.'},
+    sci:{cm2:'Sciences CM2 - 1 seule question courte et amusante sur : corps humain (organe, fonction), animaux (habitat, alimentation, classification), plantes (photosynthèse, parties), états de la matière, météo, environnement. Format : QCM à 3 choix, vrai/faux avec justification en 1 phrase, ou question ouverte avec réponse en 1-2 phrases max. JAMAIS de compte-rendu ou résumé long.',
+      sec:'Physique-Chimie (mécanique, optique, chimie), SVT (cellule, génétique, écosystèmes). Exercice avec calcul ou analyse.',
+      pre:'Spécialités : exercice niveau baccalauréat en physique-chimie ou SVT avec raisonnement scientifique.'},
+    spe:{cm2:'',sec:'',pre:'Sciences spécialité : exercice complet de niveau baccalauréat (physique, chimie ou biologie) avec justifications attendues.'}
+  };
+  return (subjectMap[s]&&subjectMap[s][p])||'Un exercice adapté au niveau.';
+}
+
+
+function renderMarkdownMath(text, elementId){
+  const el = document.getElementById(elementId);
+  if(!el) return;
+  // Parse markdown then render math
+  const html = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g,'<br>');
+  el.innerHTML = html;
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([el]).catch(err=>console.log(err));
+  }
+}
+
+function renderFeedback(elementId, html){
+  const el = document.getElementById(elementId);
+  if(!el) return;
+  el.innerHTML = html;
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([el]).catch(err=>console.log(err));
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────
+function goToPrevQuestion(){
+  answers[currentQIdx]=document.getElementById('answer-input').value;
+  currentQIdx--;
+  showCurrentQuestion();
+}
+
+// ── Hint for current question ──────────────────────────────
+async function getHint(){
+  hintsPerQ[currentQIdx]=(hintsPerQ[currentQIdx]||0)+1;
+  const hintNum=hintsPerQ[currentQIdx];
+  document.getElementById('hint-btn').disabled=true;
+  document.getElementById('hint-btn').textContent='💡 Chargement...';
+  const levelDesc=getLevelDesc();
+  const qText=questions[currentQIdx].q;
+  const ctx=exoContext?'Contexte : '+exoContext+'\n\n':'';
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.
+Niveau : ${levelDesc}. Guide SANS donner la réponse.
+Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis.
+2-4 lignes max. LaTeX si nécessaire.`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,system:systemPrompt,
+        messages:[{role:'user',content:ctx+'Question : '+qText+'\n\nIndice n°'+hintNum+' svp.'}]})
+    });
+    const data=await resp.json();
+    const hintText=data.content?.[0]?.text||'Indice non disponible';
+    const hz=document.getElementById('hint-zone');
+    const hid='h-'+currentQIdx+'-'+hintNum;
+    hz.innerHTML+=`<div class="hint-card" id="${hid}">💡 <strong>Indice ${hintNum} :</strong> <span></span></div>`;
+    const span=document.querySelector('#'+hid+' span');
+    span.innerHTML=typeof marked!=='undefined'?marked.parse(hintText):hintText;
+    if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetPromise([document.getElementById(hid)]);}
+    document.getElementById('hint-btn').textContent='💡 Autre indice';
+    document.getElementById('hint-btn').disabled=false;
+  }catch(e){
+    document.getElementById('hint-btn').textContent='💡 Un indice';
+    document.getElementById('hint-btn').disabled=false;
+  }
+}
+
+// ── Submit / advance ───────────────────────────────────────
+async function submitAnswer(){
+  const answer=document.getElementById('answer-input').value.trim();
+  if(!answer){document.getElementById('answer-input').focus();return;}
+  answers[currentQIdx]=answer;
+  const isLast=currentQIdx===questions.length-1;
+  if(!isLast){
+    currentQIdx++;
+    showCurrentQuestion();
+    return;
+  }
+  // Last question → correct everything
+  document.getElementById('submit-btn').disabled=true;
+  document.getElementById('submit-btn').textContent='Correction en cours...';
+  document.getElementById('hint-btn').disabled=true;
+  document.getElementById('answer-zone').style.display='none';
+  const levelDesc=getLevelDesc();
+  const isCM2=currentProfile==='cm2';
+  const ctx=exoContext?'**Contexte :**\n'+exoContext+'\n\n':'';
+  const qaList=questions.map((q,i)=>
+    `**Question ${i+1}:** ${q.q}\n**Réponse élève :** ${answers[i]||'(pas de réponse)'}`
+  ).join('\n\n');
+  const systemPrompt=`Tu es un professeur correcteur expert. Niveau : ${levelDesc}.
+Corrige chaque question séparément en utilisant LaTeX ($...$) pour toutes les expressions mathématiques.
+Sois ${isCM2?"encourageant et ludique avec emojis":"rigoureux, précis et pédagogue"}.
+Structure OBLIGATOIRE (une section par question numérotée, rien avant Q1) :
+
+Q1:
+VERDICT: CORRECT
+CORRECTION: Explication complète avec LaTeX. Ex: La dérivée $f'(x) = \\frac{1}{(x+2)^2}$ est bien positive sur $]0;+\\infty[$.
+
+Q2:
+VERDICT: PARTIEL
+CORRECTION: Ce qui est juste, ce qui manque, la méthode correcte avec LaTeX.
+
+(répète pour chaque question, puis OBLIGATOIREMENT en dernière ligne :)
+TOTAL_VERDICT: CORRECT|PARTIEL|INCORRECT`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:systemPrompt,
+        messages:[{role:'user',content:ctx+qaList}]})
+    });
+    const data=await resp.json();
+    if(!resp.ok){
+      document.getElementById('answer-zone').style.display='block';
+      document.getElementById('submit-btn').disabled=false;
+      document.getElementById('submit-btn').textContent='Corriger tout →';
+      document.getElementById('hint-btn').disabled=false;
+      document.getElementById('feedback-zone').innerHTML='<div class="feedback-card partial"><div class="feedback-title">⚠️ Erreur API '+resp.status+'</div><div class="feedback-text">'+(data.error?.message||'')+'</div></div>';
+      return;
+    }
+    showAllFeedbacks(data.content?.[0]?.text||'',isCM2);
+  }catch(e){
+    document.getElementById('answer-zone').style.display='block';
+    document.getElementById('submit-btn').disabled=false;
+    document.getElementById('submit-btn').textContent='Corriger tout →';
+    document.getElementById('hint-btn').disabled=false;
+    document.getElementById('feedback-zone').innerHTML='<div class="feedback-card partial"><div class="feedback-title">⚠️ Erreur réseau</div><div class="feedback-text">'+e.message+'</div></div>';
+  }
+}
+
+function showAllFeedbacks(raw,isCM2){
+  const fz=document.getElementById('feedback-zone');
+  fz.innerHTML='';
+  const totalVMatch=raw.match(/TOTAL_VERDICT:\s*(CORRECT|PARTIEL|INCORRECT)/i);
+  const totalV=totalVMatch?totalVMatch[1].toUpperCase():'PARTIEL';
+  const qSections=raw.split(/Q\d+:/i).slice(1);
+  let totalPts=0;
+  questions.forEach((q,i)=>{
+    const section=qSections[i]||'';
+    const vMatch=section.match(/VERDICT:\s*(CORRECT|PARTIEL|INCORRECT)/i);
+    const cMatch=section.match(/CORRECTION:\s*([\s\S]*?)(?=TOTAL_VERDICT:|$)/i);
+    const verdict=vMatch?vMatch[1].toUpperCase():'PARTIEL';
+    const correction=cMatch?cMatch[1].trim():'';
+    let cls='partial',emoji='🟡',pts=0;
+    if(verdict==='CORRECT'){cls='correct';emoji='✅';pts=isCM2?10:15;}
+    else if(verdict==='INCORRECT'){cls='incorrect';emoji='❌';pts=2;}
+    else{cls='partial';emoji='🟡';pts=5;}
+    pts=Math.max(1,pts-(hintsPerQ[i]||0)*2);
+    totalPts+=pts;
+    const label=verdict==='CORRECT'?'Correct +'+pts+' pts':verdict==='PARTIEL'?'Partiel +'+pts+' pts':'À retravailler +'+pts+' pt';
+    const cardId='fd'+i;
+    fz.innerHTML+=`<div class="feedback-card ${cls}">
+      <div class="feedback-title">${emoji} Q${i+1} — ${label}</div>
+      <div class="feedback-q-recap">${(q.q||'').length>90?(q.q).slice(0,90)+'…':q.q}</div>
+      <div class="feedback-text" id="${cardId}"></div>
+    </div>`;
+    const el=document.getElementById(cardId);
+    if(el) el.innerHTML=typeof marked!=='undefined'?marked.parse(correction):correction.replace(/\n/g,'<br>');
+  });
+  if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetPromise([fz]);}
+  totalScore[currentProfile]+=totalPts;
+  const pct=totalV==='CORRECT'?5:totalV==='PARTIEL'?3:1;
+  if(progress[currentProfile][currentSubject.id]<100)
+    progress[currentProfile][currentSubject.id]=Math.min(100,(progress[currentProfile][currentSubject.id]||0)+pct);
+  // Track per-topic score
+  if(currentSubject.topicId){
+    const tkey = currentSubject.id+'_topics';
+    if(!progress[currentProfile][tkey]) progress[currentProfile][tkey]={};
+    const old = progress[currentProfile][tkey][currentSubject.topicId]||0;
+    const gain = totalV==='CORRECT'?10:totalV==='PARTIEL'?4:-3;
+    progress[currentProfile][tkey][currentSubject.topicId]=Math.max(0,Math.min(100,old+gain));
+  }
+  saveData();
+  // If agent mode, rotate to next weak topic after 2 exercises on same topic
+  if(currentSubject.isAgent && agentWeakTopics.length>1){
+    const topicScores=(progress[currentProfile][currentSubject.id+'_topics'])||{};
+    const sc=topicScores[currentSubject.topicId]||0;
+    if(sc>=60) agentWeakTopics.shift(); // mastered, move on
+  }
+  document.getElementById('dash-score').textContent='⭐ '+totalScore[currentProfile]+' pts';
+  const scoreEl=document.getElementById('dash-score');
+  scoreEl.classList.remove('score-pop');void scoreEl.offsetWidth;scoreEl.classList.add('score-pop');
+  document.getElementById('next-zone').style.display='block';
+  const nz=document.getElementById('nav-zone');if(nz)nz.innerHTML='';
+  updateStepBar();
+  document.querySelector('.exo-body').scrollTo({top:0,behavior:'smooth'});
+}
+
+</script>
 </body>
 </html>
