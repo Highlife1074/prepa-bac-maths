@@ -245,10 +245,10 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <div class="logo">Edu<span>Smart</span> ✨</div>
     <p>Choisis ton espace pour commencer à apprendre !</p>
     <div style="margin-top:.8rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
-      <button onclick="showApiKeyModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔑 Configurer la clé API</button>
-      <button onclick="showExportModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📤 Exporter la progression</button>
-      <button onclick="showImportModal()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📥 Importer la progression</button>
-      <button onclick="resetProgress()" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔄 Réinitialiser</button>
+      <button data-action="showApiKeyModal" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔑 Configurer la clé API</button>
+      <button data-action="showExportModal" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📤 Exporter la progression</button>
+      <button data-action="showImportModal" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">📥 Importer la progression</button>
+      <button data-action="resetProgress" style="font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;padding:5px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)">🔄 Réinitialiser</button>
     </div>
   </div>
   <div class="profiles-grid">
@@ -329,8 +329,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <p>Copie ce code et garde-le précieusement. Il te permettra de restaurer la progression sur n'importe quel appareil ou après une mise en ligne.</p>
     <textarea id="export-code" readonly style="width:100%;height:90px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:monospace;font-size:.75rem;background:var(--bg);resize:none;margin-top:.5rem"></textarea>
     <div class="modal-btns" style="margin-top:.8rem">
-      <button class="btn-cancel" onclick="document.getElementById('export-modal').classList.remove('open')">Fermer</button>
-      <button class="btn-ok" onclick="copyExportCode()">📋 Copier</button>
+      <button class="btn-cancel" data-action="closeExportModal">Fermer</button>
+      <button class="btn-ok" data-action="copyExportCode">📋 Copier</button>
     </div>
     <div id="export-copy-msg" style="font-size:.78rem;color:#1D9E75;margin-top:.4rem;min-height:1rem;text-align:center"></div>
   </div>
@@ -345,8 +345,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <textarea id="import-code" placeholder="Colle ton code ici..." style="width:100%;height:90px;padding:8px;border-radius:10px;border:1.5px solid var(--border);font-family:monospace;font-size:.75rem;background:var(--bg);resize:none;margin-top:.5rem;outline:none"></textarea>
     <div class="modal-error" id="import-error"></div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="document.getElementById('import-modal').classList.remove('open')">Annuler</button>
-      <button class="btn-ok" onclick="doImport()">Importer ✓</button>
+      <button class="btn-cancel" data-action="closeImportModal">Annuler</button>
+      <button class="btn-ok" data-action="doImport">Importer ✓</button>
     </div>
   </div>
 </div>
@@ -354,7 +354,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
 <!-- DASHBOARD SCREEN -->
 <div id="dashboard" class="screen">
   <div class="dash-header">
-    <button class="dash-back" onclick="goHome()">← Accueil</button>
+    <button class="dash-back" data-action="goHome">← Accueil</button>
     <span class="dash-title" id="dash-title">Mon Espace</span>
     <span class="dash-score" id="dash-score">⭐ 0 pts</span>
   </div>
@@ -374,12 +374,12 @@ mjx-container { overflow-x: auto; max-width: 100% }
 <!-- SUBJECT PICKER SCREEN -->
 <div id="subject-picker" class="screen">
   <div class="dash-header">
-    <button class="dash-back" onclick="goToPickerBack()">← Retour</button>
+    <button class="dash-back" data-action="goToPickerBack">← Retour</button>
     <span class="dash-title" id="picker-title">Choisir un sujet</span>
   </div>
   <div class="dash-body">
     <!-- AI AGENT BANNER -->
-    <div class="agent-banner" onclick="startAgentMode()">
+    <div class="agent-banner" data-action="startAgentMode">
       <div class="agent-icon">🤖</div>
       <div class="agent-text">
         <div class="agent-title">IA Learning Agent</div>
@@ -388,7 +388,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
       <div class="agent-arrow">→</div>
     </div>
     <!-- TUTOR BANNER -->
-    <div class="tutor-banner" onclick="startTutorMode()">
+    <div class="tutor-banner" data-action="startTutorMode">
       <div class="agent-icon">🎓</div>
       <div class="agent-text">
         <div class="agent-title">Tuteur IA Personnalisé</div>
@@ -407,7 +407,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
 <!-- TUTOR SCREEN -->
 <div id="tutor" class="screen">
   <div class="exo-header">
-    <button class="exo-back" onclick="goToDash()">← Retour</button>
+    <button class="exo-back" data-action="goToDash">← Retour</button>
     <span class="exo-info" id="tutor-info">Tuteur IA</span>
     <span class="exo-pts" id="tutor-level-badge" style="font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:99px"></span>
   </div>
@@ -419,14 +419,14 @@ mjx-container { overflow-x: auto; max-width: 100% }
   </div>
   <div class="tutor-input-bar">
     <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorMessage()}"></textarea>
-    <button class="tutor-send" onclick="sendTutorMessage()">→</button>
+    <button class="tutor-send" data-action="sendTutorMessage">→</button>
   </div>
 </div>
 
 <!-- EXERCISE SCREEN -->
 <div id="exercise" class="screen">
   <div class="exo-header">
-    <button class="exo-back" onclick="goToDash()">← Retour</button>
+    <button class="exo-back" data-action="goToDash">← Retour</button>
     <span class="exo-info" id="exo-info">Exercice</span>
     <div id="step-bar" style="display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:.5rem"></div>
     <span class="exo-pts" id="exo-pts"></span>
@@ -458,8 +458,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
       <div class="label">✏️ Ta réponse</div>
       <textarea class="answer-area" id="answer-input" placeholder="Écris ta réponse ici..."></textarea>
       <div class="exo-actions">
-        <button class="btn-hint" id="hint-btn" onclick="getHint()">💡 Un indice</button>
-        <button class="btn-submit" id="submit-btn" onclick="submitAnswer()">Valider →</button>
+        <button class="btn-hint" id="hint-btn" data-action="getHint">💡 Un indice</button>
+        <button class="btn-submit" id="submit-btn" data-action="submitAnswer">Valider →</button>
       </div>
     </div>
 
@@ -468,7 +468,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
 
     <!-- NEXT BUTTON -->
     <div class="btn-next-wrap" id="next-zone" style="display:none">
-      <button class="btn-next" onclick="nextExercise()">➡️ Nouvel exercice</button>
+      <button class="btn-next" data-action="nextExercise">➡️ Nouvel exercice</button>
     </div>
 
   </div>
@@ -1125,7 +1125,7 @@ function renderNavButtons(){
   if(!nz) return;
   const hasPrev=currentQIdx>0;
   nz.innerHTML=hasPrev
-    ?`<button class="btn-prev" onclick="goToPrevQuestion()">← Question précédente</button>`
+    ?`<button class="btn-prev" data-action="goToPrevQuestion">← Question précédente</button>`
     :'';
 }
 
@@ -1177,15 +1177,14 @@ const SCAFFOLD_DESC = {
 
 function getLevelDesc(){
   const p=currentProfile;
-  const lvl = getScaffoldLevel();
-  const scaffoldText = (SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
-  if(p==='cm2'){
-    return 'CM2 (9-10 ans, primaire France). '+scaffoldText+' Sois encourageant, utilise des emojis et un contexte amusant (aventure, animaux, sport...). IMPORTANT FORMAT CM2 : Pour les operations de base, ecris DIRECTEMENT les symboles unicode : × (multiplication), ÷ (division), + (addition), − (soustraction). JAMAIS de LaTeX comme \\times ou \\div pour des calculs simples CM2. Exemple correct : 6 × 7 = ? et non $6 \\times 7$. Utilise le LaTeX $...$ uniquement pour les fractions comme $\\frac{3}{4}$.';
-  }
-  if(p==='sec'){
-    return 'Seconde (15-16 ans, lycee France). '+scaffoldText+' REGLES FORMAT LATEX SECONDE : Utilise TOUJOURS $...$ pour les expressions mathematiques en ligne : fractions $\\frac{a}{b}$, puissances $x^2$, racines $\\sqrt{x}$, vecteurs $\\vec{u}$, angles $\\widehat{ABC}$, ensembles $\\mathbb{R}$, infini $+\\infty$, appartenance $x \\in$, inegalites $\\leq$ $\\geq$, valeur absolue $|x|$. Formules longues centrées avec $$...$$. Pour les operations simples dans une phrase, utilise les symboles directs : × ÷ − ≤ ≥ ≠ ≈. JAMAIS de code LaTeX brut non encadre par $ comme ecrire \\frac sans les $.';
-  }
-  return 'Premiere (16-17 ans, lycee France). '+scaffoldText+' REGLES FORMAT LATEX PREMIERE : Utilise TOUJOURS $...$ pour toute expression mathematique : derivees $f'(x)$, integrales $\\int_a^b f(x)dx$, limites $\\lim_{x \\to +\\infty}$, fractions $\\frac{u}{v}$, probabilites $P(A|B)$, suites $u_{n+1}$, complexes $e^{i\\theta}$, logarithmes $\\ln(x)$, valeur absolue $|z|$, module $||\\vec{u}||$. Formules importantes centrées avec $$...$$. Dans les enonces, ecris les symboles directement quand possible : ∀ ∃ ∈ ⊂ → ⟺. JAMAIS de LaTeX brut sans $ encadrant.';
+  const lvl=getScaffoldLevel();
+  const scaffoldText=(SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
+  const LATEX_CM2=`FORMAT CM2 : utilise les symboles directs x (multiplication), / (division). LaTeX uniquement pour les fractions: $\\frac{3}{4}$.`;
+  const LATEX_SEC=`FORMAT LATEX Seconde : toujours $...$ pour les maths : $\\frac{a}{b}$, $x^2$, $\\sqrt{x}$, $\\vec{u}$, $\\leq$, $\\geq$, $+\\infty$, $\\mathbb{R}$. Formules centrees avec $$...$$. Symboles directs dans le texte : x / - <= >=. JAMAIS de LaTeX sans $.`;
+  const LATEX_PRE=`FORMAT LATEX Premiere : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $e^{i\\theta}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
+  if(p==='cm2') return `CM2 (9-10 ans, primaire France). ${scaffoldText} Sois encourageant, emojis, contexte amusant. ${LATEX_CM2}`;
+  if(p==='sec') return `Seconde (15-16 ans, lycee France). ${scaffoldText} ${LATEX_SEC}`;
+  return `Premiere (16-17 ans, lycee France). ${scaffoldText} ${LATEX_PRE}`;
 }
 
 function getSubjectPrompt(){
@@ -1527,10 +1526,10 @@ RÈGLES ABSOLUES :
 - LaTeX pour les maths : $x^2$, $\frac{a}{b}$ etc. Pour CM2 : × ÷ − directement
 - Après chaque réponse de l'élève, évalue subtilement et adapte la difficulté
 - Indique la méthode utilisée entre crochets à la fin : [socrate], [feynman], [scaffold] ou [recall]
-- Si l'élève répond correctement 2 fois de suite → monte la difficulté
-- Si l'élève se trompe → reviens en arrière, reformule plus simplement
+- Si l\'élève répond correctement 2 fois de suite → monte la difficulté
+- Si l\'élève se trompe → reviens en arrière, reformule plus simplement
 
-${userMsg === 'START_SESSION' ? 'Lance la session avec un message d'accueil chaleureux (2 lignes max) et ta première question de diagnostic sur ' + tutorSubject.name + '.' : ''}`;
+${userMsg === 'START_SESSION' ? 'Lance la session avec un message d\u2019accueil chaleureux (2 lignes max) et ta premiere question de diagnostic sur ' + tutorSubject.name + '.' : ''}`;
 
   // Build messages for API
   const messages = userMsg === 'START_SESSION'
@@ -1586,10 +1585,28 @@ ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d'accueil chal
 
 // ── Wire up all event listeners via JS (avoids onclick scope issues) ──
 document.addEventListener('DOMContentLoaded', function(){
-  // Profile cards
+  // Map action names to functions
+  const ACTIONS = {
+    showApiKeyModal, showExportModal, showImportModal, resetProgress,
+    closeExportModal: ()=>document.getElementById('export-modal').classList.remove('open'),
+    closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
+    copyExportCode, doImport, goHome, goToPickerBack, startAgentMode,
+    startTutorMode, getHint, submitAnswer, nextExercise, goToPrevQuestion,
+    sendTutorMessage, goToDash
+  };
+
+  // Wire all data-action elements
+  document.querySelectorAll('[data-action]').forEach(el=>{
+    const fn = ACTIONS[el.dataset.action];
+    if(fn) el.addEventListener('click', fn);
+    else console.warn('Unknown action:', el.dataset.action);
+  });
+
+  // Wire profile cards
   document.querySelectorAll('[data-profile]').forEach(card=>{
     card.addEventListener('click', ()=>openLogin(card.dataset.profile));
   });
+
   // Password modal
   const pwdOk = document.getElementById('pwd-ok-btn');
   const pwdCancel = document.getElementById('pwd-cancel-btn');
@@ -1597,12 +1614,14 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pwdOk) pwdOk.addEventListener('click', checkPwd);
   if(pwdCancel) pwdCancel.addEventListener('click', closeModal);
   if(pwdInput) pwdInput.addEventListener('keydown', e=>{ if(e.key==='Enter') checkPwd(); });
+
   // API key modal
   const apikeyOk = document.getElementById('apikey-ok-btn');
   const apikeyCancel = document.getElementById('apikey-cancel-btn');
   if(apikeyOk) apikeyOk.addEventListener('click', saveApiKey);
   if(apikeyCancel) apikeyCancel.addEventListener('click', ()=>document.getElementById('apikey-modal').classList.remove('open'));
-  // Tutor input
+
+  // Tutor input enter key
   const tutorInput = document.getElementById('tutor-input');
   if(tutorInput) tutorInput.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
