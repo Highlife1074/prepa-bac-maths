@@ -1128,8 +1128,8 @@ const SCAFFOLD_LABELS = ['','🟢 Débutant','🟡 Intermédiaire','🟠 Avancé
 // Scaffold descriptions per profile
 const SCAFFOLD_DESC = {
   cm2: {
-    1: 'SCAFFOLDING Niveau 1 Debutant CM2 : exercice tres simple, 1 operation, nombres <= 20, contexte tres image. Encourage beaucoup.',
-    2: 'SCAFFOLDING Niveau 2 Intermediaire CM2 : 1-2 etapes, nombres <= 100, probleme concret simple.',
+    1: 'SCAFFOLDING Niveau 1 Debutant CM2 : exercice tres simple, 1 operation, nombres <= 20, contexte tres image. Encourage beaucoup. Exemple : 3 × 4 = ?, 15 − 8 = ?',
+    2: 'SCAFFOLDING Niveau 2 Intermediaire CM2 : 1-2 etapes, nombres <= 100, probleme concret simple. Exemple : 24 × 3 = ?, probleme avec addition et soustraction.',
     3: 'SCAFFOLDING Niveau 3 Avance CM2 : 2-3 etapes, nombres <= 10000, raisonnement requis, geometrie avec calcul.',
     4: 'SCAFFOLDING Niveau 4 Expert CM2 : multi-etapes complexes, fractions combinees, pieges possibles, logique poussee.'
   },
@@ -1152,12 +1152,12 @@ function getLevelDesc(){
   const lvl = getScaffoldLevel();
   const scaffoldText = (SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
   if(p==='cm2'){
-    return 'CM2 (9-10 ans, primaire France). '+scaffoldText+' Sois encourageant, utilise des emojis et un contexte amusant (aventure, animaux, sport...).';
+    return 'CM2 (9-10 ans, primaire France). '+scaffoldText+' Sois encourageant, utilise des emojis et un contexte amusant (aventure, animaux, sport...). IMPORTANT FORMAT CM2 : Pour les operations de base, ecris DIRECTEMENT les symboles unicode : × (multiplication), ÷ (division), + (addition), − (soustraction). JAMAIS de LaTeX comme \\times ou \\div pour des calculs simples CM2. Exemple correct : 6 × 7 = ? et non $6 \\times 7$. Utilise le LaTeX $...$ uniquement pour les fractions comme $\\frac{3}{4}$.';
   }
   if(p==='sec'){
-    return 'Seconde (15-16 ans, lycee France). '+scaffoldText;
+    return 'Seconde (15-16 ans, lycee France). '+scaffoldText+' REGLES FORMAT LATEX SECONDE : Utilise TOUJOURS $...$ pour les expressions mathematiques en ligne : fractions $\\frac{a}{b}$, puissances $x^2$, racines $\\sqrt{x}$, vecteurs $\\vec{u}$, angles $\\widehat{ABC}$, ensembles $\\mathbb{R}$, infini $+\\infty$, appartenance $x \\in$, inegalites $\\leq$ $\\geq$, valeur absolue $|x|$. Formules longues centrées avec $$...$$. Pour les operations simples dans une phrase, utilise les symboles directs : × ÷ − ≤ ≥ ≠ ≈. JAMAIS de code LaTeX brut non encadre par $ comme ecrire \\frac sans les $.';
   }
-  return 'Premiere (16-17 ans, lycee France). '+scaffoldText;
+  return 'Premiere (16-17 ans, lycee France). '+scaffoldText+' REGLES FORMAT LATEX PREMIERE : Utilise TOUJOURS $...$ pour toute expression mathematique : derivees $f'(x)$, integrales $\\int_a^b f(x)dx$, limites $\\lim_{x \\to +\\infty}$, fractions $\\frac{u}{v}$, probabilites $P(A|B)$, suites $u_{n+1}$, complexes $e^{i\\theta}$, logarithmes $\\ln(x)$, valeur absolue $|z|$, module $||\\vec{u}||$. Formules importantes centrées avec $$...$$. Dans les enonces, ecris les symboles directement quand possible : ∀ ∃ ∈ ⊂ → ⟺. JAMAIS de LaTeX brut sans $ encadrant.';
 }
 
 function getSubjectPrompt(){
@@ -1267,7 +1267,7 @@ async function submitAnswer(){
     `**Question ${i+1}:** ${q.q}\n**Réponse élève :** ${answers[i]||'(pas de réponse)'}`
   ).join('\n\n');
   const systemPrompt=`Tu es un professeur correcteur expert. Niveau : ${levelDesc}.
-Corrige chaque question séparément en utilisant LaTeX ($...$) pour toutes les expressions mathématiques.
+Corrige chaque question séparément. REGLES LATEX STRICTES dans la correction : (1) Toute expression mathematique doit etre dans $...$ : fractions $\frac{a}{b}$, puissances $x^2$, racines $\sqrt{x}$, integrales $\int$, derivees $f'(x)$, limites $\lim$, suites $u_n$, vecteurs $\vec{u}$. (2) Pour CM2 uniquement : utilise les symboles directs × ÷ − pour les operations simples, et $\frac{a}{b}$ pour les fractions. (3) JAMAIS de code LaTeX brut non encadre par $.
 Sois ${isCM2?"encourageant et ludique avec emojis":"rigoureux, précis et pédagogue"}.
 Structure OBLIGATOIRE (une section par question numérotée, rien avant Q1) :
 
