@@ -10,43 +10,40 @@ window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script type="module">
-// ── Firebase init ──────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- Firebase compat (no module needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFikMYsV7HHQNPVWpYuNSnOLPfMiT7iec",
+    authDomain: "edusmart-3f36e.firebaseapp.com",
+    projectId: "edusmart-3f36e",
+    storageBucket: "edusmart-3f36e.firebasestorage.app",
+    messagingSenderId: "207706746399",
+    appId: "1:207706746399:web:2f5e0118495a81865c2f2a"
+  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCFikMYsV7HHQNPVWpYuNSnOLPfMiT7iec",
-  authDomain: "edusmart-3f36e.firebaseapp.com",
-  projectId: "edusmart-3f36e",
-  storageBucket: "edusmart-3f36e.firebasestorage.app",
-  messagingSenderId: "207706746399",
-  appId: "1:207706746399:web:2f5e0118495a81865c2f2a"
-};
+  // Expose using same API as before
+  window._db = db;
+  window._fsDoc = function(db,col,id){ return db.collection(col).doc(id); };
+  window._fsGetDoc = function(ref){ return ref.get(); };
+  window._fsSetDoc = function(ref,data){ return ref.set(data,{merge:true}); };
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Expose to global scope for use in main script
-window._db = db;
-window._fsDoc = doc;
-window._fsGetDoc = getDoc;
-window._fsSetDoc = setDoc;
-window._firebaseReady = true;
-window.dispatchEvent(new Event('firebase-ready'));
-
-// Auto-load API key as soon as Firebase is ready
-(async()=>{
-  try{
-    const snap = await getDoc(doc(db,'edusmart','_config'));
-    if(snap.exists()){
+  // Auto-load API key immediately
+  db.collection('edusmart').doc('_config').get().then(snap=>{
+    if(snap.exists){
       const key=snap.data().apiKey;
       if(key && key.startsWith('sk-ant-')){
-        window._preloadedApiKey = key;
-        localStorage.setItem('edusmart_apikey', key);
+        window._preloadedApiKey=key;
+        localStorage.setItem('edusmart_apikey',key);
       }
     }
-  }catch(e){}
+  }).catch(()=>{});
 })();
 </script>
 <style>
