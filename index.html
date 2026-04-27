@@ -312,7 +312,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
     <div id="modal-emoji" style="font-size:2rem;margin-bottom:.5rem">🔒</div>
     <h3 id="modal-title">Accès sécurisé</h3>
     <p id="modal-desc">Entre ton mot de passe pour accéder à ton espace</p>
-    <input type="password" id="pwd-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPwd()">
+    <input type="password" id="pwd-input" placeholder="••••••••••••">
     <div class="modal-error" id="modal-error"></div>
     <div class="modal-btns">
       <button class="btn-cancel" id="pwd-cancel-btn">Annuler</button>
@@ -418,7 +418,7 @@ mjx-container { overflow-x: auto; max-width: 100% }
     </div>
   </div>
   <div class="tutor-input-bar">
-    <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTutorMessage()}"></textarea>
+    <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2"></textarea>
     <button class="tutor-send" data-action="sendTutorMessage">→</button>
   </div>
 </div>
@@ -1036,7 +1036,7 @@ async function generateExercise(){
   // Try to load API key if missing
   if(!ANTHROPIC_KEY) await ensureApiKey();
   if(!ANTHROPIC_KEY){
-    document.getElementById('q-text').innerHTML='<div style="padding:1rem;color:#E24B4A">⚠️ Clé API non configurée.<br><br><button onclick="showApiKeyModal()" style="padding:8px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">🔑 Configurer maintenant</button></div>';
+    document.getElementById('q-text').innerHTML='<div style="padding:1rem;color:#E24B4A">⚠️ Clé API non configurée.<br><br><button style="padding:8px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">🔑 Configurer maintenant</button></div>';
     return;
   }
   const levelDesc=getLevelDesc();
