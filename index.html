@@ -455,6 +455,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .session-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(15,110,86,.3)}
 .tutor-banner{background:linear-gradient(135deg,#185FA5,#378ADD);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1.5rem;transition:transform .2s,box-shadow .2s;color:#fff}
 .tutor-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(24,95,165,.3)}
+.lesson-banner{background:linear-gradient(135deg,#BA7517,#E0A040);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
+.lesson-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(186,117,23,.3)}
 .suspended-banner{background:linear-gradient(135deg,#185FA5,#2E86DE);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;color:#fff}
 #tutor{flex-direction:column;height:100vh;overflow:hidden}
 #tutor.active{display:flex}
@@ -680,6 +682,15 @@ setTimeout(function(){
       </div>
       <div class="agent-arrow">→</div>
     </div>
+    <!-- LESSON BANNER -->
+    <div class="lesson-banner" data-action="startLessonMode">
+      <div class="agent-icon">📝</div>
+      <div class="agent-text">
+        <div class="agent-title">Réviser ma leçon</div>
+        <div class="agent-desc">Prends ta leçon en photo ou colle-la : l'IA te fait des exercices dessus</div>
+      </div>
+      <div class="agent-arrow">→</div>
+    </div>
     <!-- TUTOR BANNER -->
     <div class="tutor-banner" data-action="startTutorMode">
       <div class="agent-icon">🎓</div>
@@ -762,6 +773,28 @@ setTimeout(function(){
   <div class="tutor-input-bar">
     <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2"></textarea>
     <button class="tutor-send" data-action="sendTutorMessage">→</button>
+  </div>
+</div>
+
+<!-- LESSON SCREEN -->
+<div id="lesson-screen" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" data-action="goToDash">← Retour</button>
+    <span class="dash-title" id="lesson-title">📝 Réviser ma leçon</span>
+  </div>
+  <div class="dash-body">
+    <div class="admin-card">
+      <div class="admin-section-title">Ma leçon</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">Prends une photo de ta leçon (cahier, fiche, manuel) ou recopie / colle le texte. Tu peux ajouter plusieurs photos.</p>
+      <input type="file" id="lesson-photo" accept="image/*" capture="environment" multiple style="display:none">
+      <button class="session-start-btn" id="lesson-photo-btn" style="margin-top:0;background:#378ADD">📷 Prendre / ajouter une photo</button>
+      <div id="lesson-status" style="font-size:.8rem;font-weight:700;color:var(--muted);min-height:1.2rem;margin:.6rem 0"></div>
+      <div class="admin-field">
+        <label>Texte de la leçon <span style="font-size:.7rem">(vérifie que la photo a bien été lue, tu peux corriger)</span></label>
+        <textarea id="lesson-text" rows="10" placeholder="Ex : Les nombres décimaux. Un nombre décimal s'écrit avec une virgule..."></textarea>
+      </div>
+    </div>
+    <button class="session-start-btn" id="lesson-start-btn" style="background:#1D9E75">🚀 M'entraîner sur cette leçon</button>
   </div>
 </div>
 
@@ -1598,7 +1631,7 @@ async function loadFromFirebase(profileKey){
         if(fbScore>=lcScore){
           const fp=d.progress;
           if(fp[profileKey]) progress[profileKey]=fp[profileKey];
-          ['scaffolding','srs','notSeen','orthoLog','customSubjects'].forEach(k=>{
+          ['scaffolding','srs','notSeen','orthoLog','customSubjects','lessons'].forEach(k=>{
             if(fp[k] && fp[k][profileKey]!==undefined){
               if(!progress[k]) progress[k]={};
               progress[k][profileKey]=fp[k][profileKey];
@@ -2124,7 +2157,12 @@ async function generateExercise(){
   let topicExtra = '';
   let adaptiveExtra = '';
 
-  if(currentSubject.topicName){
+  if(currentSubject.isLesson){
+    topicExtra = 'LEÇON DE L\'ÉLÈVE (source unique, recopiée de son cahier) :\n---\n' + currentSubject.lessonText + '\n---\n'
+      + 'Crée un exercice qui vérifie que l\'élève a compris et retenu CETTE leçon, avec son vocabulaire, ses définitions et ses méthodes. '
+      + 'Varie d\'un exercice à l\'autre : définition à restituer, application directe, exemple à trouver, vrai/faux justifié, petit problème utilisant la notion. '
+      + 'N\'interroge sur rien qui ne soit pas dans la leçon.';
+  } else if(currentSubject.topicName){
     topicExtra = 'SUJET PRÉCIS à traiter : ' + currentSubject.topicName + ' (' + (currentSubject.topicDesc||'') + '). Cible UNIQUEMENT ce sujet.';
   }
 
@@ -2483,7 +2521,7 @@ function getLevelDesc(withTheme=true){
   // No narrative theme for hints/corrections, memory drills and consigne/problem decoding:
   // the theme adds reading load exactly where Amaury needs a clean statement.
   const NO_THEME_TOPICS = ['memoire_visuelle','memoire_auditive','vocab_consignes','consignes_etapes','reformuler','donnees_utiles','question_intermediaire'];
-  if(p==='cm2' && (!withTheme || NO_THEME_TOPICS.includes(currentSubject?.topicId))){
+  if(p==='cm2' && (!withTheme || currentSubject?.isLesson || NO_THEME_TOPICS.includes(currentSubject?.topicId))){
     return `6e (11-12 ans, collège France). ${scaffoldText} Phrases courtes, vocabulaire simple, une seule consigne par phrase. ${LATEX_CM2}`;
   }
   if(p==='cm2'){
@@ -2696,8 +2734,8 @@ async function getHint(){
   document.getElementById('hint-btn').textContent='💡 Chargement...';
   const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
-  const ctx=exoContext?'Contexte : '+exoContext+'\n\n':'';
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.
+  const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.`;
@@ -2754,7 +2792,8 @@ async function submitAnswer(){
   document.getElementById('answer-zone').style.display='none';
   const levelDesc=getLevelDesc(false);
   const isCM2=currentProfile==='cm2';
-  const ctx=exoContext?'**Contexte :**\n'+exoContext+'\n\n':'';
+  const ctx=(currentSubject.isLesson?'**Leçon de référence (corrige selon cette leçon) :**\n'+currentSubject.lessonText+'\n\n':'')
+    +(exoContext?'**Contexte :**\n'+exoContext+'\n\n':'');
   const qaList=questions.map((q,i)=>
     `**Question ${i+1}:** ${q.q}\n**Réponse élève :** ${answers[i]||'(pas de réponse)'}`
   ).join('\n\n');
@@ -3217,7 +3256,7 @@ document.addEventListener('DOMContentLoaded', function(){
     closeExportModal: ()=>document.getElementById('export-modal').classList.remove('open'),
     closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
     copyExportCode, doImport, goHome, goToPickerBack, startAgentMode: ()=>startAgentMode(false),
-    startTutorMode, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
+    startTutorMode, startLessonMode, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
     sendTutorMessage, goToDash
   };
 
@@ -3251,12 +3290,115 @@ document.addEventListener('DOMContentLoaded', function(){
   const sessionStartBtn = document.getElementById('session-start-btn');
   if(sessionStartBtn) sessionStartBtn.addEventListener('click', launchSession);
 
+  // Lesson screen
+  const lessonPhotoBtn = document.getElementById('lesson-photo-btn');
+  const lessonPhoto = document.getElementById('lesson-photo');
+  if(lessonPhotoBtn) lessonPhotoBtn.addEventListener('click', ()=>lessonPhoto.click());
+  if(lessonPhoto) lessonPhoto.addEventListener('change', ()=>{ transcribeLessonPhotos([...lessonPhoto.files]); lessonPhoto.value=''; });
+  const lessonStart = document.getElementById('lesson-start-btn');
+  if(lessonStart) lessonStart.addEventListener('click', startLessonExercise);
+
   // Tutor input enter key
   const tutorInput = document.getElementById('tutor-input');
   if(tutorInput) tutorInput.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
   });
 });
+
+// ══════════════════════════════════════════════════════════
+// RÉVISER MA LEÇON — photo ou texte de la leçon → exercices dessus
+// ══════════════════════════════════════════════════════════
+const LESSON_MAX_CHARS = 12000;
+
+function getSavedLesson(profile, subjectId){
+  return (progress.lessons && progress.lessons[profile] && progress.lessons[profile][subjectId]) || null;
+}
+
+function startLessonMode(){
+  if(!currentSubjectObj) return;
+  document.getElementById('lesson-title').textContent = '📝 Réviser ma leçon — ' + currentSubjectObj.name;
+  const saved = getSavedLesson(currentProfile, currentSubjectObj.id);
+  document.getElementById('lesson-text').value = saved ? saved.text : '';
+  document.getElementById('lesson-status').textContent = saved
+    ? '📌 Dernière leçon enregistrée le ' + new Date(saved.savedAt).toLocaleDateString('fr-FR') + ' (remplace-la par la nouvelle si besoin)'
+    : '';
+  showScreen('lesson-screen');
+}
+
+// Downscale a photo to a JPEG the API accepts (keeps the text readable, limits upload size)
+function imageFileToJpegBase64(file, maxSide=1600){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = Math.min(1, maxSide/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+    img.src = url;
+  });
+}
+
+async function transcribeLessonPhotos(files){
+  if(!files.length) return;
+  const status = document.getElementById('lesson-status');
+  const btn = document.getElementById('lesson-photo-btn');
+  if(!ANTHROPIC_KEY) await ensureApiKey();
+  if(!ANTHROPIC_KEY){ status.textContent = '⚠️ Clé API non configurée.'; return; }
+  btn.disabled = true;
+  try{
+    status.textContent = '⏳ Lecture de ' + files.length + ' photo' + (files.length>1?'s':'') + '...';
+    const images = await Promise.all(files.map(f=>imageFileToJpegBase64(f)));
+    const content = images.map(data=>({type:'image', source:{type:'base64', media_type:'image/jpeg', data}}));
+    content.push({type:'text', text:'Transcris fidèlement le contenu de cette leçon (dans l\'ordre des photos). Garde les titres, définitions, règles, exemples et tableaux (en texte simple). Écris les formules en LaTeX entre $...$. Ignore les ratures, les décorations et ce qui n\'est pas la leçon. Si un passage est illisible, écris [illisible]. Réponds uniquement avec la transcription.'});
+    const resp = await fetchAnthropicWithRetry({ model:'claude-sonnet-4-5', max_tokens:4000, messages:[{role:'user', content}] });
+    const data = await resp.json();
+    if(!resp.ok){ status.textContent = '⚠️ Erreur API ' + resp.status + ' : ' + (data.error?.message||''); return; }
+    const text = (data.content?.[0]?.text || '').trim();
+    const ta = document.getElementById('lesson-text');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + text;
+    status.textContent = '✅ Leçon lue ! Vérifie le texte ci-dessous, puis lance l\'entraînement.';
+  }catch(e){
+    status.textContent = '❌ ' + e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function startLessonExercise(){
+  const text = document.getElementById('lesson-text').value.trim();
+  const status = document.getElementById('lesson-status');
+  if(text.length < 30){ status.textContent = '✏️ Ajoute ta leçon (photo ou texte) avant de commencer.'; return; }
+  const lessonText = text.slice(0, LESSON_MAX_CHARS);
+  // Keep the last lesson of each subject (synced like the rest of the progress)
+  if(!progress.lessons) progress.lessons = {};
+  if(!progress.lessons[currentProfile]) progress.lessons[currentProfile] = {};
+  progress.lessons[currentProfile][currentSubjectObj.id] = {text:lessonText, savedAt:Date.now()};
+  saveData();
+  isAgentMode = false;
+  currentSubject = {
+    id: currentSubjectObj.id,
+    name: currentSubjectObj.name + ' — Ma leçon',
+    icon: '📝',
+    topicId: 'lecon_' + currentSubjectObj.id,
+    topicName: 'Ma leçon',
+    topicDesc: 'leçon fournie par l\'élève',
+    isAdaptive: true,
+    isLesson: true,
+    lessonText,
+    customPrompt: currentSubjectObj.customPrompt || ''
+  };
+  questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
+  sessionExoCount++;
+  document.getElementById('exo-info').innerHTML = '📝 Ma leçon <span style="font-size:.65rem;background:#FAEEDA;color:#854F0B;padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">' + (SCAFFOLD_LABELS[getScaffoldDisplayLevel()]||'') + '</span>';
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
 
 // ══════════════════════════════════════════════════════════
 // SESSION MANAGER — Répétition espacée (SRS)
@@ -4696,6 +4838,7 @@ window.endSession = endSession;
 window.stopAgentSession = stopAgentSession;
 window.resumeAgentMode = resumeAgentMode;
 window.startTutorMode = startTutorMode;
+window.startLessonMode = startLessonMode;
 window.nextExercise = nextExercise;
 window.getHint = getHint;
 window.submitAnswer = submitAnswer;
