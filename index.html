@@ -457,6 +457,22 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .session-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(15,110,86,.3)}
 .tutor-banner{background:linear-gradient(135deg,#185FA5,#378ADD);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1.5rem;transition:transform .2s,box-shadow .2s;color:#fff}
 .tutor-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(24,95,165,.3)}
+.prof-banner,.prof-dash-card{background:linear-gradient(135deg,#534AB7,#7F77DD);border-radius:18px;padding:1.3rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;color:#fff;box-shadow:0 8px 24px rgba(83,74,183,.3);transition:transform .2s}
+.prof-banner:hover,.prof-dash-card:hover{transform:translateY(-3px)}
+.prof-dash-card .agent-title{font-size:1.25rem}
+.prof-bubble{display:flex;gap:.9rem;align-items:flex-start;margin-bottom:1rem}
+.prof-avatar{font-size:2.6rem;flex-shrink:0;line-height:1}
+.prof-text{background:var(--card);border:1.5px solid var(--border);border-radius:18px;border-top-left-radius:4px;padding:1rem 1.2rem;font-size:1rem;line-height:1.6;flex:1}
+.prof-text p{margin-bottom:.4rem}.prof-text p:last-child{margin-bottom:0}
+.prof-tip{background:#FAEEDA;border:2px solid #BA7517;border-radius:16px;padding:1rem 1.2rem;margin-bottom:1rem;font-size:1rem;line-height:1.6;color:#633806}
+.prof-tip:empty{display:none}
+.prof-tip strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}
+.prof-plan{display:flex;flex-direction:column;gap:.45rem}
+.prof-step{display:flex;align-items:center;gap:.7rem;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:.65rem .9rem;font-size:.9rem}
+.prof-step.current{border-color:#7F77DD;background:#EEEDFE;font-weight:800}
+.prof-step.done{opacity:.75}
+.prof-step-role{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);width:86px;flex-shrink:0}
+.prof-step-name{flex:1}
 .lesson-banner{background:linear-gradient(135deg,#BA7517,#E0A040);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
 .lesson-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(186,117,23,.3)}
 .suspended-banner{background:linear-gradient(135deg,#185FA5,#2E86DE);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;color:#fff}
@@ -665,6 +681,17 @@ setTimeout(function(){
     <!-- UNIFIED RESUME ZONE (one banner for everything in progress) -->
     <div id="unified-resume-zone"></div>
 
+    <!-- PROF BANNER (6e, Mémoire & Compréhension) -->
+    <div class="prof-banner" id="prof-banner-picker" data-action="startProfSeance" style="display:none">
+      <div class="agent-icon">🧑‍🏫</div>
+      <div class="agent-text">
+        <div class="agent-title">Ma séance avec Prof Max</div>
+        <div class="agent-desc">5 exercices, environ 15 minutes. Prof Max choisit et t'apprend une astuce à chaque fois.</div>
+      </div>
+      <div class="agent-arrow">→</div>
+    </div>
+    <button id="free-mode-btn" class="btn-prev" style="display:none;margin-bottom:1rem">🔧 Mode libre (parents) : choisir un exercice</button>
+
     <!-- SESSION BANNER -->
     <div class="session-banner" data-action="startSessionMode">
       <div class="agent-icon">📅</div>
@@ -704,7 +731,7 @@ setTimeout(function(){
     </div>
     <!-- TOPIC LIST -->
     <div style="margin-bottom:.6rem">
-      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.8rem">— Ou choisis un sujet précis —</div>
+      <div id="topics-header" style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.8rem">— Ou choisis un sujet précis —</div>
     </div>
     <div id="topics-grid" class="topics-grid"></div>
   </div>
@@ -775,6 +802,23 @@ setTimeout(function(){
   <div class="tutor-input-bar">
     <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2"></textarea>
     <button class="tutor-send" data-action="sendTutorMessage">→</button>
+  </div>
+</div>
+
+<!-- PROF SCREEN (séance guidée 6e) -->
+<div id="prof-screen" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" data-action="leaveProf">← Accueil</button>
+    <span class="dash-title">🧑‍🏫 Ma séance avec Prof Max</span>
+  </div>
+  <div class="dash-body">
+    <div class="prof-bubble">
+      <div class="prof-avatar">🧑‍🏫</div>
+      <div class="prof-text" id="prof-message"></div>
+    </div>
+    <div class="prof-tip" id="prof-tip"></div>
+    <div class="prof-plan" id="prof-plan"></div>
+    <button class="session-start-btn" id="prof-go-btn">▶️ C'est parti !</button>
   </div>
 </div>
 
@@ -1070,7 +1114,7 @@ const PROFILES = {
         {id:'problemes_ouverts',e:'💡',n:'Problèmes ouverts',d:'Chercher plusieurs solutions'},
         {id:'geometrie_log',e:'🔷',n:'Figures et transformations',d:'Symétrie, patrons, vision dans l\'espace'},
       ]},
-      {id:'ortho_cm2',icon:'🧠',name:'Entraînement Mémoire & Compréhension',desc:'Exercices ciblés orthophonie — mémoire, compréhension, orthographe',isOrtho:true,topics:[
+      {id:'ortho_cm2',icon:'🧠',name:'Mémoire & Compréhension',desc:'Avec Prof Max — mémoire, compréhension, consignes',isOrtho:true,topics:[
         {id:'memoire_visuelle',e:'👁️',n:'Mémoire visuelle',d:'Mémoriser des séquences, des mots, des images mentales'},
         {id:'memoire_auditive',e:'👂',n:'Mémoire auditive',d:'Retenir des listes, des consignes, des suites'},
         {id:'comprehension_texte',e:'📖',n:'Compréhension de texte',d:'Lire et répondre à des questions sur un texte court'},
@@ -1651,7 +1695,7 @@ async function loadFromFirebase(profileKey){
         if(fbScore>=lcScore){
           const fp=d.progress;
           if(fp[profileKey]) progress[profileKey]=fp[profileKey];
-          ['scaffolding','srs','notSeen','orthoLog','customSubjects','lessons'].forEach(k=>{
+          ['scaffolding','srs','notSeen','orthoLog','customSubjects','lessons','profSeances'].forEach(k=>{
             if(fp[k] && fp[k][profileKey]!==undefined){
               if(!progress[k]) progress[k]={};
               progress[k][profileKey]=fp[k][profileKey];
@@ -1798,11 +1842,12 @@ async function checkPwd(){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='exercise' || id==='tutor') startCM2Session();
+  if(id==='exercise' || id==='tutor' || id==='prof-screen') startCM2Session();
   if(id!=='exercise' && memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
 }
 function goHome(){stopCM2Session();currentProfile=null;window._currentProfileKey=null;showScreen('home')}
 function goToDash(){
+  if(currentSubject && currentSubject.isProf){ leaveProf(); return; }
   stopCM2Session(); // stop daily timer
   // If coming from session-end, refresh subject picker to clear stale banners
   if(currentSubjectObj){
@@ -1901,10 +1946,27 @@ function showDashboard(){
   document.getElementById('dash-score').textContent='⭐ '+totalScore[currentProfile]+' pts';
   document.getElementById('dash-welcome-title').textContent=p.welcome;
   document.getElementById('dash-welcome-sub').textContent=p.sub;
+  // 6e: one big entry point, the guided séance with the prof
+  let profCard=document.getElementById('prof-dash-card');
+  if(currentProfile==='cm2'){
+    if(!profCard){
+      profCard=document.createElement('div');
+      profCard.id='prof-dash-card';
+      profCard.className='prof-dash-card';
+      profCard.addEventListener('click', startProfSeance);
+      document.getElementById('subjects-grid').insertAdjacentElement('beforebegin', profCard);
+    }
+    const st=loadProfSeance();
+    const doneToday = st && st.idx>=st.plan.length;
+    const inProgress = st && st.idx>0 && !doneToday;
+    profCard.innerHTML=`<div class="agent-icon" style="font-size:2.6rem">🧑‍🏫</div><div class="agent-text"><div class="agent-title">${doneToday?'Séance du jour terminée ✅':inProgress?'Reprendre ma séance ('+st.idx+'/5)':'Ma séance avec '+PROF_NAME}</div><div class="agent-desc">${doneToday?'Bravo ! Tu peux faire une séance bonus ou réviser une leçon.':'Mémoire & compréhension · 5 exercices · 15 min'}</div></div><div class="agent-arrow">▶️</div>`;
+    profCard.style.display='';
+  } else if(profCard){ profCard.style.display='none'; }
   // Subjects → click opens topic picker
   const grid=document.getElementById('subjects-grid');
   grid.innerHTML='';
   const subjects=getProfileSubjects(currentProfile);
+  if(currentProfile==='cm2') subjects.sort((a,b)=>(b.isOrtho?1:0)-(a.isOrtho?1:0)); // Mémoire & Compréhension first
   subjects.forEach(s=>{
     const card=document.createElement('div');
     card.className = s.isOrtho ? 'subj-card ortho-card' : 'subj-card';
@@ -1951,6 +2013,21 @@ function showSubjectPicker(subjectObj){
   const tutorBanner = document.querySelector('.tutor-banner');
   if(agentBanner) agentBanner.style.display = (subjectObj.topics && subjectObj.topics.length) ? '' : 'none';
   if(tutorBanner) tutorBanner.style.display = '';
+  // 6e: keep it simple. Mémoire & Compréhension = the prof only (free mode for parents);
+  // other subjects = "Réviser ma leçon" + topics, no session/agent/tutor.
+  const is6e = currentProfile==='cm2';
+  const isMemo6e = is6e && subjectObj.id==='ortho_cm2';
+  const show = (sel, on)=>{ const el=document.querySelector(sel); if(el) el.style.display = on ? '' : 'none'; };
+  if(is6e){
+    show('.session-banner', false); show('.agent-banner', false); show('.tutor-banner', false);
+  } else {
+    show('.session-banner', true);
+  }
+  show('.lesson-banner', !isMemo6e);
+  show('#prof-banner-picker', isMemo6e);
+  show('#free-mode-btn', isMemo6e);
+  show('#topics-header', !isMemo6e);
+  document.getElementById('topics-grid').style.display = isMemo6e ? 'none' : '';
 
   // Build topic cards
   const grid = document.getElementById('topics-grid');
@@ -2240,6 +2317,11 @@ async function generateExercise(){
 - Chaque réponse se trouve explicitement dans le texte. Pas de piège sur des détails non écrits.`;
   }
 
+  if(currentSubject.isProf){
+    memoExtra += `\nSÉANCE GUIDÉE PAR LE PROF : le prof vient d'enseigner l'astuce « ${currentSubject.profTip} ». Conçois l'exercice pour que cette astuce aide vraiment à réussir. Ne répète pas l'astuce dans l'énoncé.`;
+    if(currentSubject.profRole==='echauffement') memoExtra += ' ÉCHAUFFEMENT : un cran plus facile que le niveau indiqué, pour démarrer par une réussite.';
+  }
+
   const subjectPrompt = [basePrompt, topicExtra, adaptiveExtra, memoExtra].filter(Boolean).join('\n');
 
   const systemPrompt=`Tu es un professeur expert qui crée des exercices complets et rigoureux pour des élèves français.
@@ -2502,7 +2584,8 @@ function updateScaffoldLevel(verdict){
 function getMemoryDifficulty(){
   const lvl = getScaffoldLevel(); // 1-10 for cm2, 1-4 for others
   const isCM2 = currentProfile === 'cm2';
-  const score = isCM2 ? lvl : lvl * 2.5; // normalize to ~1-10 scale
+  let score = isCM2 ? lvl : lvl * 2.5; // normalize to ~1-10 scale
+  if(currentSubject && currentSubject.profRole==='echauffement') score = Math.max(1, score-2);
 
   let items, seconds, label;
   if(score <= 3){ items=4; seconds=60; label='Débutant'; }
@@ -2869,7 +2952,7 @@ Format : {"total":"CORRECT","items":[{"v":"CORRECT","c":"Bravo ! ${isCM2?'🎉 '
 Valeurs de v : CORRECT / PARTIEL / INCORRECT
 Valeurs de total : CORRECT si tout bon, PARTIEL si mixte, INCORRECT si tout faux
 
-REGLES STRICTES :
+${currentSubject.isProf ? 'SEANCE AVEC LE PROF : termine la correction de chaque question par une phrase courte qui rappelle l astuce du prof : « '+currentSubject.profTip+' ». Si l eleve s est trompe, montre comment l astuce l aurait aide.\n' : ''}REGLES STRICTES :
 1. CALCUL CORRECT = CORRECT. Jamais remettre en cause un calcul juste.
 2. Ne jamais mentionner de confusion ou d incoherence dans le contexte.
 3. Temps verbaux : verifier le temps demande. Orthographe : verifier lettre par lettre.
@@ -2995,7 +3078,7 @@ function showAllFeedbacks(raw,isCM2){
     updateSRS(currentProfile, srsKey, totalV);
     // Track ortho exercises separately
     const isOrthoSubj = currentSubject.id === 'ortho_cm2' || currentSubject.id === 'ortho_pre';
-    if(isOrthoSubj && (currentProfile==='cm2'||currentProfile==='pre')){
+    if((isOrthoSubj || currentSubject.isProf) && (currentProfile==='cm2'||currentProfile==='pre')){
       logOrthoExercise(currentProfile, currentSubject.topicId, totalV);
     }
   }
@@ -3052,6 +3135,18 @@ function showAllFeedbacks(raw,isCM2){
     if(nz) nz.innerHTML='';
     updateStepBar();
 
+    // ── Prof séance: record the step, then back to the prof ──
+    if(currentSubject && currentSubject.isProf){
+      profAfterExercise(totalV);
+      const nextBtn = document.querySelector('#next-zone .btn-next');
+      if(nextBtn){
+        const st = loadProfSeance();
+        const finished = st && st.idx >= st.plan.length;
+        nextBtn.textContent = finished ? '🏁 Voir mon bilan avec '+PROF_NAME : '🧑‍🏫 Retour vers '+PROF_NAME;
+        nextBtn.style.background = '#7F77DD';
+        nextBtn.onclick = profContinue;
+      }
+    } else
     // ── Session mode: wire next button correctly ──────────
     if(currentSubject && currentSubject.isSession){
       const nextBtn = document.querySelector('#next-zone .btn-next');
@@ -3312,7 +3407,7 @@ document.addEventListener('DOMContentLoaded', function(){
     closeExportModal: ()=>document.getElementById('export-modal').classList.remove('open'),
     closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
     copyExportCode, doImport, goHome, goToPickerBack, startAgentMode: ()=>startAgentMode(false),
-    startTutorMode, startLessonMode, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
+    startTutorMode, startLessonMode, startProfSeance, leaveProf, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
     sendTutorMessage, goToDash
   };
 
@@ -3346,6 +3441,14 @@ document.addEventListener('DOMContentLoaded', function(){
   const sessionStartBtn = document.getElementById('session-start-btn');
   if(sessionStartBtn) sessionStartBtn.addEventListener('click', launchSession);
 
+  // Parent "free mode" in the simplified 6e Mémoire & Compréhension screen
+  const freeBtn = document.getElementById('free-mode-btn');
+  if(freeBtn) freeBtn.addEventListener('click', ()=>{
+    document.getElementById('topics-grid').style.display='';
+    document.getElementById('topics-header').style.display='';
+    freeBtn.style.display='none';
+  });
+
   // Lesson screen
   const lessonPhotoBtn = document.getElementById('lesson-photo-btn');
   const lessonPhoto = document.getElementById('lesson-photo');
@@ -3360,6 +3463,224 @@ document.addEventListener('DOMContentLoaded', function(){
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
   });
 });
+
+// ══════════════════════════════════════════════════════════
+// PROF MAX — séance guidée Mémoire & Compréhension (espace 6e)
+// Un seul point d'entrée : le prof compose la séance du jour (échauffement,
+// notion du jour x2, révision, défi), enseigne une astuce avant chaque
+// exercice et débloque les compétences par étapes.
+// ══════════════════════════════════════════════════════════
+const PROF_NAME = 'Prof Max';
+const PROF_SKILLS = {
+  memoire_visuelle:{subj:'ortho_cm2', n:'Mémoire visuelle', e:'👁️', phase:1, warm:true, tips:[
+    'Je fais des <b>paquets</b> de 2 ou 3 mots, c\'est plus facile à retenir qu\'une longue liste.',
+    'J\'invente une <b>petite histoire</b> qui relie les mots entre eux : le chat mange une pomme sur le vélo...',
+    'Je <b>dessine</b> chaque mot dans ma tête, en couleur, comme une image.']},
+  memoire_auditive:{subj:'ortho_cm2', n:'Mémoire auditive', e:'👂', phase:1, warm:true, tips:[
+    'Je <b>répète dans ma tête</b> la liste, comme une chanson, plusieurs fois.',
+    'Je dis les éléments <b>avec un rythme</b> : un-deux / trois-quatre.',
+    'Je compte <b>combien</b> il y a d\'éléments avant de les apprendre.']},
+  comprehension_consigne:{subj:'ortho_cm2', n:'Comprendre les consignes', e:'📋', phase:1, tips:[
+    'Je cherche le <b>verbe</b> de la consigne (souligne, calcule, entoure...) : c\'est ce que je dois FAIRE.',
+    'Je <b>compte sur mes doigts</b> combien de choses on me demande.',
+    'Avant de répondre, je <b>redis la consigne avec mes mots</b> : « On me demande de... ».']},
+  details_memoire:{subj:'consignes', n:'Œil de détective', e:'🎨', phase:1, defi:true, tips:[
+    'Je regarde comme un <b>détective</b> : les couleurs, les nombres, les places (à gauche, dessous...).',
+    'Je me pose les questions <b>Qui ? Quoi ? Où ? Combien ?</b> en lisant.']},
+  comprehension_texte:{subj:'ortho_cm2', n:'Compréhension de texte', e:'📖', phase:2, tips:[
+    'Je cherche dans le texte : <b>Qui ? Fait quoi ? Où ? Quand ? Pourquoi ?</b>',
+    'Je lis d\'abord <b>la question</b>, puis je cherche la réponse dans le texte.',
+    'Après chaque phrase, je me demande : <b>qu\'est-ce que je viens d\'apprendre ?</b>']},
+  memoire_travail:{subj:'ortho_cm2', n:'Mémoire de travail', e:'🔄', phase:2, tips:[
+    'Je <b>répète l\'information</b> à garder pendant que je fais l\'autre tâche.',
+    'Je fais <b>une seule chose à la fois</b> : d\'abord je retiens, ensuite je calcule.']},
+  jeu_piste:{subj:'consignes', n:'Jeu de piste', e:'🗺️', phase:2, defi:true, tips:[
+    'Je me fais <b>un film dans ma tête</b>, étape par étape, comme si j\'y étais.',
+    'Je repère les <b>mots de direction</b> : gauche, droite, tout droit, après, avant.']},
+  consigne_cachee:{subj:'consignes', n:'La consigne cachée', e:'🙈', phase:2, defi:true, tips:[
+    'Je <b>compte les actions</b> demandées et je les retiens dans l\'ordre : 1, 2, 3.',
+    'Je retiens le <b>verbe + sur quoi</b> : « souligner les noms », « entourer en rouge ».']},
+  ortho_lexicale:{subj:'ortho_cm2', n:'Orthographe des mots', e:'✍️', phase:3, tips:[
+    'Je regarde le mot, je <b>l\'épelle</b>, je ferme les yeux, je le revois, puis je l\'écris.',
+    'Je repère la <b>lettre piège</b> du mot (la lettre muette, le double l...).']},
+  consignes_etapes:{subj:'consignes', n:'Consignes à étapes', e:'🪜', phase:3, tips:[
+    'Je <b>numérote</b> les étapes de la consigne et je coche chaque étape faite.',
+    'Je vérifie à la fin : <b>ai-je tout fait ?</b>']},
+  reformuler:{subj:'consignes', n:'Reformuler', e:'💬', phase:3, tips:[
+    'Je dis la consigne <b>comme si je l\'expliquais à un copain</b>.',
+    'Je commence ma phrase par <b>« On cherche... »</b>.']},
+};
+const PROF_ROLES = {echauffement:'Échauffement', focus:'Notion du jour', rappel:'Révision', defi:'Défi'};
+
+function getProfHistory(){
+  if(!progress.profSeances) progress.profSeances = {};
+  if(!progress.profSeances.cm2) progress.profSeances.cm2 = {count:0, history:[]};
+  return progress.profSeances.cm2;
+}
+function profSkillScore(id){
+  const sk = PROF_SKILLS[id];
+  return ((progress.cm2 && progress.cm2[sk.subj+'_topics']) || {})[id] || 0;
+}
+function profSkillLast(id){
+  return getSRSData('cm2', PROF_SKILLS[id].subj+'_'+id).lastReview || 0;
+}
+// Phase 1 at start; one more phase every 3 séances, or earlier when the unlocked skills average 50 %
+function profUnlockedPhase(){
+  const h = getProfHistory();
+  let phase = Math.min(3, 1 + Math.floor(h.count/3));
+  for(let ph=phase; ph<3; ph++){
+    const ids = Object.keys(PROF_SKILLS).filter(id=>PROF_SKILLS[id].phase<=ph);
+    const avg = ids.reduce((a,id)=>a+profSkillScore(id),0)/ids.length;
+    if(avg >= 50) phase = ph+1; else break;
+  }
+  return phase;
+}
+function buildProfPlan(){
+  const h = getProfHistory();
+  const phase = profUnlockedPhase();
+  const unlocked = Object.keys(PROF_SKILLS).filter(id=>PROF_SKILLS[id].phase<=phase);
+  const byOldest = (a,b)=>profSkillLast(a)-profSkillLast(b);
+  const warm = unlocked.filter(id=>PROF_SKILLS[id].warm).sort(byOldest)[0];
+  const core = unlocked.filter(id=>!PROF_SKILLS[id].defi && id!==warm);
+  // Focus: a skill never practised first (introduction), else the weakest one
+  const fresh = core.filter(id=>!profSkillLast(id));
+  const focus = fresh.length ? fresh[0] : [...core].sort((a,b)=>profSkillScore(a)-profSkillScore(b) || byOldest(a,b))[0];
+  // Review: the skill whose spaced-repetition date is the most overdue
+  const others = core.filter(id=>id!==focus && profSkillLast(id));
+  const rappel = (others.length ? others : core.filter(id=>id!==focus))
+    .sort((a,b)=>getSRSData('cm2',PROF_SKILLS[a].subj+'_'+a).nextReview - getSRSData('cm2',PROF_SKILLS[b].subj+'_'+b).nextReview)[0] || focus;
+  const defis = unlocked.filter(id=>PROF_SKILLS[id].defi);
+  const defi = defis[h.count % defis.length];
+  const tipOf = id=>{ const t=PROF_SKILLS[id].tips; return t[h.count % t.length]; };
+  return {
+    date: getTodayKey(), focus, idx: 0, results: [], introduced: fresh.length>0,
+    plan: [['echauffement',warm],['focus',focus],['focus',focus],['rappel',rappel],['defi',defi]]
+      .map(([role,id])=>({role, skill:id, tip:tipOf(id)}))
+  };
+}
+function loadProfSeance(){
+  try{
+    const s = JSON.parse(localStorage.getItem('edusmart_prof_seance')||'null');
+    if(s && s.date===getTodayKey()) return s;
+  }catch(e){}
+  return null;
+}
+function saveProfSeance(s){
+  try{ localStorage.setItem('edusmart_prof_seance', JSON.stringify(s)); }catch(e){}
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function startProfSeance(){
+  // A paused prof exercise comes back first
+  try{
+    const sus = JSON.parse(localStorage.getItem('edusmart_suspended_exo')||'null');
+    if(sus && sus.profile==='cm2' && sus.subject && sus.subject.isProf && Date.now()-sus.suspendedAt < 24*3600*1000){
+      resumeSuspendedExercise(); return;
+    }
+  }catch(e){}
+  let s = loadProfSeance();
+  if(!s || s.idx >= s.plan.length){
+    if(s && s.idx >= s.plan.length && !confirm('Tu as déjà fait ta séance aujourd\'hui 🎉\nFaire une séance bonus ?')) return;
+    s = buildProfPlan();
+    saveProfSeance(s);
+  }
+  renderProfScreen(s);
+}
+
+function renderProfScreen(s){
+  currentSubjectObj = null;
+  const step = s.plan[s.idx];
+  const done = s.idx >= s.plan.length;
+  const focusSk = PROF_SKILLS[s.focus];
+  let msg;
+  if(done){
+    msg = profBilanMessage(s);
+  } else if(s.idx === 0){
+    msg = `<p>Bonjour Amaury ! 👋 Aujourd'hui, on fait <b>5 exercices</b>, environ 15 minutes.</p>`
+      + `<p>Notre objectif du jour : <b>${focusSk.e} ${focusSk.n}</b>${s.introduced?' — c\'est nouveau, je vais t\'expliquer !':'.'}</p>`
+      + `<p>On commence par un petit échauffement pour réveiller ta mémoire 💪</p>`;
+  } else {
+    const last = s.results[s.results.length-1];
+    const reaction = last==='CORRECT' ? pick(['Bravo, c\'est réussi ! 🎉','Super travail ! 🌟','Excellent, tu progresses ! 💪'])
+      : last==='PARTIEL' ? pick(['Presque ! Tu as trouvé une bonne partie. 👍','Pas mal du tout, il manquait juste un petit morceau.'])
+      : pick(['Ce n\'est pas grave : c\'est en se trompant qu\'on apprend. 🙂','Pas cette fois, mais ton cerveau s\'entraîne quand même !']);
+    const next = PROF_ROLES[step.role];
+    const nextSk = PROF_SKILLS[step.skill];
+    const sameAsBefore = s.plan[s.idx-1].skill === step.skill;
+    msg = `<p>${reaction}</p><p>Étape ${s.idx+1} sur 5 : <b>${next}</b> — ${nextSk.e} ${nextSk.n}.${sameAsBefore?' On recommence avec la même astuce, pour bien l\'ancrer.':''}</p>`;
+  }
+  document.getElementById('prof-message').innerHTML = msg;
+  document.getElementById('prof-tip').innerHTML = done ? '' : `<strong>💡 L'astuce de ${PROF_NAME}</strong>${step.tip}`;
+  document.getElementById('prof-plan').innerHTML = s.plan.map((st,i)=>{
+    const sk = PROF_SKILLS[st.skill];
+    const r = s.results[i];
+    const status = r==='CORRECT'?'✅':r==='PARTIEL'?'🟡':r?'🔁':i===s.idx?'▶️':'○';
+    return `<div class="prof-step ${i===s.idx?'current':''} ${i<s.idx?'done':''}"><span class="prof-step-role">${PROF_ROLES[st.role]}</span><span>${sk.e}</span><span class="prof-step-name">${sk.n}</span><span>${status}</span></div>`;
+  }).join('');
+  const go = document.getElementById('prof-go-btn');
+  go.textContent = done ? '🏠 Retour à l\'accueil' : s.idx===0 ? '▶️ C\'est parti !' : '▶️ Exercice suivant';
+  go.onclick = done ? leaveProf : ()=>launchProfStep(s);
+  showScreen('prof-screen');
+}
+
+function profBilanMessage(s){
+  const ok = s.results.filter(r=>r==='CORRECT').length;
+  const part = s.results.filter(r=>r==='PARTIEL').length;
+  const focusSk = PROF_SKILLS[s.focus];
+  const focusRes = s.plan.map((st,i)=>st.role==='focus'?s.results[i]:null).filter(Boolean);
+  const focusOk = focusRes.filter(r=>r==='CORRECT').length;
+  const title = ok>=4 ? 'Séance géniale ! 🏆' : ok>=2 ? 'Belle séance ! 🌟' : 'Bravo d\'avoir tout fait ! 💪';
+  const focusLine = focusOk===2 ? `Tu as réussi les 2 exercices de <b>${focusSk.n}</b> : l'astuce marche pour toi !`
+    : focusOk===1 ? `Sur <b>${focusSk.n}</b>, tu en as réussi un sur deux : on continue demain, tu y es presque.`
+    : `<b>${focusSk.n}</b>, c'est encore difficile, et c'est normal : on va le retravailler ensemble.`;
+  return `<p><b>${title}</b></p><p>Résultat : ✅ ${ok} réussi${ok>1?'s':''}${part?' · 🟡 '+part+' presque':''} sur 5.</p><p>${focusLine}</p>`
+    + `<p>Rappelle-toi l'astuce du jour : ${s.plan[1].tip}</p><p>À demain pour la prochaine séance ! 👋</p>`;
+}
+
+function launchProfStep(s){
+  const step = s.plan[s.idx];
+  const sk = PROF_SKILLS[step.skill];
+  const subj = getProfileSubjects('cm2').find(x=>x.id===sk.subj);
+  const topic = (subj?.topics||[]).find(t=>t.id===step.skill) || {id:step.skill, n:sk.n, d:''};
+  isAgentMode = false;
+  currentSubject = {
+    id: sk.subj, name: sk.n, icon: sk.e,
+    topicId: step.skill, topicName: topic.n, topicDesc: topic.d,
+    isAdaptive: true, isProf: true, profRole: step.role, profTip: step.tip.replace(/<[^>]+>/g,'')
+  };
+  questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
+  sessionExoCount++;
+  document.getElementById('exo-info').innerHTML = sk.e+' '+sk.n+' <span style="font-size:.65rem;background:#EEEDFE;color:#3C3489;padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">'+PROF_ROLES[step.role]+' · '+(s.idx+1)+'/5</span>';
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
+
+// Called from the correction screen of a prof exercise
+function profAfterExercise(verdict){
+  const s = loadProfSeance();
+  if(!s || s.idx >= s.plan.length) return;
+  s.results[s.idx] = verdict;
+  s.idx++;
+  saveProfSeance(s);
+  if(s.idx >= s.plan.length){
+    const h = getProfHistory();
+    h.count++;
+    h.history.push({date:s.date, focus:s.focus, results:s.results});
+    h.history = h.history.slice(-30);
+    saveData();
+  }
+}
+function profContinue(){
+  const s = loadProfSeance();
+  if(s) renderProfScreen(s); else leaveProf();
+}
+function leaveProf(){
+  currentSubjectObj = null;
+  if(currentSubject && currentSubject.isProf) currentSubject = null;
+  stopCM2Session();
+  showDashboard();
+}
 
 // ══════════════════════════════════════════════════════════
 // RÉVISER MA LEÇON — photo ou texte de la leçon → exercices dessus
@@ -3823,6 +4144,7 @@ function showReport(){
     const orthoSubj = subjects.find(s=>s.id===orthoSubjId);
     const topicNames = {};
     (orthoSubj?.topics||[]).forEach(t=>topicNames[t.id]=t.n+' '+t.e);
+    if(profile==='cm2') Object.entries(PROF_SKILLS).forEach(([id,sk])=>{ if(!topicNames[id]) topicNames[id]=sk.n+' '+sk.e; });
 
     html += `<div class="ortho-report-card">
       <div class="ortho-report-title">🧠 Suivi Orthophonie — 14 derniers jours</div>
@@ -3862,6 +4184,22 @@ function showReport(){
       </div>
 
       ${stats.lastDone?`<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">Dernier exercice : ${stats.lastDone}</div>`:''}
+    </div>`;
+  }
+
+  // Séances with the prof (6e)
+  if(profile==='cm2'){
+    const h = getProfHistory();
+    const rows = h.history.slice(-10).reverse().map(x=>{
+      const ok = x.results.filter(r=>r==='CORRECT').length;
+      const d = new Date(x.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+      const sk = PROF_SKILLS[x.focus];
+      return `<div style="display:flex;gap:.6rem;align-items:center;font-size:.82rem;margin-bottom:.35rem"><span style="width:90px;color:var(--muted)">${d}</span><span style="flex:1;font-weight:700">${sk?sk.e+' '+sk.n:x.focus}</span><span>${x.results.map(r=>r==='CORRECT'?'✅':r==='PARTIEL'?'🟡':'🔁').join('')}</span><span style="font-weight:800;width:34px;text-align:right">${ok}/5</span></div>`;
+    }).join('');
+    html += `<div class="ortho-report-card">
+      <div class="ortho-report-title">🧑‍🏫 Séances avec ${PROF_NAME} — ${h.count} séance${h.count>1?'s':''} · étape ${profUnlockedPhase()}/3</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem">Compétence travaillée (notion du jour) et résultat des 5 exercices</div>
+      ${rows || '<div style="color:var(--muted);font-size:.82rem;font-style:italic">Aucune séance terminée pour l\'instant.</div>'}
     </div>`;
   }
 
@@ -4984,6 +5322,7 @@ window.stopAgentSession = stopAgentSession;
 window.resumeAgentMode = resumeAgentMode;
 window.startTutorMode = startTutorMode;
 window.startLessonMode = startLessonMode;
+window.startProfSeance = startProfSeance;
 window.nextExercise = nextExercise;
 window.getHint = getHint;
 window.submitAnswer = submitAnswer;
