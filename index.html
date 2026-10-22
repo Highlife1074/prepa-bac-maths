@@ -323,6 +323,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .memo-ready-btn{width:100%;padding:10px;border-radius:12px;border:none;background:#1D9E75;color:#fff;font-family:Nunito,sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;margin-bottom:.5rem;transition:background .2s}
 .memo-ready-btn:hover{background:#0F6E56}
+.read-content{font-weight:500;text-align:left}
+.read-content ol,.read-content ul{margin:.3rem 0 .3rem 1.3rem}
 .memo-tip{font-size:.72rem;color:var(--muted);text-align:center;font-style:italic}
 .rappel-instruction{background:#EEEDFE;border-radius:12px;padding:1rem 1.2rem;font-size:.95rem;line-height:1.6;border:2px solid #7F77DD;font-weight:600}
 
@@ -1025,6 +1027,9 @@ const PROFILES = {
         {id:'question_intermediaire',e:'🧱',n:'Problèmes à étapes',d:'Trouver la question cachée avant la réponse'},
         {id:'choisir_operation',e:'➗',n:'Choisir la bonne opération',d:'Addition, soustraction, multiplication ou division ?'},
         {id:'verifier_reponse',e:'✅',n:'Vérifier et rédiger',d:'Ma réponse est-elle logique ? Phrase réponse avec unité'},
+        {id:'jeu_piste',e:'🗺️',n:'Jeu de piste',d:'Lis le chemin, il disparaît : à gauche ou à droite ?'},
+        {id:'consigne_cachee',e:'🙈',n:'La consigne cachée',d:'Lis la consigne, elle se cache : qu\'est-ce qu\'on te demandait ?'},
+        {id:'details_memoire',e:'🎨',n:'Œil de détective',d:'Lis la scène, puis retrouve les couleurs, nombres et places'},
       ]},
       {id:'math',icon:'➕',name:'Mathématiques',desc:'Décimaux, fractions, géométrie, problèmes',topics:[
         {id:'decimaux',e:'🔢',n:'Nombres décimaux',d:'Lire, écrire, comparer, ranger, droite graduée'},
@@ -2150,7 +2155,7 @@ async function generateExercise(){
   const isFrench = currentSubject && (currentSubject.id==='fr' || currentSubject.topicId?.includes('fr') ||
     ['peau','menteur','boetie','forets','methodo','grammaire','conjugaison','accord','vocabulaire',
      'figures','lecture','expression','orthographe'].includes(currentSubject.topicId));
-  const nQuestions = isCM2 ? 1 : 3; // fixed 3 questions for lycee
+  const nQuestions = isReadHideTopic() ? getReadHideDifficulty().questions : isCM2 ? 1 : 3; // fixed 3 questions for lycee
   // Build topic-aware subject prompt
   const basePrompt = getSubjectPrompt();
   // Build adaptive context from topic history
@@ -2194,6 +2199,22 @@ async function generateExercise(){
     memoExtra = `DIFFICULTE_MEMO : niveau ${md.label} → utilise EXACTEMENT ${md.items} éléments dans PHASE_MEMO. Mots du quotidien uniquement, un seul mot par élément, séparés par " - ".`;
   }
 
+  // Read-then-hide: the text is shown once, then hidden while the questions are asked
+  if(isReadHideTopic()){
+    const rh = getReadHideDifficulty();
+    const styles = {
+      jeu_piste: `JEU DE PISTE : un parcours raconté à la 2e personne (« Tu sors de la cabane, tu prends le chemin de gauche... »). Décor créatif et varié d un exercice à l autre (forêt enchantée, château, île au trésor, station spatiale, ville romaine, musée la nuit, montagne enneigée...). Le parcours contient ${rh.steps} étapes avec des directions (gauche, droite, tout droit, monter, traverser), des repères (pont rouge, grand chêne, fontaine), des objets à ramasser et des nombres (3 clés, porte n°7). Une étape par ligne, numérotée.`,
+      consigne_cachee: `CONSIGNE CACHÉE : une vraie consigne d exercice scolaire de 6e (maths, français, sciences ou histoire) à ${rh.steps} actions, avec son petit support (liste de mots, de nombres, mini-texte de 2 phrases). Exemples d actions : souligner, entourer, recopier, ranger dans l ordre croissant, colorier, compter, barrer. Les questions portent sur la consigne elle-même : quelle action faire en premier, avec quelle couleur, sur quels mots, combien d éléments, ce qu il ne fallait PAS faire.`,
+      details_memoire: `ŒIL DE DÉTECTIVE : une scène courte et vivante (marché, cour de récréation, vaisseau pirate, laboratoire, stade...) décrite en ${rh.steps} phrases, riche en détails à retenir : couleurs, nombres, positions (à gauche de, sous, derrière), noms de personnages, objets.`
+    };
+    memoExtra += `\nMODE LIRE-PUIS-CACHER (EXCEPTION à la règle 1 : les questions ne doivent PAS redonner les informations du texte) :
+- Le champ "context" contient le TEXTE À LIRE. L élève le lit, puis il est CACHÉ : il répond de mémoire.
+- ${styles[currentSubject.topicId]}
+- Phrases courtes et simples, vocabulaire de 11 ans, mise en forme markdown aérée (gras sur 1 ou 2 mots-clés maximum).
+- Le tableau questions contient EXACTEMENT ${rh.questions} questions courtes, une seule chose demandée par question, réponse en un mot, un nombre ou une courte phrase. Mélange : détail précis (couleur, nombre, objet), ordre des étapes (« qu as-tu fait juste après... ? »), direction (« à la sortie de la forêt, tu prends à gauche ou à droite ? »), compréhension (« pourquoi... ? », « où arrives-tu à la fin ? »).
+- Chaque réponse se trouve explicitement dans le texte. Pas de piège sur des détails non écrits.`;
+  }
+
   const subjectPrompt = [basePrompt, topicExtra, adaptiveExtra, memoExtra].filter(Boolean).join('\n');
 
   const systemPrompt=`Tu es un professeur expert qui crée des exercices complets et rigoureux pour des élèves français.
@@ -2220,7 +2241,7 @@ REGLES DE CORRECTION STRICTES :
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
 {"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).","questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
-NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
+NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
 Ne donne PAS les réponses.`;
 
@@ -2270,6 +2291,7 @@ Ne donne PAS les réponses.`;
       return;
     }
     exoContext=parsed.context||'';
+    readPhaseDone=false; peekUsed=false;
     let rawQs = (parsed.questions||[]).slice(0, nQuestions); // cap to max
     // If not enough questions generated, request is still valid — show what we have
     if(rawQs.length === 0){
@@ -2312,9 +2334,13 @@ function showCurrentQuestion(){
   document.getElementById('exo-pts').textContent=`Q${currentQIdx+1}/${total}`;
 
   // Build question text
+  if(isReadHideTopic() && exoContext && !readPhaseDone){
+    showReadPhase();
+    return;
+  }
   let fullText='';
-  if(currentQIdx===0 && exoContext) fullText=exoContext+'\n\n';
-  fullText+='**'+( total>1?'Question '+(currentQIdx+1)+' :'+' ':'')+'**'+q.q;
+  if(currentQIdx===0 && exoContext && !isReadHideTopic()) fullText=exoContext+'\n\n';
+  fullText+=(total>1?'**Question '+(currentQIdx+1)+' :** ':'')+q.q;
 
   // 2-phase memory exercise detection
   if(fullText.includes('PHASE_MEMO:') && fullText.includes('PHASE_RAPPEL:')){
@@ -2328,13 +2354,16 @@ function showCurrentQuestion(){
   // Problem-solving checklist for Amaury (6e) on consignes / problems / logic
   const mc=document.getElementById('method-card');
   if(mc){
-    const showMethod = currentProfile==='cm2' && (currentSubject.id==='consignes' || currentSubject.id==='logique'
+    const showMethod = currentProfile==='cm2' && !isReadHideTopic() && (currentSubject.id==='consignes' || currentSubject.id==='logique'
       || (currentSubject.id==='math' && ['problemes','proportionnalite','mesures'].includes(currentSubject.topicId)));
     mc.style.display = showMethod ? 'block' : 'none';
     mc.open = showMethod && (getScaffoldLevel() <= 4);
   }
   document.getElementById('answer-input').value=answers[currentQIdx]||'';
   document.getElementById('answer-input').focus();
+
+  // Read-then-hide: one "peek" joker per exercise (costs points like a hint)
+  renderPeekButton();
 
   // Hint button
   const hintBtn=document.getElementById('hint-btn');
@@ -2520,7 +2549,7 @@ function getLevelDesc(withTheme=true){
   const LATEX_PRE=`FORMAT LATEX Premiere : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $e^{i\\theta}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
   // No narrative theme for hints/corrections, memory drills and consigne/problem decoding:
   // the theme adds reading load exactly where Amaury needs a clean statement.
-  const NO_THEME_TOPICS = ['memoire_visuelle','memoire_auditive','vocab_consignes','consignes_etapes','reformuler','donnees_utiles','question_intermediaire'];
+  const NO_THEME_TOPICS = ['jeu_piste','consigne_cachee','details_memoire','memoire_visuelle','memoire_auditive','vocab_consignes','consignes_etapes','reformuler','donnees_utiles','question_intermediaire'];
   if(p==='cm2' && (!withTheme || currentSubject?.isLesson || NO_THEME_TOPICS.includes(currentSubject?.topicId))){
     return `6e (11-12 ans, collège France). ${scaffoldText} Phrases courtes, vocabulaire simple, une seule consigne par phrase. ${LATEX_CM2}`;
   }
@@ -2645,6 +2674,7 @@ TYPES selon le sujet :
 - donnees_utiles : un énoncé avec 1-2 données inutiles ; l élève recopie les données utiles et barre (cite) les inutiles. Pas de calcul demandé.
 - question_intermediaire : problème à 2 étapes ; l élève doit écrire la question intermédiaire cachée PUIS répondre au problème.
 - choisir_operation : 3 mini-problèmes d une ligne ; pour chacun, l élève indique l opération à faire (sans forcément calculer) et pourquoi en quelques mots.
+- jeu_piste / consigne_cachee / details_memoire : voir MODE LIRE-PUIS-CACHER plus bas.
 - verifier_reponse : un problème avec la réponse d un élève fictif (parfois absurde : unité oubliée, ordre de grandeur faux) ; Amaury dit si elle est logique et rédige la bonne phrase réponse avec l unité.
 CORRECTION : valoriser la démarche (avoir compris la question) autant que le résultat.`,
       sec:'', pre:''
@@ -2735,7 +2765,7 @@ async function getHint(){
   const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
   const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.`;
@@ -4367,6 +4397,7 @@ function suspendExercise(){
     currentQIdx: currentQIdx,
     hintsPerQ: hintsPerQ,
     exoContext: exoContext,
+    readPhaseDone: readPhaseDone,
     sessionExoCount: sessionExoCount,
     suspendedAt: Date.now()
   };
@@ -4522,6 +4553,7 @@ function resumeSuspendedExercise(){
     currentQIdx = state.currentQIdx;
     hintsPerQ = state.hintsPerQ || new Array(questions.length).fill(0);
     exoContext = state.exoContext || '';
+    readPhaseDone = !!state.readPhaseDone;
     sessionExoCount = state.sessionExoCount || 0;
     localStorage.removeItem('edusmart_suspended_exo');
     // Rebuild the surrounding session / agent queue, otherwise the "next" button
@@ -4761,6 +4793,92 @@ function showMemoryExercise(fullText, qIdx){
   renderMemoPhase();
 }
 
+// ══════════════════════════════════════════════════════════
+// LIRE PUIS CACHER — jeu de piste, consigne cachée, œil de détective
+// ══════════════════════════════════════════════════════════
+const READ_HIDE_TOPICS = ['jeu_piste','consigne_cachee','details_memoire'];
+let readPhaseDone = false;
+let peekUsed = false;
+
+function isReadHideTopic(){
+  return !!currentSubject && READ_HIDE_TOPICS.includes(currentSubject.topicId);
+}
+
+// Text length, number of questions and reading time follow the adaptive level (1-10)
+function getReadHideDifficulty(){
+  const lvl = currentProfile==='cm2' ? getCM2DifficultyLevel() : getScaffoldDisplayLevel()*2.5;
+  if(lvl <= 3) return {steps:4, questions:3, seconds:75, label:'Débutant'};
+  if(lvl <= 6) return {steps:6, questions:4, seconds:90, label:'Intermédiaire'};
+  if(lvl <= 8) return {steps:8, questions:5, seconds:90, label:'Avancé'};
+  return {steps:10, questions:6, seconds:100, label:'Expert'};
+}
+
+function showReadPhase(){
+  const rh = getReadHideDifficulty();
+  const qTextEl = document.getElementById('q-text');
+  document.getElementById('answer-zone').style.display = 'none';
+  document.getElementById('q-label-text').textContent = 'À lire attentivement';
+  peekUsed = false;
+  memoryCountdown = rh.seconds;
+  memoryTotalSeconds = rh.seconds;
+  qTextEl.innerHTML = `
+    <div class="memo-phase">
+      <div class="memo-badge">📖 Lis bien, le texte va se cacher ! <span class="memo-level-badge">${rh.label}</span></div>
+      <div class="memo-content read-content" id="read-content"></div>
+      <div class="memo-timer-bar-bg"><div class="memo-timer-bar" id="memo-timer-bar"></div></div>
+      <div class="memo-timer-text" id="memo-timer-text">⏱ ${rh.seconds}s pour lire</div>
+      <button class="memo-ready-btn" onclick="endReadPhase()">✅ J'ai bien lu, cache le texte !</button>
+      <div class="memo-tip">💡 Astuce : lis une 2e fois, puis ferme les yeux et raconte-toi l'histoire dans ta tête.</div>
+    </div>`;
+  const rc = document.getElementById('read-content');
+  rc.innerHTML = typeof marked !== 'undefined' ? marked.parse(exoContext) : exoContext;
+  if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([rc]);
+  if(memoryTimer) clearInterval(memoryTimer);
+  memoryTimer = setInterval(()=>{
+    memoryCountdown--;
+    const tt = document.getElementById('memo-timer-text');
+    const tb = document.getElementById('memo-timer-bar');
+    if(tt) tt.textContent = '⏱ '+memoryCountdown+'s pour lire';
+    if(tb) tb.style.width = (memoryCountdown/memoryTotalSeconds*100)+'%';
+    if(memoryCountdown <= 0) endReadPhase();
+  }, 1000);
+}
+
+function endReadPhase(){
+  if(memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
+  readPhaseDone = true;
+  showSyncBadge('🙈 Texte caché — réponds de mémoire !');
+  showCurrentQuestion();
+}
+
+function renderPeekButton(){
+  let btn = document.getElementById('peek-btn');
+  if(!isReadHideTopic()){ if(btn) btn.remove(); return; }
+  if(!btn){
+    btn = document.createElement('button');
+    btn.id = 'peek-btn';
+    btn.className = 'btn-hint';
+    btn.addEventListener('click', peekText);
+    document.querySelector('#answer-zone .exo-actions').prepend(btn);
+  }
+  btn.textContent = peekUsed ? '👀 Joker utilisé' : '👀 Joker : revoir le texte 5 s';
+  btn.disabled = peekUsed;
+}
+
+// One peek per exercise, shown 5 seconds, costs points like a hint
+function peekText(){
+  if(peekUsed) return;
+  peekUsed = true;
+  hintsPerQ[currentQIdx] = (hintsPerQ[currentQIdx]||0) + 1;
+  const hz = document.getElementById('hint-zone');
+  const card = document.createElement('div');
+  card.className = 'hint-card';
+  card.innerHTML = '👀 <strong>Joker (5 s)</strong>' + (typeof marked!=='undefined' ? marked.parse(exoContext) : exoContext);
+  hz.appendChild(card);
+  renderPeekButton();
+  setTimeout(()=>{ card.innerHTML = '👀 Joker utilisé — le texte est de nouveau caché.'; }, 5000);
+}
+
 function switchToRappel(rappelText){
   if(memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
   memoryPhase = 'rappel';
@@ -4820,6 +4938,7 @@ window.resumeDaySession = resumeDaySession;
 window.doUnifiedResume = doUnifiedResume;
 window.doUnifiedDiscard = doUnifiedDiscard;
 window.switchToRappel = switchToRappel;
+window.endReadPhase = endReadPhase;
 window.renderUnifiedResumeBanner = renderUnifiedResumeBanner;
 window.resumeAgentWithSRS = resumeAgentWithSRS;
 window.clearDaySession = clearDaySession;
