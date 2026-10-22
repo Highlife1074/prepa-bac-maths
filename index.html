@@ -563,8 +563,8 @@ setTimeout(function(){
       <p class="sublevel">Mode Expert · Objectif bac maths</p>
       <div class="prof-subjects">
         <span class="subj math">Maths</span>
-        <span class="subj fr">Français</span>
-        <span class="subj hist">Histoire</span>
+        <span class="subj fr">Philosophie</span>
+        <span class="subj hist">Histoire-Géo</span>
         <span class="subj sci">Spécialités</span>
       </div>
       <button class="prof-btn">Entrer dans mon espace 🔒</button>
@@ -1145,27 +1145,33 @@ const PROFILES = {
         {id:'va_sommes',e:'📊',n:'Sommes de variables aléatoires',d:'Espérance, variance, Bienaymé-Tchebychev, loi des grands nombres'},
         {id:'algo_python',e:'🐍',n:'Algorithmique Python',d:'Suites, seuils, listes, simulation'},
       ]},
-      {id:'fr',icon:'📝',name:'Français',desc:'Dissertation, commentaire composé',topics:[
-        {id:'peau',e:'📕',n:'La Peau de chagrin',d:'Balzac — roman, désir, pacte'},
-        {id:'menteur',e:'🎭',n:'Le Menteur',d:'Corneille — comédie classique'},
-        {id:'boetie',e:'✊',n:'Discours servitude',d:'La Boétie — essai, liberté'},
-        {id:'forets',e:'🌲',n:'Mes forêts',d:'Hélène Dorion — poésie contemporaine'},
-        {id:'methodo',e:'📋',n:'Méthodologie',d:'Dissertation, commentaire composé'},
-        {id:'grammaire',e:'🔍',n:'Grammaire bac',d:'Analyse grammaticale avancée'},
+      {id:'philo',icon:'🤔',name:'Philosophie',desc:'Dissertation, explication de texte, notions',topics:[
+        {id:'methodo_dissert',e:'📋',n:'Méthode de la dissertation',d:'Analyse du sujet, problématique, plan'},
+        {id:'explication_texte',e:'🔎',n:'Explication de texte',d:'Thèse, structure, analyse d\'un extrait'},
+        {id:'conscience_liberte',e:'🧠',n:'Conscience, inconscient, liberté',d:'Descartes, Freud, Sartre, Spinoza'},
+        {id:'raison_verite',e:'⚖️',n:'Raison, vérité, science',d:'Platon, Kant, Popper, Bachelard'},
+        {id:'art_technique_travail',e:'🛠️',n:'Art, technique, travail',d:'Kant, Hegel, Marx, Arendt'},
+        {id:'justice_etat_devoir',e:'🏛️',n:'Justice, État, devoir',d:'Platon, Hobbes, Rousseau, Kant'},
+        {id:'bonheur_temps_nature',e:'⏳',n:'Bonheur, temps, nature',d:'Épicure, Pascal, Bergson'},
+        {id:'langage_religion',e:'💬',n:'Langage, religion',d:'Nietzsche, Wittgenstein, Durkheim'},
       ]},
-      {id:'hist',icon:'📜',name:'Histoire-Géo',desc:'Analyse de docs, géopolitique',topics:[
-        {id:'guerres',e:'⚔️',n:'Guerres mondiales',d:'WWI, WWII, causes et bilans'},
-        {id:'decolonisation',e:'🌍',n:'Décolonisation',d:'Indépendances, nouveaux États'},
-        {id:'guerre_froide',e:'☢️',n:'Guerre froide',d:'Blocs, crises, chute du mur'},
-        {id:'geo_monde',e:'🗺️',n:'Géopolitique',d:'Mondialisation, puissances, conflits'},
-        {id:'france',e:'🇫🇷',n:'France contemporaine',d:'Ve République, société française'},
+      {id:'hist',icon:'📜',name:'Histoire-Géo',desc:'Programme de Terminale, analyse de documents',topics:[
+        {id:'guerres',e:'⚔️',n:'Années 1930 et Seconde Guerre mondiale',d:'Crise de 1929, totalitarismes, guerre d\'anéantissement'},
+        {id:'guerre_froide',e:'☢️',n:'Le monde bipolaire (1945-1970)',d:'Guerre froide, ONU, construction européenne'},
+        {id:'decolonisation',e:'🌍',n:'Décolonisation et Tiers-monde',d:'Indépendances, nouveaux États, non-alignement'},
+        {id:'annees70_91',e:'📉',n:'Années 1970 à 1991',d:'Chocs pétroliers, fin du communisme, évolutions en France'},
+        {id:'monde_1990',e:'🌐',n:'Le monde depuis 1990',d:'Nouvelles conflictualités, UE, France'},
+        {id:'mers_oceans',e:'🌊',n:'Mers et océans',d:'Au cœur de la mondialisation'},
+        {id:'geo_monde',e:'🗺️',n:'Territoires dans la mondialisation',d:'Coopérations, tensions, Union européenne'},
+        {id:'france',e:'🇫🇷',n:'La France et ses régions',d:'Dans l\'UE et la mondialisation'},
       ]},
-      {id:'spe',icon:'🔭',name:'Spécialités',desc:'Exercices de spécialité',topics:[
-        {id:'phys_chimie',e:'⚗️',n:'Physique-Chimie',d:'Mécanique, optique, chimie organique'},
-        {id:'svt',e:'🧬',n:'SVT',d:'Génétique, évolution, neurosciences'},
-        {id:'info',e:'💻',n:'NSI',d:'Algorithmes, programmation Python'},
-        {id:'eco',e:'📊',n:'SES',d:'Économie, sociologie, science politique'},
-        {id:'philo',e:'🤔',n:'Philosophie',d:'Notions, auteurs, dissertations'},
+      {id:'spe',icon:'🔭',name:'Spécialités',desc:'Programme de Terminale + Grand oral',topics:[
+        {id:'phys_chimie',e:'⚗️',n:'Physique-Chimie',d:'Lois de Newton, ondes, thermodynamique, acide-base, cinétique'},
+        {id:'svt',e:'🧬',n:'SVT',d:'Génétique et évolution, géologie, corps humain'},
+        {id:'info',e:'💻',n:'NSI',d:'Structures de données, POO, récursivité, graphes, SQL'},
+        {id:'eco',e:'📊',n:'SES',d:'Croissance, commerce international, chômage, inégalités'},
+        {id:'hggsp',e:'🌍',n:'HGGSP',d:'Puissances, guerre et paix, patrimoine, environnement, connaissance'},
+        {id:'grand_oral',e:'🎤',n:'Grand oral',d:'Préparer ses questions, l\'exposé et l\'entretien'},
       ]},
       {id:'logique',icon:'🧩',name:'Logique & Problèmes',desc:'Raisonnement avancé, démonstration',topics:[
         {id:'demonstration',e:'📐',n:'Démonstration',d:'Raisonnement par récurrence, absurde, contraposée'},
@@ -2670,18 +2676,19 @@ function getSubjectPrompt(){
       pre:'Mathématiques, spécialité Terminale (programme officiel, sans maths expertes : PAS de nombres complexes, PAS d arithmétique, PAS de matrices). Chapitres : suites et récurrence, limites et continuité, dérivation et convexité, logarithme népérien, exponentielle, fonctions sinus/cosinus, primitives et équations différentielles, calcul intégral, dénombrement, géométrie dans l espace, loi binomiale, sommes de variables aléatoires et loi des grands nombres, algorithmique Python. Style des sujets du bac de spécialité (épreuve écrite de 4 h) : énoncé rédigé comme au bac, questions numérotées, résultats intermédiaires donnés (« Montrer que... ») pour ne pas bloquer la suite, justification et rédaction attendues. Exercices de type bac souvent en contexte (population, médicament, entreprise, jeu).'},
     fr:{cm2:'Français 6e : accord sujet-verbe, accords dans le groupe nominal, conjugaison (présent, imparfait, passé simple, futur, passé composé), classes de mots, fonctions (sujet, COD, COI, compléments circonstanciels), homophones, vocabulaire. Pour la lecture : extrait court (5-8 lignes) de mythe, conte ou récit d aventure + 1 question précise. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
       sec:'Grammaire (propositions subordonnées, syntaxe), conjugaison (tous temps), vocabulaire, rédaction courte, analyse d\'un court extrait littéraire. Pose une question ouverte sur un texte ou un exercice de rédaction guidée.',
-      pre:'Français Première - oeuvres au programme de cette élève : (1) La Peau de chagrin de Balzac (roman, realisme, pacte faustien, critique sociale), (2) Le Menteur de Corneille (comedie classique, mensonge et honneur), (3) Discours de la servitude volontaire de La Boetie (essai humaniste, liberte, tyrannie), (4) Mes forets de Helene Dorion (poesie contemporaine, nature, memoire, identite). Varie entre ces oeuvres a chaque exercice. Types : dissertation (problematique + plan detaille), commentaire compose d un extrait fourni, question de grammaire sur un passage, analyse lineaire guidee, question sur le parcours associe. Niveau exigence baccalaureat.'},
+      pre:''},
     hist:{cm2:'Histoire-Géographie 6e : débuts de l humanité et Néolithique, Grèce antique (cités, dieux, Homère), récits fondateurs des Hébreux, Rome (fondation, République, Empire), habiter une métropole, habiter un espace de faible densité, habiter les littoraux. Une question précise : définir un mot-clé, situer une date sur une frise, répondre à une question sur un court document fourni dans l énoncé. Respect strict des dates et des faits.',
       sec:'Programme seconde : Méditerranée antique, monde médiéval, Renaissance, géographie physique et humaine.',
-      pre:'Programme première : XXe siècle, guerres mondiales, décolonisation, géopolitique contemporaine.'},
+      pre:'Histoire-Géographie Terminale (programme officiel) : Histoire — fragilités des démocraties, totalitarismes et Seconde Guerre mondiale (1929-1945) ; le monde bipolaire et la multiplication des acteurs internationaux (1945-années 1970, décolonisation) ; les remises en cause des années 1970 à 1991 ; le monde, l Europe et la France depuis 1990. Géographie — mers et océans au cœur de la mondialisation ; dynamiques territoriales, coopérations et tensions ; l Union européenne dans la mondialisation ; la France et ses régions. Exercices : analyse de document(s) fournis dans l énoncé, question problématisée, croquis décrit en texte, repères chronologiques précis.'},
     sci:{cm2:'Sciences 6e - 1 seule question courte et amusante sur : classification du vivant, besoins et nutrition des êtres vivants, corps humain, états de la matière et mélanges, énergie et mouvement, système solaire et saisons. Format : QCM à 3 choix, vrai/faux avec justification en 1 phrase, ou question ouverte avec réponse en 1-2 phrases max. JAMAIS de compte-rendu ou résumé long.',
       sec:'Physique-Chimie (mécanique, optique, chimie), SVT (cellule, génétique, écosystèmes). Exercice avec calcul ou analyse.',
       pre:'Spécialités : exercice niveau baccalauréat en physique-chimie ou SVT avec raisonnement scientifique.'},
-    spe:{cm2:'',sec:'',pre:'Sciences spécialité : exercice complet de niveau baccalauréat (physique, chimie ou biologie) avec justifications attendues.'},
+    spe:{cm2:'',sec:'',pre:'Spécialité Terminale, épreuve écrite du bac (programme de Terminale uniquement). Physique-Chimie : mouvements et lois de Newton, mouvement dans un champ, ondes et interférences, lunette, thermodynamique, acide-base et pH, cinétique, équilibres, piles, condensateur et circuit RC. SVT : génétique et évolution, géologie (lithosphère, climats passés), corps humain (comportements, muscle, glycémie, stress, immunité). NSI : structures de données, POO, récursivité, arbres et graphes, bases de données SQL, programmation dynamique, processus et réseaux. SES : croissance, commerce international, chômage, crises financières, intégration européenne, structure sociale, mobilité, travail, engagement politique, justice sociale, environnement. HGGSP : espace, mers, guerre et paix, histoire et mémoires, patrimoine, environnement, connaissance. Grand oral : aider à formuler une question liant les deux spécialités, construire un exposé de 5 minutes et préparer l entretien (questions possibles du jury) ; jamais rédiger l exposé entier à la place de l élève.'},
+    philo:{cm2:'',sec:'',pre:'Philosophie Terminale (programme 2020, épreuve de 4 h : dissertation OU explication de texte). Notions : art, bonheur, conscience, devoir, État, inconscient, justice, langage, liberté, nature, raison, religion, science, technique, temps, travail, vérité. Types d exercices : analyser un sujet de dissertation (définir les termes, dégager le paradoxe, formuler une problématique), proposer et critiquer un plan, mobiliser un auteur et un exemple pour un argument, expliquer un court extrait d un auteur au programme (thèse, mouvement du texte, concept clé). Corrige avec l exigence d un correcteur du bac : problématisation, argumentation, références précises.'},
     logique:{
       cm2:'Logique et résolution de problèmes 6e : enigmes simples, suites logiques (trouver le terme suivant avec la règle), problèmes de déduction avec indices, grilles logiques type sudoku 4x4. Enoncé court et ludique (détectives, robots, pirates...). Une seule notion, pas de calcul complexe.',
       sec:'Logique et raisonnement Seconde : raisonnement par cas, implications, contraposée, syllogismes, initiation algo (pseudo-code simple), combinatoire de base, enigmes avec justification rigoureuse. 2-3 questions progressives.',
-      pre:'Logique et démonstration Première : raisonnement par récurrence, par l absurde, contraposée, logique propositionnelle, optimisation avec modélisation, complexité algorithmique, problèmes ouverts avec démonstration. Niveau baccalauréat exigeant.'
+      pre:'Logique et démonstration Terminale : raisonnement par récurrence, par l absurde, contraposée, logique propositionnelle, optimisation avec modélisation, complexité algorithmique, problèmes ouverts avec démonstration. Niveau baccalauréat exigeant.'
     },
     consignes:{
       cm2:`CONSIGNES & PROBLÈMES 6e — objectif : apprendre à Amaury à COMPRENDRE ce qu on lui demande avant de répondre (bilan orthophonique : compréhension de texte et de consignes fragiles, mémoire de travail faible).
@@ -2719,15 +2726,15 @@ TYPES D EXERCICES selon le sujet :
     },
     ortho_pre:{
       cm2:'', sec:'',
-      pre:`PROGRAMME ORTHOPHONIQUE MARIE PREMIÈRE — Bilan du 28/05/2026 (repérage anaphores centile 5, vitesse de repérage centile 5, flexibilité lexicale centile 25, difficultés attentionnelles).
+      pre:`PROGRAMME ORTHOPHONIQUE MARIE TERMINALE — Bilan du 28/05/2026 (réalisé en Première) (repérage anaphores centile 5, vitesse de repérage centile 5, flexibilité lexicale centile 25, difficultés attentionnelles).
 FORCES à appuyer : mémoire excellente (centile 95), compréhension de fond excellente (centile 95), inférences très bonnes.
 OBJECTIFS : améliorer le repérage rapide dans les textes, identifier les reprises anaphoriques, renforcer l attention soutenue et la flexibilité lexicale.
 REGLES pour ces exercices :
-- Textes de niveau Première (littérature, philosophie, sciences)
+- Textes de niveau Terminale (philosophie, histoire, sciences, sujets de spécialité)
 - Exercices chronométrés quand pertinent (compétence de vitesse)
 - Questions précises et ciblées sur la compétence travaillée
 - Progressifs : commencer accessible, finir challengeant
-- Lien avec les œuvres du bac quand possible (La Peau de chagrin, Le Menteur, La Boétie, Hélène Dorion)
+- Lien avec les épreuves de Terminale quand possible : textes de philosophes du programme, énoncés longs de maths ou de spécialité (repérer vite la donnée utile), documents d histoire-géo
 
 TYPES D EXERCICES selon le sujet :
 - anaphores : texte de 10-15 lignes, "À quoi renvoie 'il' ligne 3 ?", "que désigne 'cette réalité' ligne 7 ?", "remplace chaque pronom par ce qu il désigne"
