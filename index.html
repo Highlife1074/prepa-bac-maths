@@ -323,6 +323,8 @@ mjx-container { overflow-x: auto; max-width: 100% }
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .memo-ready-btn{width:100%;padding:10px;border-radius:12px;border:none;background:#1D9E75;color:#fff;font-family:Nunito,sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;margin-bottom:.5rem;transition:background .2s}
 .memo-ready-btn:hover{background:#0F6E56}
+.read-content{font-weight:500;text-align:left}
+.read-content ol,.read-content ul{margin:.3rem 0 .3rem 1.3rem}
 .memo-tip{font-size:.72rem;color:var(--muted);text-align:center;font-style:italic}
 .rappel-instruction{background:#EEEDFE;border-radius:12px;padding:1rem 1.2rem;font-size:.95rem;line-height:1.6;border:2px solid #7F77DD;font-weight:600}
 
@@ -450,6 +452,44 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .score-pop{animation:scorePop .4s ease}
 @keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
 
+/* ===== SESSION / TUTOR / STEPS (classes used by the JS) ===== */
+.session-banner{background:linear-gradient(135deg,#0F6E56,#1D9E75);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
+.session-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(15,110,86,.3)}
+.tutor-banner{background:linear-gradient(135deg,#185FA5,#378ADD);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1.5rem;transition:transform .2s,box-shadow .2s;color:#fff}
+.tutor-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(24,95,165,.3)}
+.lesson-banner{background:linear-gradient(135deg,#BA7517,#E0A040);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
+.lesson-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(186,117,23,.3)}
+.suspended-banner{background:linear-gradient(135deg,#185FA5,#2E86DE);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;color:#fff}
+#tutor{flex-direction:column;height:100vh;overflow:hidden}
+#tutor.active{display:flex}
+.tutor-body{flex:1;overflow-y:auto;padding:1.2rem 1rem;max-width:780px;width:100%;margin:0 auto}
+#tutor-messages{display:flex;flex-direction:column;gap:.7rem}
+.tutor-msg{max-width:85%;padding:.8rem 1rem;border-radius:16px;font-size:.95rem;line-height:1.6;word-wrap:break-word}
+.tutor-msg p{margin-bottom:.4rem}.tutor-msg p:last-child{margin-bottom:0}
+.tutor-msg.tutor{align-self:flex-start;background:var(--card);border:1.5px solid var(--border);border-bottom-left-radius:4px}
+.tutor-msg.user{align-self:flex-end;background:#7F77DD;color:#fff;border-bottom-right-radius:4px;white-space:pre-wrap}
+.tutor-msg.system{align-self:center;background:transparent;color:var(--muted);font-size:.72rem;font-weight:700;padding:.2rem}
+.tutor-method-badge{display:inline-block;margin-top:.4rem;font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:99px;background:#EEEDFE;color:#3C3489}
+.badge-feynman{background:#FAEEDA;color:#854F0B}.badge-scaffold{background:#E1F5EE;color:#0F6E56}.badge-recall{background:#E6F1FB;color:#185FA5}
+.tutor-typing{align-self:flex-start;gap:4px;padding:.8rem 1rem;background:var(--card);border:1.5px solid var(--border);border-radius:16px}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:dotBounce .8s infinite}
+.typing-dot:nth-child(2){animation-delay:.15s}.typing-dot:nth-child(3){animation-delay:.3s}
+.tutor-input-bar{flex-shrink:0;display:flex;gap:.6rem;padding:.8rem 1rem;border-top:1.5px solid var(--border);background:var(--card)}
+.tutor-input{flex:1;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-size:1rem;resize:none;background:var(--bg);outline:none}
+.tutor-input:focus{border-color:#7F77DD}
+.tutor-send{width:48px;border-radius:12px;border:none;background:#7F77DD;color:#fff;font-size:1.2rem;font-weight:800;cursor:pointer}
+.step-dot{width:10px;height:10px;border-radius:50%;background:var(--border)}
+.step-dot.active{background:#7F77DD;box-shadow:0 0 0 3px #EEEDFE}
+.step-dot.done{background:#1D9E75}
+.step-line{width:12px;height:2px;background:var(--border)}
+.btn-prev{padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:transparent;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;color:var(--muted)}
+.btn-prev:hover{background:var(--card)}
+.feedback-q-recap{font-size:.78rem;opacity:.75;font-style:italic;margin-bottom:.5rem}
+.method-card{background:#E6F1FB;border:1.5px solid #B5D4F4;border-radius:12px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.85rem;color:#0C447C}
+.method-card summary{font-weight:800;cursor:pointer}
+.method-card ol{margin:.5rem 0 0 1.3rem;line-height:1.7}
+.dash-header{flex-wrap:wrap}
+
 /* Responsive */
 @media(max-width:500px){
   .profiles-grid{grid-template-columns:1fr}
@@ -495,12 +535,13 @@ setTimeout(function(){
   <div class="profiles-grid">
     <div class="prof-card cm2" data-profile="cm2">
       <div class="prof-avatar">🌟</div>
-      <h2>Espace CM2</h2>
-      <p class="sublevel">Mode Aventurier · 9-10 ans</p>
+      <h2>Espace 6e</h2>
+      <p class="sublevel">Mode Aventurier · 11-12 ans</p>
       <div class="prof-subjects">
         <span class="subj math">Maths</span>
         <span class="subj fr">Français</span>
-        <span class="subj sci">Sciences</span>
+        <span class="subj hist">Histoire-Géo</span>
+        <span class="subj sci">Consignes</span>
       </div>
       <button class="prof-btn">Entrer dans mon espace 🔒</button>
     </div>
@@ -518,12 +559,12 @@ setTimeout(function(){
     </div>
     <div class="prof-card pre" data-profile="pre">
       <div class="prof-avatar">🎯</div>
-      <h2>Espace Première</h2>
-      <p class="sublevel">Mode Expert · 16-17 ans</p>
+      <h2>Espace Terminale</h2>
+      <p class="sublevel">Mode Expert · Objectif bac maths</p>
       <div class="prof-subjects">
         <span class="subj math">Maths</span>
-        <span class="subj fr">Français</span>
-        <span class="subj hist">Histoire</span>
+        <span class="subj fr">Philosophie</span>
+        <span class="subj hist">Histoire-Géo</span>
         <span class="subj sci">Spécialités</span>
       </div>
       <button class="prof-btn">Entrer dans mon espace 🔒</button>
@@ -643,6 +684,15 @@ setTimeout(function(){
       </div>
       <div class="agent-arrow">→</div>
     </div>
+    <!-- LESSON BANNER -->
+    <div class="lesson-banner" data-action="startLessonMode">
+      <div class="agent-icon">📝</div>
+      <div class="agent-text">
+        <div class="agent-title">Réviser ma leçon</div>
+        <div class="agent-desc">Prends ta leçon en photo ou colle-la : l'IA te fait des exercices dessus</div>
+      </div>
+      <div class="agent-arrow">→</div>
+    </div>
     <!-- TUTOR BANNER -->
     <div class="tutor-banner" data-action="startTutorMode">
       <div class="agent-icon">🎓</div>
@@ -728,6 +778,28 @@ setTimeout(function(){
   </div>
 </div>
 
+<!-- LESSON SCREEN -->
+<div id="lesson-screen" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" data-action="goToDash">← Retour</button>
+    <span class="dash-title" id="lesson-title">📝 Réviser ma leçon</span>
+  </div>
+  <div class="dash-body">
+    <div class="admin-card">
+      <div class="admin-section-title">Ma leçon</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">Prends une photo de ta leçon (cahier, fiche, manuel) ou recopie / colle le texte. Tu peux ajouter plusieurs photos.</p>
+      <input type="file" id="lesson-photo" accept="image/*" capture="environment" multiple style="display:none">
+      <button class="session-start-btn" id="lesson-photo-btn" style="margin-top:0;background:#378ADD">📷 Prendre / ajouter une photo</button>
+      <div id="lesson-status" style="font-size:.8rem;font-weight:700;color:var(--muted);min-height:1.2rem;margin:.6rem 0"></div>
+      <div class="admin-field">
+        <label>Texte de la leçon <span style="font-size:.7rem">(vérifie que la photo a bien été lue, tu peux corriger)</span></label>
+        <textarea id="lesson-text" rows="10" placeholder="Ex : Les nombres décimaux. Un nombre décimal s'écrit avec une virgule..."></textarea>
+      </div>
+    </div>
+    <button class="session-start-btn" id="lesson-start-btn" style="background:#1D9E75">🚀 M'entraîner sur cette leçon</button>
+  </div>
+</div>
+
 <!-- SESSION END SCREEN -->
 <div id="session-end" class="screen">
   <div class="dash-header">
@@ -772,9 +844,9 @@ setTimeout(function(){
     <div class="admin-card">
       <div class="admin-section-title">Profil cible</div>
       <div class="admin-profile-select">
-        <button class="admin-profile-btn active" data-adminprofile="cm2" onclick="selectAdminProfile('cm2')">🌟 CM2</button>
+        <button class="admin-profile-btn active" data-adminprofile="cm2" onclick="selectAdminProfile('cm2')">🌟 6e</button>
         <button class="admin-profile-btn" data-adminprofile="sec" onclick="selectAdminProfile('sec')">🚀 Seconde</button>
-        <button class="admin-profile-btn" data-adminprofile="pre" onclick="selectAdminProfile('pre')">🎯 Première</button>
+        <button class="admin-profile-btn" data-adminprofile="pre" onclick="selectAdminProfile('pre')">🎯 Terminale</button>
       </div>
     </div>
 
@@ -875,6 +947,18 @@ setTimeout(function(){
     <!-- ANSWER BLOCK -->
     <div class="answer-block" id="answer-zone" style="display:none">
       <div class="label">✏️ Ta réponse</div>
+      <details class="method-card" id="method-card" style="display:none">
+        <summary>🧭 Ma méthode pour comprendre la consigne</summary>
+        <ol>
+          <li>Je lis l'énoncé <strong>deux fois</strong>.</li>
+          <li>Je repère <strong>la question</strong> : qu'est-ce qu'on me demande ?</li>
+          <li>Je note les <strong>données utiles</strong> (et je laisse les inutiles).</li>
+          <li>Je cherche s'il y a une <strong>étape cachée</strong> avant la réponse.</li>
+          <li>Je choisis l'<strong>opération</strong> et je calcule.</li>
+          <li>Je <strong>vérifie</strong> : est-ce que mon résultat est logique ?</li>
+          <li>J'écris une <strong>phrase réponse</strong> avec l'unité.</li>
+        </ol>
+      </details>
       <textarea class="answer-area" id="answer-input" placeholder="Écris ta réponse ici..."></textarea>
       <div class="exo-actions">
         <button class="btn-hint" id="hint-btn" data-action="getHint">💡 Un indice</button>
@@ -887,7 +971,7 @@ setTimeout(function(){
 
     <!-- NEXT BUTTON -->
     <div class="btn-next-wrap" id="next-zone" style="display:none">
-      <button class="btn-next" data-action="nextExercise">➡️ Nouvel exercice</button>
+      <button class="btn-next" id="btn-next">➡️ Nouvel exercice</button>
     </div>
 
   </div>
@@ -930,39 +1014,61 @@ async function ensureApiKey(){
   }
 }
 const PROFILES = {
-  cm2:{
-    name:'CM2',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
-    welcome:'Super ! Prêt(e) pour une nouvelle aventure ?',
+  cm2:{ // clé historique 'cm2' conservée pour garder la progression d'Amaury (désormais en 6e)
+    name:'6e',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
+    welcome:'Super ! Prêt pour une nouvelle aventure ?',
     sub:'Choisis une matière et laisse l\'IA créer des exercices juste pour toi !',
     subjects:[
-      {id:'math',icon:'➕',name:'Mathématiques',desc:'Tables, fractions, problèmes',topics:[
-        {id:'tables',e:'✖️',n:'Tables de multiplication',d:'Tables de 1 à 12'},
-        {id:'calcul',e:'🔢',n:'Calcul posé',d:'Addition, soustraction, retenue'},
-        {id:'fractions',e:'🍕',n:'Fractions simples',d:'Moitié, tiers, quart'},
-        {id:'problemes',e:'🧩',n:'Problèmes',d:'Problèmes à 1-2 étapes'},
-        {id:'geometrie',e:'📐',n:'Géométrie',d:'Périmètre, formes, angles'},
-        {id:'mesures',e:'📏',n:'Mesures',d:'Longueurs, masses, durées'},
+      {id:'consignes',icon:'🎯',name:'Consignes & Problèmes',desc:'Comprendre ce qu\'on me demande, résoudre pas à pas',topics:[
+        {id:'vocab_consignes',e:'🔑',n:'Les mots des consignes',d:'Calculer, justifier, compléter, déduire, comparer...'},
+        {id:'consignes_etapes',e:'🪜',n:'Consignes à plusieurs étapes',d:'Tout faire, dans le bon ordre, sans rien oublier'},
+        {id:'reformuler',e:'💬',n:'Reformuler avec mes mots',d:'Qu\'est-ce qu\'on me demande exactement ?'},
+        {id:'donnees_utiles',e:'🔎',n:'Trier les données',d:'Repérer les informations utiles et inutiles'},
+        {id:'question_intermediaire',e:'🧱',n:'Problèmes à étapes',d:'Trouver la question cachée avant la réponse'},
+        {id:'choisir_operation',e:'➗',n:'Choisir la bonne opération',d:'Addition, soustraction, multiplication ou division ?'},
+        {id:'verifier_reponse',e:'✅',n:'Vérifier et rédiger',d:'Ma réponse est-elle logique ? Phrase réponse avec unité'},
+        {id:'jeu_piste',e:'🗺️',n:'Jeu de piste',d:'Lis le chemin, il disparaît : à gauche ou à droite ?'},
+        {id:'consigne_cachee',e:'🙈',n:'La consigne cachée',d:'Lis la consigne, elle se cache : qu\'est-ce qu\'on te demandait ?'},
+        {id:'details_memoire',e:'🎨',n:'Œil de détective',d:'Lis la scène, puis retrouve les couleurs, nombres et places'},
       ]},
-      {id:'fr',icon:'✍️',name:'Français',desc:'Orthographe, conjugaison, dictée',topics:[
-        {id:'conjugaison',e:'🔤',n:'Conjugaison',d:'Présent, passé composé, futur'},
-        {id:'accord',e:'✅',n:'Accords',d:'Sujet-verbe, adjectif-nom'},
-        {id:'vocabulaire',e:'📚',n:'Vocabulaire',d:'Synonymes, antonymes, familles'},
-        {id:'grammaire',e:'🔍',n:'Grammaire',d:'Nature et fonction des mots'},
-        {id:'orthographe',e:'🖊️',n:'Orthographe',d:'Mots invariables, homophones'},
+      {id:'math',icon:'➕',name:'Mathématiques',desc:'Décimaux, fractions, géométrie, problèmes',topics:[
+        {id:'decimaux',e:'🔢',n:'Nombres décimaux',d:'Lire, écrire, comparer, ranger, droite graduée'},
+        {id:'calcul',e:'🧮',n:'Calcul',d:'Opérations posées et calcul mental sur les décimaux'},
+        {id:'fractions',e:'🍕',n:'Fractions',d:'Partage, fraction d\'une quantité, droite graduée'},
+        {id:'proportionnalite',e:'⚖️',n:'Proportionnalité',d:'Tableaux, recettes, pourcentages simples'},
+        {id:'problemes',e:'🧩',n:'Problèmes',d:'Problèmes à plusieurs étapes'},
+        {id:'geometrie',e:'📐',n:'Géométrie',d:'Droites, cercles, triangles, symétrie axiale'},
+        {id:'mesures',e:'📏',n:'Grandeurs et mesures',d:'Périmètres, aires, angles, durées, conversions'},
       ]},
-      {id:'sci',icon:'🔬',name:'Sciences',desc:'Nature, corps humain, animaux',topics:[
-        {id:'corps',e:'🫀',n:'Corps humain',d:'Organes et fonctions'},
-        {id:'animaux',e:'🐾',n:'Animaux',d:'Classification, alimentation'},
-        {id:'plantes',e:'🌱',n:'Plantes',d:'Photosynthèse, parties'},
-        {id:'matiere',e:'💧',n:'Matière',d:'États solide, liquide, gaz'},
-        {id:'environnement',e:'🌍',n:'Environnement',d:'Écosystèmes, météo'},
+      {id:'fr',icon:'✍️',name:'Français',desc:'Grammaire, conjugaison, orthographe, lecture',topics:[
+        {id:'conjugaison',e:'🔤',n:'Conjugaison',d:'Présent, imparfait, passé simple, futur, passé composé'},
+        {id:'accord',e:'✅',n:'Accords',d:'Sujet-verbe, dans le groupe nominal'},
+        {id:'grammaire',e:'🔍',n:'Grammaire',d:'Classes de mots, sujet, COD, COI, compléments'},
+        {id:'orthographe',e:'🖊️',n:'Orthographe',d:'Homophones, mots invariables'},
+        {id:'vocabulaire',e:'📚',n:'Vocabulaire',d:'Synonymes, familles de mots, sens d\'un mot'},
+        {id:'lecture',e:'📖',n:'Lecture',d:'Comprendre un récit : mythes, contes, aventures'},
       ]},
-      {id:'logique',icon:'🧩',name:'Logique & Problèmes',desc:'Raisonnement, énigmes, stratégie',topics:[
+      {id:'hist',icon:'🏛️',name:'Histoire-Géo',desc:'Antiquité, premiers hommes, habiter le monde',topics:[
+        {id:'prehistoire',e:'🦴',n:'Les débuts de l\'humanité',d:'Premiers hommes, Néolithique'},
+        {id:'grece',e:'🏺',n:'La Grèce antique',d:'Cités, dieux, Homère, Athènes'},
+        {id:'hebreux',e:'📜',n:'Les Hébreux',d:'Récits fondateurs, monothéisme'},
+        {id:'rome',e:'🦅',n:'Rome',d:'Fondation, République, Empire, César, Auguste'},
+        {id:'geo_villes',e:'🏙️',n:'Habiter une métropole',d:'Villes, quartiers, transports'},
+        {id:'geo_espaces',e:'🌍',n:'Habiter le monde',d:'Littoraux, espaces peu peuplés, répartition'},
+      ]},
+      {id:'sci',icon:'🔬',name:'Sciences',desc:'Vivant, matière, énergie, Terre',topics:[
+        {id:'vivant',e:'🐾',n:'Le vivant',d:'Classer les êtres vivants, besoins, nutrition'},
+        {id:'corps',e:'🫀',n:'Corps humain',d:'Organes et fonctions, santé'},
+        {id:'matiere',e:'💧',n:'La matière',d:'États, mélanges, masse et volume'},
+        {id:'energie',e:'⚡',n:'Énergie et mouvement',d:'Sources d\'énergie, trajectoires'},
+        {id:'terre',e:'🌎',n:'La planète Terre',d:'Système solaire, saisons, environnement'},
+      ]},
+      {id:'logique',icon:'🧩',name:'Logique & Énigmes',desc:'Raisonnement, énigmes, stratégie',topics:[
         {id:'suites_log',e:'🔢',n:'Suites logiques',d:'Trouver la règle et continuer'},
-        {id:'enigmes',e:'🔍',n:'Énigmes',d:'Problèmes de déduction simples'},
-        {id:'grilles',e:'🔲',n:'Grilles et tableaux',d:'Sudoku simple, grilles logiques'},
+        {id:'enigmes',e:'🔍',n:'Énigmes',d:'Problèmes de déduction'},
+        {id:'grilles',e:'🔲',n:'Grilles et tableaux',d:'Sudoku, grilles logiques'},
         {id:'problemes_ouverts',e:'💡',n:'Problèmes ouverts',d:'Chercher plusieurs solutions'},
-        {id:'geometrie_log',e:'🔷',n:'Figures et transformations',d:'Symétrie, rotation, patrons'},
+        {id:'geometrie_log',e:'🔷',n:'Figures et transformations',d:'Symétrie, patrons, vision dans l\'espace'},
       ]},
       {id:'ortho_cm2',icon:'🧠',name:'Entraînement Mémoire & Compréhension',desc:'Exercices ciblés orthophonie — mémoire, compréhension, orthographe',isOrtho:true,topics:[
         {id:'memoire_visuelle',e:'👁️',n:'Mémoire visuelle',d:'Mémoriser des séquences, des mots, des images mentales'},
@@ -1018,39 +1124,54 @@ const PROFILES = {
     ]
   },
   pre:{
-    name:'Première',emoji:'🎯',color:'var(--pre-color)',light:'var(--pre-light)',
-    welcome:'Espace Première — Niveau expert',
+    name:'Terminale',emoji:'🎯',color:'var(--pre-color)',light:'var(--pre-light)', // clé historique 'pre' conservée (Marie, désormais en Terminale)
+    welcome:'Espace Terminale — Objectif bac de maths',
     sub:'Entraînement type bac, correction exigeante et fiches de révision.',
     subjects:[
-      {id:'math',icon:'∑',name:'Mathématiques',desc:'Suites, dérivées, probabilités',topics:[
-        {id:'suites',e:'∞',n:'Suites',d:'Arithmétiques, géométriques, limites'},
-        {id:'derivees',e:'∂',n:'Dérivation',d:'Calcul, tableaux de variations'},
-        {id:'integrales',e:'∫',n:'Intégration',d:'Primitives, calcul d\'aires'},
-        {id:'proba',e:'🎲',n:'Probabilités',d:'Loi binomiale, conditionnelles'},
-        {id:'trigo',e:'〰️',n:'Trigonométrie',d:'Cercle trigonométrique, formules'},
-        {id:'complexes',e:'ℂ',n:'Nombres complexes',d:'Forme algébrique, module, argument'},
+      {id:'math',icon:'∑',name:'Mathématiques',desc:'Spécialité Terminale — préparation au bac',topics:[
+        {id:'sujet_bac',e:'🏆',n:'Exercice type bac',d:'Exercice complet multi-chapitres, parties A et B, barème'},
+        {id:'qcm_bac',e:'☑️',n:'QCM type bac',d:'4 questions, 4 réponses proposées, sans justification'},
+        {id:'suites',e:'∞',n:'Suites',d:'Récurrence, limites, convergence monotone'},
+        {id:'limites_continuite',e:'↗️',n:'Limites et continuité',d:'Limites de fonctions, asymptotes, TVI'},
+        {id:'derivees',e:'∂',n:'Dérivation et convexité',d:'Composée, dérivée seconde, convexité, inflexion'},
+        {id:'logarithme',e:'㏑',n:'Logarithme népérien',d:'Propriétés, équations, inéquations, étude de fonction'},
+        {id:'exponentielle',e:'📈',n:'Exponentielle',d:'Révision de Première, études de fonctions'},
+        {id:'trigo',e:'〰️',n:'Fonctions trigonométriques',d:'Sinus, cosinus : dérivées, variations, équations'},
+        {id:'primitives_ed',e:'🔁',n:'Primitives et équations différentielles',d:'y\'=ay, y\'=ay+b, primitives usuelles'},
+        {id:'integrales',e:'∫',n:'Calcul intégral',d:'Aires, intégration par parties, valeur moyenne'},
+        {id:'denombrement',e:'🔢',n:'Dénombrement',d:'Listes, arrangements, combinaisons, triangle de Pascal'},
+        {id:'espace',e:'🧊',n:'Géométrie dans l\'espace',d:'Vecteurs, droites, plans, orthogonalité, équations'},
+        {id:'proba',e:'🎲',n:'Loi binomiale',d:'Schéma de Bernoulli, conditionnelles, arbres'},
+        {id:'va_sommes',e:'📊',n:'Sommes de variables aléatoires',d:'Espérance, variance, Bienaymé-Tchebychev, loi des grands nombres'},
+        {id:'algo_python',e:'🐍',n:'Algorithmique Python',d:'Suites, seuils, listes, simulation'},
       ]},
-      {id:'fr',icon:'📝',name:'Français',desc:'Dissertation, commentaire composé',topics:[
-        {id:'peau',e:'📕',n:'La Peau de chagrin',d:'Balzac — roman, désir, pacte'},
-        {id:'menteur',e:'🎭',n:'Le Menteur',d:'Corneille — comédie classique'},
-        {id:'boetie',e:'✊',n:'Discours servitude',d:'La Boétie — essai, liberté'},
-        {id:'forets',e:'🌲',n:'Mes forêts',d:'Hélène Dorion — poésie contemporaine'},
-        {id:'methodo',e:'📋',n:'Méthodologie',d:'Dissertation, commentaire composé'},
-        {id:'grammaire',e:'🔍',n:'Grammaire bac',d:'Analyse grammaticale avancée'},
+      {id:'philo',icon:'🤔',name:'Philosophie',desc:'Dissertation, explication de texte, notions',topics:[
+        {id:'methodo_dissert',e:'📋',n:'Méthode de la dissertation',d:'Analyse du sujet, problématique, plan'},
+        {id:'explication_texte',e:'🔎',n:'Explication de texte',d:'Thèse, structure, analyse d\'un extrait'},
+        {id:'conscience_liberte',e:'🧠',n:'Conscience, inconscient, liberté',d:'Descartes, Freud, Sartre, Spinoza'},
+        {id:'raison_verite',e:'⚖️',n:'Raison, vérité, science',d:'Platon, Kant, Popper, Bachelard'},
+        {id:'art_technique_travail',e:'🛠️',n:'Art, technique, travail',d:'Kant, Hegel, Marx, Arendt'},
+        {id:'justice_etat_devoir',e:'🏛️',n:'Justice, État, devoir',d:'Platon, Hobbes, Rousseau, Kant'},
+        {id:'bonheur_temps_nature',e:'⏳',n:'Bonheur, temps, nature',d:'Épicure, Pascal, Bergson'},
+        {id:'langage_religion',e:'💬',n:'Langage, religion',d:'Nietzsche, Wittgenstein, Durkheim'},
       ]},
-      {id:'hist',icon:'📜',name:'Histoire-Géo',desc:'Analyse de docs, géopolitique',topics:[
-        {id:'guerres',e:'⚔️',n:'Guerres mondiales',d:'WWI, WWII, causes et bilans'},
-        {id:'decolonisation',e:'🌍',n:'Décolonisation',d:'Indépendances, nouveaux États'},
-        {id:'guerre_froide',e:'☢️',n:'Guerre froide',d:'Blocs, crises, chute du mur'},
-        {id:'geo_monde',e:'🗺️',n:'Géopolitique',d:'Mondialisation, puissances, conflits'},
-        {id:'france',e:'🇫🇷',n:'France contemporaine',d:'Ve République, société française'},
+      {id:'hist',icon:'📜',name:'Histoire-Géo',desc:'Programme de Terminale, analyse de documents',topics:[
+        {id:'guerres',e:'⚔️',n:'Années 1930 et Seconde Guerre mondiale',d:'Crise de 1929, totalitarismes, guerre d\'anéantissement'},
+        {id:'guerre_froide',e:'☢️',n:'Le monde bipolaire (1945-1970)',d:'Guerre froide, ONU, construction européenne'},
+        {id:'decolonisation',e:'🌍',n:'Décolonisation et Tiers-monde',d:'Indépendances, nouveaux États, non-alignement'},
+        {id:'annees70_91',e:'📉',n:'Années 1970 à 1991',d:'Chocs pétroliers, fin du communisme, évolutions en France'},
+        {id:'monde_1990',e:'🌐',n:'Le monde depuis 1990',d:'Nouvelles conflictualités, UE, France'},
+        {id:'mers_oceans',e:'🌊',n:'Mers et océans',d:'Au cœur de la mondialisation'},
+        {id:'geo_monde',e:'🗺️',n:'Territoires dans la mondialisation',d:'Coopérations, tensions, Union européenne'},
+        {id:'france',e:'🇫🇷',n:'La France et ses régions',d:'Dans l\'UE et la mondialisation'},
       ]},
-      {id:'spe',icon:'🔭',name:'Spécialités',desc:'Exercices de spécialité',topics:[
-        {id:'phys_chimie',e:'⚗️',n:'Physique-Chimie',d:'Mécanique, optique, chimie organique'},
-        {id:'svt',e:'🧬',n:'SVT',d:'Génétique, évolution, neurosciences'},
-        {id:'info',e:'💻',n:'NSI',d:'Algorithmes, programmation Python'},
-        {id:'eco',e:'📊',n:'SES',d:'Économie, sociologie, science politique'},
-        {id:'philo',e:'🤔',n:'Philosophie',d:'Notions, auteurs, dissertations'},
+      {id:'spe',icon:'🔭',name:'Spécialités',desc:'Programme de Terminale + Grand oral',topics:[
+        {id:'phys_chimie',e:'⚗️',n:'Physique-Chimie',d:'Lois de Newton, ondes, thermodynamique, acide-base, cinétique'},
+        {id:'svt',e:'🧬',n:'SVT',d:'Génétique et évolution, géologie, corps humain'},
+        {id:'info',e:'💻',n:'NSI',d:'Structures de données, POO, récursivité, graphes, SQL'},
+        {id:'eco',e:'📊',n:'SES',d:'Croissance, commerce international, chômage, inégalités'},
+        {id:'hggsp',e:'🌍',n:'HGGSP',d:'Puissances, guerre et paix, patrimoine, environnement, connaissance'},
+        {id:'grand_oral',e:'🎤',n:'Grand oral',d:'Préparer ses questions, l\'exposé et l\'entretien'},
       ]},
       {id:'logique',icon:'🧩',name:'Logique & Problèmes',desc:'Raisonnement avancé, démonstration',topics:[
         {id:'demonstration',e:'📐',n:'Démonstration',d:'Raisonnement par récurrence, absurde, contraposée'},
@@ -1077,7 +1198,7 @@ let hintCount=0, currentQuestion='', sessionExoCount=0;
 // Load from localStorage or start fresh
 // ── Data layer: localStorage + Firebase sync ──────────────
 const DEFAULT_DATA = {
-  progress:{cm2:{math:0,fr:0,sci:0,hist:0,spe:0},sec:{math:0,fr:0,sci:0,hist:0,spe:0},pre:{math:0,fr:0,sci:0,hist:0,spe:0}},
+  progress:{cm2:{math:0,fr:0,sci:0,hist:0,spe:0,consignes:0},sec:{math:0,fr:0,sci:0,hist:0,spe:0},pre:{math:0,fr:0,sci:0,hist:0,spe:0}},
   totalScore:{cm2:0,sec:0,pre:0},
   scaffolding:{cm2:{},sec:{},pre:{}},
   srs:{cm2:{},sec:{},pre:{}}, // Spaced Repetition: {topicKey: {score,nextReview,interval,streak}}
@@ -1254,6 +1375,9 @@ function startDailyTimer(){
   const g = getGamification();
   const today = getTodayKey();
   if(!g.dailyLog[today]) g.dailyLog[today]={minutes:0,correct:0,total:0,xp:0};
+  // Keep a running segment (screen changes between exercises must not reset it),
+  // but drop one left open from an earlier day / closed tab.
+  if(g.sessionStart && Date.now()-g.sessionStart < 3600000) return;
   g.sessionStart = Date.now();
 }
 
@@ -1262,7 +1386,8 @@ function stopDailyTimer(){
   if(!g.sessionStart) return;
   const today = getTodayKey();
   if(!g.dailyLog[today]) g.dailyLog[today]={minutes:0,correct:0,total:0,xp:0};
-  const elapsed = Math.round((Date.now()-g.sessionStart)/60000);
+  // Fractional minutes (short segments used to round to 0); one segment counts 60 min max
+  const elapsed = Math.min(60, (Date.now()-g.sessionStart)/60000);
   g.dailyLog[today].minutes = Math.min(180, (g.dailyLog[today].minutes||0)+elapsed);
   g.sessionStart = null;
   saveData();
@@ -1271,7 +1396,8 @@ function stopDailyTimer(){
 function getDailyProgress(){
   const g = getGamification();
   const today = getTodayKey();
-  return g.dailyLog[today] || {minutes:0,correct:0,total:0,xp:0};
+  const d = g.dailyLog[today] || {minutes:0,correct:0,total:0,xp:0};
+  return {...d, minutes:Math.floor(d.minutes||0)};
 }
 
 function getLast7Days(){
@@ -1498,7 +1624,7 @@ async function loadApiKeyFromFirebase(){
   try{
     const db=window._db, docFn=window._fsDoc, getFn=window._fsGetDoc;
     const snap=await getFn(docFn(db,'edusmart','_config'));
-    if(snap.exists()){
+    if(snap.exists){
       const key=snap.data().apiKey;
       if(key && key.startsWith('sk-ant-')){
         ANTHROPIC_KEY=key;
@@ -1514,16 +1640,28 @@ async function loadFromFirebase(profileKey){
   try{
     const db=window._db, docFn=window._fsDoc, getFn=window._fsGetDoc;
     const snap = await getFn(docFn(db,'edusmart',profileKey));
-    if(snap.exists()){
+    if(snap.exists){
       const d=snap.data();
-      // Merge: keep most recent (firebase wins if score higher)
+      // Merge ONLY this profile's slice: each profile doc is written by the
+      // device where that child logged in, so its data for the other
+      // children may be stale. Firebase wins if its score is >= local.
       if(d.totalScore && d.progress){
-        // Take whichever has higher total across all profiles
-        const fbTotal=(d.totalScore.cm2||0)+(d.totalScore.sec||0)+(d.totalScore.pre||0);
-        const lcTotal=(totalScore.cm2||0)+(totalScore.sec||0)+(totalScore.pre||0);
-        if(fbTotal>=lcTotal){
-          progress=d.progress;
-          totalScore=d.totalScore;
+        const fbScore=d.totalScore[profileKey]||0;
+        const lcScore=totalScore[profileKey]||0;
+        if(fbScore>=lcScore){
+          const fp=d.progress;
+          if(fp[profileKey]) progress[profileKey]=fp[profileKey];
+          ['scaffolding','srs','notSeen','orthoLog','customSubjects','lessons'].forEach(k=>{
+            if(fp[k] && fp[k][profileKey]!==undefined){
+              if(!progress[k]) progress[k]={};
+              progress[k][profileKey]=fp[k][profileKey];
+            }
+          });
+          if(profileKey==='cm2' && fp.gamification && fp.gamification.cm2){
+            if(!progress.gamification) progress.gamification={};
+            progress.gamification.cm2=fp.gamification.cm2;
+          }
+          totalScore[profileKey]=fbScore;
           saveData(); // sync back to localStorage
         }
         return true;
@@ -1538,7 +1676,7 @@ function showSyncBadge(msg){
   if(!badge){
     badge=document.createElement('div');
     badge.id='sync-badge';
-    badge.style.cssText='position:fixed;bottom:1rem;right:1rem;background:#1a1a1a;color:#fff;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:99px;z-index:999;opacity:0;transition:opacity .3s;font-family:Nunito,sans-serif';
+    badge.style.cssText='position:fixed;top:4.2rem;right:1rem;background:#1a1a1a;color:#fff;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:99px;z-index:999;opacity:0;transition:opacity .3s;font-family:Nunito,sans-serif';
     document.body.appendChild(badge);
   }
   badge.textContent=msg;
@@ -1660,8 +1798,10 @@ async function checkPwd(){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if(id==='exercise' || id==='tutor') startCM2Session();
+  if(id!=='exercise' && memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
 }
-function goHome(){currentProfile=null;window._currentProfileKey=null;showScreen('home')}
+function goHome(){stopCM2Session();currentProfile=null;window._currentProfileKey=null;showScreen('home')}
 function goToDash(){
   stopCM2Session(); // stop daily timer
   // If coming from session-end, refresh subject picker to clear stale banners
@@ -1673,6 +1813,7 @@ function goToDash(){
 }
 function goToPickerBack(){
   // From subject picker → go back to dashboard
+  stopCM2Session();
   currentSubjectObj=null;
   showScreen('dashboard');
   // Render CM2 gamification section
@@ -1763,7 +1904,8 @@ function showDashboard(){
   // Subjects → click opens topic picker
   const grid=document.getElementById('subjects-grid');
   grid.innerHTML='';
-  p.subjects.forEach(s=>{
+  const subjects=getProfileSubjects(currentProfile);
+  subjects.forEach(s=>{
     const card=document.createElement('div');
     card.className = s.isOrtho ? 'subj-card ortho-card' : 'subj-card';
     const orthoBadge = s.isOrtho ? ' <span class="ortho-badge">Orthophonie</span>' : '';
@@ -1775,7 +1917,7 @@ function showDashboard(){
   // Progress bars
   const pb=document.getElementById('progress-bars');
   pb.innerHTML='';
-  p.subjects.forEach(s=>{
+  subjects.forEach(s=>{
     const pct=Math.min(100,progress[currentProfile][s.id]||0);
     const color=currentProfile==='cm2'?'#1D9E75':currentProfile==='sec'?'#378ADD':'#7F77DD';
     pb.innerHTML+=`<div class="prog-item"><div class="prog-label"><span>${s.name}</span><span>${pct}%</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
@@ -1856,11 +1998,12 @@ function startExerciseOnTopic(subjectObj, topic){
     topicId: topic.id,
     topicName: topic.n,
     topicDesc: topic.d,
-    isAdaptive: true  // ← Learning agent activé pour sujets précis aussi
+    isAdaptive: true, // ← Learning agent activé pour sujets précis aussi
+    customPrompt: subjectObj.customPrompt || ''
   };
   sessionExoCount++;
   // Show adaptive badge
-  const lvl = getScaffoldLevel();
+  const lvl = getScaffoldDisplayLevel();
   const bcolor = currentProfile==='cm2'?'background:#E1F5EE;color:#0F6E56':
                  currentProfile==='sec'?'background:#E6F1FB;color:#185FA5':
                  'background:#EEEDFE;color:#3C3489';
@@ -1935,7 +2078,8 @@ function pickNextAgentTopic(){
     topicId: topic.id,
     topicName: topic.n,
     topicDesc: topic.d,
-    isAgent: true
+    isAgent: true,
+    customPrompt: currentSubjectObj.customPrompt || ''
   };
   sessionExoCount++;
   const badge = '<span class="agent-mode-badge">Agent IA</span>';
@@ -1970,7 +2114,7 @@ function nextExercise(){
   sessionExoCount++;
   showLoadingState();
   if(currentSubject && !currentSubject.isAgent){
-    const lvl=getScaffoldLevel();
+    const lvl=getScaffoldDisplayLevel();
     const icon=currentSubject.icon||'📚';
     const name=currentSubject.name||'';
     const bcolor=currentProfile==='cm2'?'background:#EEEDFE;color:#3C3489':currentProfile==='sec'?'background:#E6F1FB;color:#185FA5':'background:#EEEDFE;color:#3C3489';
@@ -1984,6 +2128,8 @@ function nextExercise(){
 }
 
 function showLoadingState(){
+  const nb=document.getElementById('btn-next');
+  if(nb){ nb.onclick=nextExercise; nb.textContent='➡️ Nouvel exercice'; nb.style.background=''; }
   document.getElementById('hint-zone').innerHTML='';
   document.getElementById('feedback-zone').innerHTML='';
   document.getElementById('answer-zone').style.display='none';
@@ -2015,7 +2161,7 @@ async function generateExercise(){
   // Try to load API key if missing
   if(!ANTHROPIC_KEY) await ensureApiKey();
   if(!ANTHROPIC_KEY){
-    document.getElementById('q-text').innerHTML='<div style="padding:1rem;color:#E24B4A">⚠️ Clé API non configurée.<br><br><button style="padding:8px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">🔑 Configurer maintenant</button></div>';
+    document.getElementById('q-text').innerHTML='<div style="padding:1rem;color:#E24B4A">⚠️ Clé API non configurée.<br><br><button onclick="showApiKeyModal()" style="padding:8px 16px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">🔑 Configurer maintenant</button></div>';
     return;
   }
   const levelDesc=getLevelDesc();
@@ -2024,19 +2170,27 @@ async function generateExercise(){
   const isFrench = currentSubject && (currentSubject.id==='fr' || currentSubject.topicId?.includes('fr') ||
     ['peau','menteur','boetie','forets','methodo','grammaire','conjugaison','accord','vocabulaire',
      'figures','lecture','expression','orthographe'].includes(currentSubject.topicId));
-  const nQuestions = isCM2 ? 1 : 3; // fixed 3 questions for lycee
+  const nQuestions = isReadHideTopic() ? getReadHideDifficulty().questions
+    : currentProfile==='pre' && currentSubject.topicId==='sujet_bac' ? 5
+    : currentProfile==='pre' && currentSubject.topicId==='qcm_bac' ? 4
+    : isCM2 ? 1 : 3; // fixed 3 questions for lycee
   // Build topic-aware subject prompt
   const basePrompt = getSubjectPrompt();
   // Build adaptive context from topic history
   let topicExtra = '';
   let adaptiveExtra = '';
 
-  if(currentSubject.topicName){
+  if(currentSubject.isLesson){
+    topicExtra = 'LEÇON DE L\'ÉLÈVE (source unique, recopiée de son cahier) :\n---\n' + currentSubject.lessonText + '\n---\n'
+      + 'Crée un exercice qui vérifie que l\'élève a compris et retenu CETTE leçon, avec son vocabulaire, ses définitions et ses méthodes. '
+      + 'Varie d\'un exercice à l\'autre : définition à restituer, application directe, exemple à trouver, vrai/faux justifié, petit problème utilisant la notion. '
+      + 'N\'interroge sur rien qui ne soit pas dans la leçon.';
+  } else if(currentSubject.topicName){
     topicExtra = 'SUJET PRÉCIS à traiter : ' + currentSubject.topicName + ' (' + (currentSubject.topicDesc||'') + '). Cible UNIQUEMENT ce sujet.';
   }
 
   if(currentSubject.isAdaptive || currentSubject.isAgent){
-    const lvl = getScaffoldLevel();
+    const lvl = getScaffoldDisplayLevel();
     const topicScores = (progress[currentProfile] && progress[currentProfile][currentSubject.id+'_topics']) || {};
     const topicScore = topicScores[currentSubject.topicId] || 0;
     const exercicesDone = sessionExoCount;
@@ -2061,6 +2215,29 @@ async function generateExercise(){
   if(currentSubject.id==='ortho_cm2' && (currentSubject.topicId==='memoire_visuelle' || currentSubject.topicId==='memoire_auditive')){
     const md = getMemoryDifficulty();
     memoExtra = `DIFFICULTE_MEMO : niveau ${md.label} → utilise EXACTEMENT ${md.items} éléments dans PHASE_MEMO. Mots du quotidien uniquement, un seul mot par élément, séparés par " - ".`;
+  }
+
+  if(currentProfile==='pre' && currentSubject.topicId==='sujet_bac'){
+    memoExtra += `\nEXERCICE TYPE BAC : un exercice complet comme dans un sujet du bac de spécialité maths (environ 5 points), qui MÉLANGE 2 ou 3 chapitres de Terminale (ex : suite + fonction logarithme, probabilités + suite, fonction exponentielle + intégrale, espace + produit scalaire). Le contexte présente la situation et les parties (Partie A / Partie B). Le tableau questions contient EXACTEMENT 5 questions progressives, chacune annonce sa partie et ses points, par exemple « (Partie A — 1 pt) ». Les résultats intermédiaires utiles pour la suite sont donnés dans l énoncé.`;
+  }
+  if(currentProfile==='pre' && currentSubject.topicId==='qcm_bac'){
+    memoExtra += `\nQCM TYPE BAC : comme l exercice QCM des sujets du bac. Le contexte rappelle la règle : « Pour chaque question, une seule des quatre réponses proposées est exacte. Aucune justification n est demandée. » Le tableau questions contient EXACTEMENT 4 questions de chapitres DIFFÉRENTS, chacune avec ses 4 propositions notées a., b., c., d. sur des lignes séparées. L élève répond par la lettre. Les mauvaises réponses correspondent à des erreurs classiques.`;
+  }
+
+  // Read-then-hide: the text is shown once, then hidden while the questions are asked
+  if(isReadHideTopic()){
+    const rh = getReadHideDifficulty();
+    const styles = {
+      jeu_piste: `JEU DE PISTE : un parcours raconté à la 2e personne (« Tu sors de la cabane, tu prends le chemin de gauche... »). Décor créatif et varié d un exercice à l autre (forêt enchantée, château, île au trésor, station spatiale, ville romaine, musée la nuit, montagne enneigée...). Le parcours contient ${rh.steps} étapes avec des directions (gauche, droite, tout droit, monter, traverser), des repères (pont rouge, grand chêne, fontaine), des objets à ramasser et des nombres (3 clés, porte n°7). Une étape par ligne, numérotée.`,
+      consigne_cachee: `CONSIGNE CACHÉE : une vraie consigne d exercice scolaire de 6e (maths, français, sciences ou histoire) à ${rh.steps} actions, avec son petit support (liste de mots, de nombres, mini-texte de 2 phrases). Exemples d actions : souligner, entourer, recopier, ranger dans l ordre croissant, colorier, compter, barrer. Les questions portent sur la consigne elle-même : quelle action faire en premier, avec quelle couleur, sur quels mots, combien d éléments, ce qu il ne fallait PAS faire.`,
+      details_memoire: `ŒIL DE DÉTECTIVE : une scène courte et vivante (marché, cour de récréation, vaisseau pirate, laboratoire, stade...) décrite en ${rh.steps} phrases, riche en détails à retenir : couleurs, nombres, positions (à gauche de, sous, derrière), noms de personnages, objets.`
+    };
+    memoExtra += `\nMODE LIRE-PUIS-CACHER (EXCEPTION à la règle 1 : les questions ne doivent PAS redonner les informations du texte) :
+- Le champ "context" contient le TEXTE À LIRE. L élève le lit, puis il est CACHÉ : il répond de mémoire.
+- ${styles[currentSubject.topicId]}
+- Phrases courtes et simples, vocabulaire de 11 ans, mise en forme markdown aérée (gras sur 1 ou 2 mots-clés maximum).
+- Le tableau questions contient EXACTEMENT ${rh.questions} questions courtes, une seule chose demandée par question, réponse en un mot, un nombre ou une courte phrase. Mélange : détail précis (couleur, nombre, objet), ordre des étapes (« qu as-tu fait juste après... ? »), direction (« à la sortie de la forêt, tu prends à gauche ou à droite ? »), compréhension (« pourquoi... ? », « où arrives-tu à la fin ? »).
+- Chaque réponse se trouve explicitement dans le texte. Pas de piège sur des détails non écrits.`;
   }
 
   const subjectPrompt = [basePrompt, topicExtra, adaptiveExtra, memoExtra].filter(Boolean).join('\n');
@@ -2089,13 +2266,13 @@ REGLES DE CORRECTION STRICTES :
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
 {"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).","questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
-NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
+NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts. Ne fusionne JAMAIS plusieurs questions dans un seul objet.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
 Ne donne PAS les réponses.`;
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:1200,
+      model:'claude-sonnet-4-5', max_tokens: isCM2 ? 1200 : 2500,
       system:systemPrompt,
       messages:[{role:'user',content:'Génère un exercice.'}]
     });
@@ -2139,6 +2316,7 @@ Ne donne PAS les réponses.`;
       return;
     }
     exoContext=parsed.context||'';
+    readPhaseDone=false; peekUsed=false;
     let rawQs = (parsed.questions||[]).slice(0, nQuestions); // cap to max
     // If not enough questions generated, request is still valid — show what we have
     if(rawQs.length === 0){
@@ -2181,9 +2359,13 @@ function showCurrentQuestion(){
   document.getElementById('exo-pts').textContent=`Q${currentQIdx+1}/${total}`;
 
   // Build question text
+  if(isReadHideTopic() && exoContext && !readPhaseDone){
+    showReadPhase();
+    return;
+  }
   let fullText='';
-  if(currentQIdx===0 && exoContext) fullText=exoContext+'\n\n';
-  fullText+='**'+( total>1?'Question '+(currentQIdx+1)+' :'+' ':'')+'**'+q.q;
+  if(currentQIdx===0 && exoContext && !isReadHideTopic()) fullText=exoContext+'\n\n';
+  fullText+=(total>1?'**Question '+(currentQIdx+1)+' :** ':'')+q.q;
 
   // 2-phase memory exercise detection
   if(fullText.includes('PHASE_MEMO:') && fullText.includes('PHASE_RAPPEL:')){
@@ -2194,8 +2376,19 @@ function showCurrentQuestion(){
   renderMarkdownMath(fullText,'q-text');
   const az=document.getElementById('answer-zone');
   az.style.display='block';
+  // Problem-solving checklist for Amaury (6e) on consignes / problems / logic
+  const mc=document.getElementById('method-card');
+  if(mc){
+    const showMethod = currentProfile==='cm2' && !isReadHideTopic() && (currentSubject.id==='consignes' || currentSubject.id==='logique'
+      || (currentSubject.id==='math' && ['problemes','proportionnalite','mesures'].includes(currentSubject.topicId)));
+    mc.style.display = showMethod ? 'block' : 'none';
+    mc.open = showMethod && (getScaffoldLevel() <= 4);
+  }
   document.getElementById('answer-input').value=answers[currentQIdx]||'';
   document.getElementById('answer-input').focus();
+
+  // Read-then-hide: one "peek" joker per exercise (costs points like a hint)
+  renderPeekButton();
 
   // Hint button
   const hintBtn=document.getElementById('hint-btn');
@@ -2235,7 +2428,7 @@ function getScaffoldLevel(){
   if(!progress.scaffolding[prof]) progress.scaffolding[prof]={};
   const topicKey = currentSubject?.topicId || currentSubject?.id || 'general';
   if(!progress.scaffolding[prof][topicKey]){
-    return getInitialScaffoldLevel(prof, topicKey);
+    return getInitialScaffoldLevel(prof, currentSubject?.id || '', currentSubject?.topicId || topicKey);
   }
   return progress.scaffolding[prof][topicKey];
 }
@@ -2320,9 +2513,7 @@ function getMemoryDifficulty(){
   return {items, seconds, label, score};
 }
 
-function getInitialScaffoldLevel(prof, topicKey){
-  const parts = topicKey.split('_');
-  const subjId = parts[0], topicId = parts.slice(1).join('_');
+function getInitialScaffoldLevel(prof, subjId, topicId){
   const tscores = (progress[prof]&&progress[prof][subjId+'_topics'])||{};
   const topicScore = tscores[topicId]||0;
   // SRS streak as proxy
@@ -2349,16 +2540,16 @@ const SCAFFOLD_LABELS = ['','🟢 Débutant','🟡 Intermédiaire','🟠 Avancé
 // Scaffold descriptions per profile
 const SCAFFOLD_DESC = {
   cm2: {
-    1: 'DIFFICULTE 1/10 — Très facile : tables <= 5, additions sans retenue <= 20. Ex: 3×4, 8+7.',
-    2: 'DIFFICULTE 2/10 — Facile : tables jusqu à 7, soustractions simples <= 50. Ex: 6×7, 45−18.',
-    3: 'DIFFICULTE 3/10 — Tables complètes (8,9,12), additions avec retenue, nombres <= 100. Ex: 8×9, 67+48.',
-    4: 'DIFFICULTE 4/10 — Calcul mental: 2-chiffres × 1-chiffre, soustractions <= 200. Ex: 24×3, 183−67.',
-    5: 'DIFFICULTE 5/10 — Intermédiaire : 12×tables, doubles, moitiés, problème 1 étape. Ex: 12×7, 12×11, problème simple.',
-    6: 'DIFFICULTE 6/10 — Avancé : 2-chiffres × 2-chiffres simples, fractions simples, problème 2 étapes. Ex: 15×12, 1/4 de 80.',
-    7: 'DIFFICULTE 7/10 — Difficile : multiplication posée complexe, fractions, pourcentages simples, géométrie. Ex: 23×14, 3/8 de 120, périmètre.',
-    8: 'DIFFICULTE 8/10 — Très difficile : combinaison d opérations, fractions + entiers, problème 3 étapes logiques. Ex: 125×16, (3/4)+0.5.',
-    9: 'DIFFICULTE 9/10 — Expert : problèmes complexes multi-étapes, fractions avancées, raisonnement abstrait, pièges.',
-    10: 'DIFFICULTE 10/10 — Maître : niveau CM2 maximal, problèmes ouverts, déduction, tout combiné. Challenger vraiment l élève.'
+    1: 'DIFFICULTE 1/10 — Révision CM2 très guidée : nombres entiers, tables, problème à 1 étape avec données très claires.',
+    2: 'DIFFICULTE 2/10 — Facile : décimaux simples (1 chiffre après la virgule), calculs posés simples, consigne d une seule action.',
+    3: 'DIFFICULTE 3/10 — Début de 6e : comparer/ranger des décimaux, fractions simples (1/2, 1/4, 3/4), problème à 1 étape.',
+    4: 'DIFFICULTE 4/10 — 6e facile : opérations sur décimaux, fraction d une quantité, problème à 2 étapes guidé.',
+    5: 'DIFFICULTE 5/10 — 6e standard : problème à 2 étapes non guidé, proportionnalité simple, périmètres.',
+    6: 'DIFFICULTE 6/10 — 6e standard+ : données inutiles dans l énoncé, aires, conversions, consigne à 2-3 actions.',
+    7: 'DIFFICULTE 7/10 — 6e exigeant : problème à 3 étapes, pourcentages simples, symétrie, justification attendue.',
+    8: 'DIFFICULTE 8/10 — Très exigeant : combinaison de notions, énoncé avec tableau ou graphique à lire.',
+    9: 'DIFFICULTE 9/10 — Expert : problèmes complexes multi-étapes, pièges classiques, raisonnement à expliquer.',
+    10: 'DIFFICULTE 10/10 — Maître : meilleur niveau de 6e, problèmes ouverts, déduction, tout combiné.'
   },
   sec: {
     1: 'SCAFFOLDING Niveau 1 Seconde : bases solides du collège, exercice guidé avec méthode rappelée. Pas trop facile — niveau 4e/3e exigeant.',
@@ -2367,20 +2558,26 @@ const SCAFFOLD_DESC = {
     4: 'SCAFFOLDING Niveau 4 Seconde : exercice de haut niveau, type concours, démonstration complète attendue, difficulté maximale pour une Seconde.'
   },
   pre: {
-    1: 'SCAFFOLDING Niveau 1 Première : bases de seconde solides, exercice guidé mais pas trivial. Niveau début de première.',
-    2: 'SCAFFOLDING Niveau 2 Programme Premiere standard : exercice type bac classique, 3-4 questions progressives, niveau attendu en premiere.',
-    3: 'SCAFFOLDING Niveau 3 Avance Premiere : exercice difficile type bac, questions ouvertes, justifications rigoureuses exigees, proche des sujets difficiles.',
-    4: 'SCAFFOLDING Niveau 4 Expert Premiere : exercice de haut niveau, sujet de concours ou bac blanc difficile, maîtrise totale attendue, aucune aide.'
+    1: 'SCAFFOLDING Niveau 1 Terminale : application directe du cours, méthode rappelée dans l énoncé, calculs guidés. Niveau début de Terminale.',
+    2: 'SCAFFOLDING Niveau 2 Terminale standard : exercice type bac classique, questions progressives, niveau attendu au bac.',
+    3: 'SCAFFOLDING Niveau 3 Terminale avancé : exercice difficile type bac, moins guidé, justifications rigoureuses exigées, proche des questions qui départagent au bac.',
+    4: 'SCAFFOLDING Niveau 4 Terminale expert : niveau des meilleures copies / bac blanc difficile, questions ouvertes, prise d initiative, aucune aide.'
   }
 };
 
-function getLevelDesc(){
+function getLevelDesc(withTheme=true){
   const p=currentProfile;
-  const lvl=getScaffoldLevel();
+  const lvl=p==='cm2' ? getCM2DifficultyLevel() : getScaffoldDisplayLevel();
   const scaffoldText=(SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
-  const LATEX_CM2=`FORMAT CM2 : utilise les symboles directs x (multiplication), / (division). LaTeX uniquement pour les fractions: $\\frac{3}{4}$.`;
+  const LATEX_CM2=`FORMAT 6e : utilise les symboles directs x (multiplication), / (division). LaTeX uniquement pour les fractions: $\\frac{3}{4}$.`;
   const LATEX_SEC=`FORMAT LATEX Seconde : toujours $...$ pour les maths : $\\frac{a}{b}$, $x^2$, $\\sqrt{x}$, $\\vec{u}$, $\\leq$, $\\geq$, $+\\infty$, $\\mathbb{R}$. Formules centrees avec $$...$$. Symboles directs dans le texte : x / - <= >=. JAMAIS de LaTeX sans $.`;
-  const LATEX_PRE=`FORMAT LATEX Premiere : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $e^{i\\theta}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
+  const LATEX_PRE=`FORMAT LATEX Terminale : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $\\binom{n}{k}$, $\\vec{u}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
+  // No narrative theme for hints/corrections, memory drills and consigne/problem decoding:
+  // the theme adds reading load exactly where Amaury needs a clean statement.
+  const NO_THEME_TOPICS = ['jeu_piste','consigne_cachee','details_memoire','memoire_visuelle','memoire_auditive','vocab_consignes','consignes_etapes','reformuler','donnees_utiles','question_intermediaire'];
+  if(p==='cm2' && (!withTheme || currentSubject?.isLesson || NO_THEME_TOPICS.includes(currentSubject?.topicId))){
+    return `6e (11-12 ans, collège France). ${scaffoldText} Phrases courtes, vocabulaire simple, une seule consigne par phrase. ${LATEX_CM2}`;
+  }
   if(p==='cm2'){
     // Rotate themes based on session count for variety
     // Large pool — pick random subset each time to maximize variety
@@ -2464,36 +2661,52 @@ function getLevelDesc(){
     const newHistory = [...themeHistory, originalIdx].slice(-8);
     try{ localStorage.setItem('edusmart_theme_history', JSON.stringify(newHistory)); }catch(e){}
     // theme set above from pool
-    return `CM2 (9-10 ans, primaire France). ${scaffoldText} IMPORTANT : intègre le thème suivant dans le contexte narratif de l'exercice : ${theme}. L'exercice doit utiliser ce thème pour rendre la situation concrète et fun (noms de personnages, lieux, objets du thème). Sois enthousiaste, utilise des emojis. ${LATEX_CM2}`;
+    return `6e (11-12 ans, collège France). ${scaffoldText} IMPORTANT : intègre le thème suivant dans le contexte narratif de l'exercice : ${theme}. Le thème sert UNIQUEMENT à habiller la situation (noms, lieux, objets) : il ne doit jamais rallonger l'énoncé ni ajouter de vocabulaire difficile. Phrases courtes, une seule consigne par phrase. Sois enthousiaste, utilise quelques emojis. ${LATEX_CM2}`;
   }
   if(p==='sec') return `Seconde (15-16 ans, lycee France). ${scaffoldText} ${LATEX_SEC}`;
-  return `Premiere (16-17 ans, lycee France). ${scaffoldText} ${LATEX_PRE}`;
+  return `Terminale (17-18 ans, lycée France, spécialité mathématiques, bac en juin). ${scaffoldText} ${LATEX_PRE}`;
 }
 
 function getSubjectPrompt(){
   const s=currentSubject.id;
   const p=currentProfile;
   const subjectMap={
-    math:{cm2:'Maths CM2 - exercices courts et ciblés sur UNE notion : tables de multiplication (trouver 5 résultats), addition/soustraction avec retenue (3 calculs posés), problème à 1-2 étapes maximum avec contexte amusant (pas plus de 3 lignes d\'énoncé), fraction simple (comparer ou colorier), géométrie (reconnaître une forme, calculer un périmètre simple). INTERDIT : problèmes à plus de 3 étapes, énoncés de plus de 4 lignes, plusieurs notions mélangées.',
+    math:{cm2:'Maths 6e (programme cycle 3) - exercices courts et ciblés sur UNE notion : nombres décimaux (comparer, ranger, droite graduée), calcul posé et mental sur les décimaux, fractions (partage, fraction d une quantité), proportionnalité, problème à 1-3 étapes avec contexte concret (pas plus de 4 lignes d\'énoncé), géométrie (constructions décrites avec des mots, symétrie axiale), grandeurs (périmètre, aire, angles, durées, conversions). Pour un problème : la question est toujours la DERNIÈRE phrase, clairement séparée. INTERDIT : plusieurs notions mélangées, énoncés de plus de 5 lignes, figures impossibles à dessiner en texte.',
       sec:'Algèbre (équations 1er/2nd degré), fonctions affines/polynômes, géométrie dans le plan et l\'espace, statistiques descriptives, trigonométrie. Propose un exercice complet avec une ou deux questions.',
-      pre:'Suites numériques, dérivées, intégrales, probabilités conditionnelles, géométrie dans l\'espace. Exercice de niveau baccalauréat avec justification attendue.'},
-    fr:{cm2:'Orthographe et grammaire CM2 : accord sujet-verbe, accord adjectif, conjugaison (présent, passé composé, imparfait, futur), nature des mots, vocabulaire, antonymes, synonymes. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
+      pre:'Mathématiques, spécialité Terminale (programme officiel, sans maths expertes : PAS de nombres complexes, PAS d arithmétique, PAS de matrices). Chapitres : suites et récurrence, limites et continuité, dérivation et convexité, logarithme népérien, exponentielle, fonctions sinus/cosinus, primitives et équations différentielles, calcul intégral, dénombrement, géométrie dans l espace, loi binomiale, sommes de variables aléatoires et loi des grands nombres, algorithmique Python. Style des sujets du bac de spécialité (épreuve écrite de 4 h) : énoncé rédigé comme au bac, questions numérotées, résultats intermédiaires donnés (« Montrer que... ») pour ne pas bloquer la suite, justification et rédaction attendues. Exercices de type bac souvent en contexte (population, médicament, entreprise, jeu).'},
+    fr:{cm2:'Français 6e : accord sujet-verbe, accords dans le groupe nominal, conjugaison (présent, imparfait, passé simple, futur, passé composé), classes de mots, fonctions (sujet, COD, COI, compléments circonstanciels), homophones, vocabulaire. Pour la lecture : extrait court (5-8 lignes) de mythe, conte ou récit d aventure + 1 question précise. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
       sec:'Grammaire (propositions subordonnées, syntaxe), conjugaison (tous temps), vocabulaire, rédaction courte, analyse d\'un court extrait littéraire. Pose une question ouverte sur un texte ou un exercice de rédaction guidée.',
-      pre:'Français Première - oeuvres au programme de cette élève : (1) La Peau de chagrin de Balzac (roman, realisme, pacte faustien, critique sociale), (2) Le Menteur de Corneille (comedie classique, mensonge et honneur), (3) Discours de la servitude volontaire de La Boetie (essai humaniste, liberte, tyrannie), (4) Mes forets de Helene Dorion (poesie contemporaine, nature, memoire, identite). Varie entre ces oeuvres a chaque exercice. Types : dissertation (problematique + plan detaille), commentaire compose d un extrait fourni, question de grammaire sur un passage, analyse lineaire guidee, question sur le parcours associe. Niveau exigence baccalaureat.'},
-    hist:{cm2:'Histoire naturelle, découvertes scientifiques simples, géographie de base de la France.',
+      pre:''},
+    hist:{cm2:'Histoire-Géographie 6e : débuts de l humanité et Néolithique, Grèce antique (cités, dieux, Homère), récits fondateurs des Hébreux, Rome (fondation, République, Empire), habiter une métropole, habiter un espace de faible densité, habiter les littoraux. Une question précise : définir un mot-clé, situer une date sur une frise, répondre à une question sur un court document fourni dans l énoncé. Respect strict des dates et des faits.',
       sec:'Programme seconde : Méditerranée antique, monde médiéval, Renaissance, géographie physique et humaine.',
-      pre:'Programme première : XXe siècle, guerres mondiales, décolonisation, géopolitique contemporaine.'},
-    sci:{cm2:'Sciences CM2 - 1 seule question courte et amusante sur : corps humain (organe, fonction), animaux (habitat, alimentation, classification), plantes (photosynthèse, parties), états de la matière, météo, environnement. Format : QCM à 3 choix, vrai/faux avec justification en 1 phrase, ou question ouverte avec réponse en 1-2 phrases max. JAMAIS de compte-rendu ou résumé long.',
+      pre:'Histoire-Géographie Terminale (programme officiel) : Histoire — fragilités des démocraties, totalitarismes et Seconde Guerre mondiale (1929-1945) ; le monde bipolaire et la multiplication des acteurs internationaux (1945-années 1970, décolonisation) ; les remises en cause des années 1970 à 1991 ; le monde, l Europe et la France depuis 1990. Géographie — mers et océans au cœur de la mondialisation ; dynamiques territoriales, coopérations et tensions ; l Union européenne dans la mondialisation ; la France et ses régions. Exercices : analyse de document(s) fournis dans l énoncé, question problématisée, croquis décrit en texte, repères chronologiques précis.'},
+    sci:{cm2:'Sciences 6e - 1 seule question courte et amusante sur : classification du vivant, besoins et nutrition des êtres vivants, corps humain, états de la matière et mélanges, énergie et mouvement, système solaire et saisons. Format : QCM à 3 choix, vrai/faux avec justification en 1 phrase, ou question ouverte avec réponse en 1-2 phrases max. JAMAIS de compte-rendu ou résumé long.',
       sec:'Physique-Chimie (mécanique, optique, chimie), SVT (cellule, génétique, écosystèmes). Exercice avec calcul ou analyse.',
       pre:'Spécialités : exercice niveau baccalauréat en physique-chimie ou SVT avec raisonnement scientifique.'},
-    spe:{cm2:'',sec:'',pre:'Sciences spécialité : exercice complet de niveau baccalauréat (physique, chimie ou biologie) avec justifications attendues.'},
+    spe:{cm2:'',sec:'',pre:'Spécialité Terminale, épreuve écrite du bac (programme de Terminale uniquement). Physique-Chimie : mouvements et lois de Newton, mouvement dans un champ, ondes et interférences, lunette, thermodynamique, acide-base et pH, cinétique, équilibres, piles, condensateur et circuit RC. SVT : génétique et évolution, géologie (lithosphère, climats passés), corps humain (comportements, muscle, glycémie, stress, immunité). NSI : structures de données, POO, récursivité, arbres et graphes, bases de données SQL, programmation dynamique, processus et réseaux. SES : croissance, commerce international, chômage, crises financières, intégration européenne, structure sociale, mobilité, travail, engagement politique, justice sociale, environnement. HGGSP : espace, mers, guerre et paix, histoire et mémoires, patrimoine, environnement, connaissance. Grand oral : aider à formuler une question liant les deux spécialités, construire un exposé de 5 minutes et préparer l entretien (questions possibles du jury) ; jamais rédiger l exposé entier à la place de l élève.'},
+    philo:{cm2:'',sec:'',pre:'Philosophie Terminale (programme 2020, épreuve de 4 h : dissertation OU explication de texte). Notions : art, bonheur, conscience, devoir, État, inconscient, justice, langage, liberté, nature, raison, religion, science, technique, temps, travail, vérité. Types d exercices : analyser un sujet de dissertation (définir les termes, dégager le paradoxe, formuler une problématique), proposer et critiquer un plan, mobiliser un auteur et un exemple pour un argument, expliquer un court extrait d un auteur au programme (thèse, mouvement du texte, concept clé). Corrige avec l exigence d un correcteur du bac : problématisation, argumentation, références précises.'},
     logique:{
-      cm2:'Logique et résolution de problèmes CM2 : enigmes simples, suites logiques (trouver le terme suivant avec la règle), problèmes de déduction avec indices, grilles logiques type sudoku 4x4. Enoncé court et ludique (détectives, robots, pirates...). Une seule notion, pas de calcul complexe.',
+      cm2:'Logique et résolution de problèmes 6e : enigmes simples, suites logiques (trouver le terme suivant avec la règle), problèmes de déduction avec indices, grilles logiques type sudoku 4x4. Enoncé court et ludique (détectives, robots, pirates...). Une seule notion, pas de calcul complexe.',
       sec:'Logique et raisonnement Seconde : raisonnement par cas, implications, contraposée, syllogismes, initiation algo (pseudo-code simple), combinatoire de base, enigmes avec justification rigoureuse. 2-3 questions progressives.',
-      pre:'Logique et démonstration Première : raisonnement par récurrence, par l absurde, contraposée, logique propositionnelle, optimisation avec modélisation, complexité algorithmique, problèmes ouverts avec démonstration. Niveau baccalauréat exigeant.'
+      pre:'Logique et démonstration Terminale : raisonnement par récurrence, par l absurde, contraposée, logique propositionnelle, optimisation avec modélisation, complexité algorithmique, problèmes ouverts avec démonstration. Niveau baccalauréat exigeant.'
+    },
+    consignes:{
+      cm2:`CONSIGNES & PROBLÈMES 6e — objectif : apprendre à Amaury à COMPRENDRE ce qu on lui demande avant de répondre (bilan orthophonique : compréhension de texte et de consignes fragiles, mémoire de travail faible).
+REGLES : énoncés courts (3-5 lignes max), phrases simples, contextes du quotidien (cantine, sport, courses, jeux). Une seule compétence par exercice. La réponse attendue est courte (quelques mots, un nombre ou une phrase).
+TYPES selon le sujet :
+- vocab_consignes : donner une consigne contenant un verbe de consigne (calculer, justifier, compléter, entourer, comparer, déduire, expliquer, encadrer, recopier) et demander CE QU IL FAUT FAIRE concrètement, ou choisir parmi 3 propositions ce que veut dire la consigne.
+- consignes_etapes : une consigne à 2-4 actions sur un petit support (liste de mots, de nombres) ; l élève applique TOUTES les actions dans l ordre. Le support est dans l énoncé.
+- reformuler : un problème court ; l élève NE calcule PAS, il écrit avec ses mots ce qu on cherche (« On cherche ... »).
+- donnees_utiles : un énoncé avec 1-2 données inutiles ; l élève recopie les données utiles et barre (cite) les inutiles. Pas de calcul demandé.
+- question_intermediaire : problème à 2 étapes ; l élève doit écrire la question intermédiaire cachée PUIS répondre au problème.
+- choisir_operation : 3 mini-problèmes d une ligne ; pour chacun, l élève indique l opération à faire (sans forcément calculer) et pourquoi en quelques mots.
+- jeu_piste / consigne_cachee / details_memoire : voir MODE LIRE-PUIS-CACHER plus bas.
+- verifier_reponse : un problème avec la réponse d un élève fictif (parfois absurde : unité oubliée, ordre de grandeur faux) ; Amaury dit si elle est logique et rédige la bonne phrase réponse avec l unité.
+CORRECTION : valoriser la démarche (avoir compris la question) autant que le résultat.`,
+      sec:'', pre:''
     },
     ortho_cm2:{
-      cm2:`PROGRAMME ORTHOPHONIQUE AMAURY CM2 — Bilan du 28/05/2026 (mémoire visuelle centile 5, mémoire auditivo-verbale centile 5, compréhension texte fragile, orthographe lexicale faible).
+      cm2:`PROGRAMME ORTHOPHONIQUE AMAURY 6e — Bilan du 28/05/2026 (mémoire visuelle centile 5, mémoire auditivo-verbale centile 5, compréhension texte fragile, orthographe lexicale faible).
 OBJECTIFS : renforcer la mémoire visuelle et auditivo-verbale, améliorer la compréhension de texte et de consignes, consolider l'orthographe lexicale.
 REGLES ABSOLUES pour ces exercices :
 - Exercices COURTS (max 5 minutes), une seule compétence à la fois
@@ -2513,15 +2726,15 @@ TYPES D EXERCICES selon le sujet :
     },
     ortho_pre:{
       cm2:'', sec:'',
-      pre:`PROGRAMME ORTHOPHONIQUE MARIE PREMIÈRE — Bilan du 28/05/2026 (repérage anaphores centile 5, vitesse de repérage centile 5, flexibilité lexicale centile 25, difficultés attentionnelles).
+      pre:`PROGRAMME ORTHOPHONIQUE MARIE TERMINALE — Bilan du 28/05/2026 (réalisé en Première) (repérage anaphores centile 5, vitesse de repérage centile 5, flexibilité lexicale centile 25, difficultés attentionnelles).
 FORCES à appuyer : mémoire excellente (centile 95), compréhension de fond excellente (centile 95), inférences très bonnes.
 OBJECTIFS : améliorer le repérage rapide dans les textes, identifier les reprises anaphoriques, renforcer l attention soutenue et la flexibilité lexicale.
 REGLES pour ces exercices :
-- Textes de niveau Première (littérature, philosophie, sciences)
+- Textes de niveau Terminale (philosophie, histoire, sciences, sujets de spécialité)
 - Exercices chronométrés quand pertinent (compétence de vitesse)
 - Questions précises et ciblées sur la compétence travaillée
 - Progressifs : commencer accessible, finir challengeant
-- Lien avec les œuvres du bac quand possible (La Peau de chagrin, Le Menteur, La Boétie, Hélène Dorion)
+- Lien avec les épreuves de Terminale quand possible : textes de philosophes du programme, énoncés longs de maths ou de spécialité (repérer vite la donnée utile), documents d histoire-géo
 
 TYPES D EXERCICES selon le sujet :
 - anaphores : texte de 10-15 lignes, "À quoi renvoie 'il' ligne 3 ?", "que désigne 'cette réalité' ligne 7 ?", "remplace chaque pronom par ce qu il désigne"
@@ -2575,12 +2788,12 @@ async function getHint(){
   const hintNum=hintsPerQ[currentQIdx];
   document.getElementById('hint-btn').disabled=true;
   document.getElementById('hint-btn').textContent='💡 Chargement...';
-  const levelDesc=getLevelDesc();
+  const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
-  const ctx=exoContext?'Contexte : '+exoContext+'\n\n':'';
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.
+  const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
-Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis.
+${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.`;
   try{
     const resp=await fetchAnthropicWithRetry({
@@ -2633,18 +2846,19 @@ async function submitAnswer(){
   document.getElementById('submit-btn').textContent='Correction en cours...';
   document.getElementById('hint-btn').disabled=true;
   document.getElementById('answer-zone').style.display='none';
-  const levelDesc=getLevelDesc();
+  const levelDesc=getLevelDesc(false);
   const isCM2=currentProfile==='cm2';
-  const ctx=exoContext?'**Contexte :**\n'+exoContext+'\n\n':'';
+  const ctx=(currentSubject.isLesson?'**Leçon de référence (corrige selon cette leçon) :**\n'+currentSubject.lessonText+'\n\n':'')
+    +(exoContext?'**Contexte :**\n'+exoContext+'\n\n':'');
   const qaList=questions.map((q,i)=>
     `**Question ${i+1}:** ${q.q}\n**Réponse élève :** ${answers[i]||'(pas de réponse)'}`
   ).join('\n\n');
   // Build a clean correction prompt without leaking theme context
   const corrLevelDesc = isCM2
-    ? 'CM2 (9-10 ans). Encourage beaucoup, emojis, sois positif meme si erreur.'
+    ? '6e (11-12 ans), difficultés de compréhension de consignes et de mémoire. Encourage beaucoup, emojis, sois positif meme si erreur. Si la réponse est fausse parce que la consigne a été mal comprise, dis-le clairement et reformule la consigne simplement avant de donner la bonne réponse.'
     : currentProfile==='sec'
       ? 'Seconde (15-16 ans). Rigoureux et pédagogue.'
-      : 'Premiere (16-17 ans). Exigeant et pédagogue, niveau bac.';
+      : 'Terminale spécialité maths (17-18 ans). Exigeant et pédagogue, niveau bac. En maths, corrige comme un correcteur du bac : pour chaque question, donne une estimation des points obtenus sur le barème si indiqué, signale les manques de rédaction ou de justification qui coûtent des points (théorème non cité, hypothèse non vérifiée, conclusion absente) et donne la rédaction attendue.';
 
   const systemPrompt=`Tu es un professeur correcteur. Niveau eleve : ${corrLevelDesc}.
 ROLE UNIQUE : corriger les reponses mathematiques ou litteraires de l eleve. Tu ne commentes PAS le contexte narratif de l exercice (histoire, jeux video, personnages). Tu corriges UNIQUEMENT la reponse sur le plan mathematique ou grammatical.
@@ -2767,7 +2981,7 @@ function showAllFeedbacks(raw,isCM2){
     updateDailyStreak();
   }
   const pct=totalV==='CORRECT'?5:totalV==='PARTIEL'?3:1;
-  if(progress[currentProfile][currentSubject.id]<100)
+  if((progress[currentProfile][currentSubject.id]||0)<100)
     progress[currentProfile][currentSubject.id]=Math.min(100,(progress[currentProfile][currentSubject.id]||0)+pct);
   // Track per-topic score + SRS update
   if(currentSubject.topicId){
@@ -2877,6 +3091,14 @@ function showAllFeedbacks(raw,isCM2){
         stopBtn.onclick = stopAgentSession;
         nzone.appendChild(stopBtn);
       }
+    } else {
+      // Free practice: reset the button (it may still carry a previous session's handler)
+      const nextBtn = document.querySelector('#next-zone .btn-next');
+      if(nextBtn){
+        nextBtn.textContent = '➡️ Nouvel exercice';
+        nextBtn.style.background = '';
+        nextBtn.onclick = nextExercise;
+      }
     }
 
     document.getElementById('next-zone').style.display='block';
@@ -2985,11 +3207,11 @@ async function sendTutorMessage(){
   input.value = '';
   addTutorMsg('user', text);
   tutorHistory.push({role:'user', content:text});
-  tutorExchangeCount++;
   await callTutor(text);
 }
 
 async function callTutor(userMsg){
+  if(!ANTHROPIC_KEY) await ensureApiKey();
   if(!ANTHROPIC_KEY){
     addTutorMsg('tutor', "⚠️ Clé API non configurée. Retourne à l'accueil.");
     return;
@@ -3000,7 +3222,7 @@ async function callTutor(userMsg){
   const lvl = getScaffoldDisplayLevel();
   const prof = currentProfile;
   const isCM2 = prof === 'cm2';
-  const levelName = prof==='cm2'?'CM2 (9-10 ans)':prof==='sec'?'Seconde (15-16 ans)':'Première (16-17 ans)';
+  const levelName = prof==='cm2'?'6e (11-12 ans)':prof==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
 
   // Build topic context
   const topicScores = (progress[prof] && progress[prof][tutorSubject.id+'_topics']) || {};
@@ -3037,9 +3259,10 @@ RÈGLES ABSOLUES :
 ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d\u2019accueil chaleureux (2 lignes max) et ta premiere question de diagnostic sur ' + tutorSubject.name + '.' : ''}`;
 
   // Build messages for API
-  const messages = userMsg === 'START_SESSION'
-    ? [{role:'user', content:'Lance la session.'}]
-    : tutorHistory.slice(-12); // keep last 12 exchanges for context
+  // The conversation must start with a user turn (tutorHistory starts with the
+  // tutor's greeting): always prepend the opening request, then the last 12 turns.
+  const messages = [{role:'user', content:'Lance la session.'}]
+    .concat(userMsg === 'START_SESSION' ? [] : tutorHistory.slice(-12));
 
   try{
     const resp = await fetchAnthropicWithRetry({
@@ -3071,16 +3294,9 @@ ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d\u2019accueil
     tutorHistory.push({role:'assistant', content:text});
     addTutorMsg('tutor', text, method);
 
-    // Update scaffold level based on flow
-    if(tutorExchangeCount > 4){
-      const lastUserMsg = tutorHistory.filter(m=>m.role==='user').slice(-1)[0]?.content||'';
-      // Simple heuristic: if tutor asked for explanation and user gave long answer → good sign
-      if(lastUserMsg.length > 80) updateScaffoldLevel('CORRECT');
-    }
-
     // Update badge
-    tutorScaffoldLvl = getScaffoldLevel();
-    document.getElementById('tutor-level-badge').textContent = SCAFFOLD_LABELS[tutorScaffoldLvl];
+    tutorScaffoldLvl = getScaffoldDisplayLevel();
+    document.getElementById('tutor-level-badge').textContent = SCAFFOLD_LABELS[tutorScaffoldLvl] || '';
 
   }catch(e){
     setTutorTyping(false);
@@ -3095,8 +3311,8 @@ document.addEventListener('DOMContentLoaded', function(){
     showApiKeyModal, showExportModal, showImportModal, resetProgress,
     closeExportModal: ()=>document.getElementById('export-modal').classList.remove('open'),
     closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
-    copyExportCode, doImport, goHome, goToPickerBack, startAgentMode,
-    startTutorMode, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
+    copyExportCode, doImport, goHome, goToPickerBack, startAgentMode: ()=>startAgentMode(false),
+    startTutorMode, startLessonMode, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
     sendTutorMessage, goToDash
   };
 
@@ -3130,12 +3346,115 @@ document.addEventListener('DOMContentLoaded', function(){
   const sessionStartBtn = document.getElementById('session-start-btn');
   if(sessionStartBtn) sessionStartBtn.addEventListener('click', launchSession);
 
+  // Lesson screen
+  const lessonPhotoBtn = document.getElementById('lesson-photo-btn');
+  const lessonPhoto = document.getElementById('lesson-photo');
+  if(lessonPhotoBtn) lessonPhotoBtn.addEventListener('click', ()=>lessonPhoto.click());
+  if(lessonPhoto) lessonPhoto.addEventListener('change', ()=>{ transcribeLessonPhotos([...lessonPhoto.files]); lessonPhoto.value=''; });
+  const lessonStart = document.getElementById('lesson-start-btn');
+  if(lessonStart) lessonStart.addEventListener('click', startLessonExercise);
+
   // Tutor input enter key
   const tutorInput = document.getElementById('tutor-input');
   if(tutorInput) tutorInput.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
   });
 });
+
+// ══════════════════════════════════════════════════════════
+// RÉVISER MA LEÇON — photo ou texte de la leçon → exercices dessus
+// ══════════════════════════════════════════════════════════
+const LESSON_MAX_CHARS = 12000;
+
+function getSavedLesson(profile, subjectId){
+  return (progress.lessons && progress.lessons[profile] && progress.lessons[profile][subjectId]) || null;
+}
+
+function startLessonMode(){
+  if(!currentSubjectObj) return;
+  document.getElementById('lesson-title').textContent = '📝 Réviser ma leçon — ' + currentSubjectObj.name;
+  const saved = getSavedLesson(currentProfile, currentSubjectObj.id);
+  document.getElementById('lesson-text').value = saved ? saved.text : '';
+  document.getElementById('lesson-status').textContent = saved
+    ? '📌 Dernière leçon enregistrée le ' + new Date(saved.savedAt).toLocaleDateString('fr-FR') + ' (remplace-la par la nouvelle si besoin)'
+    : '';
+  showScreen('lesson-screen');
+}
+
+// Downscale a photo to a JPEG the API accepts (keeps the text readable, limits upload size)
+function imageFileToJpegBase64(file, maxSide=1600){
+  return new Promise((resolve, reject)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = Math.min(1, maxSide/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Image illisible')); };
+    img.src = url;
+  });
+}
+
+async function transcribeLessonPhotos(files){
+  if(!files.length) return;
+  const status = document.getElementById('lesson-status');
+  const btn = document.getElementById('lesson-photo-btn');
+  if(!ANTHROPIC_KEY) await ensureApiKey();
+  if(!ANTHROPIC_KEY){ status.textContent = '⚠️ Clé API non configurée.'; return; }
+  btn.disabled = true;
+  try{
+    status.textContent = '⏳ Lecture de ' + files.length + ' photo' + (files.length>1?'s':'') + '...';
+    const images = await Promise.all(files.map(f=>imageFileToJpegBase64(f)));
+    const content = images.map(data=>({type:'image', source:{type:'base64', media_type:'image/jpeg', data}}));
+    content.push({type:'text', text:'Transcris fidèlement le contenu de cette leçon (dans l\'ordre des photos). Garde les titres, définitions, règles, exemples et tableaux (en texte simple). Écris les formules en LaTeX entre $...$. Ignore les ratures, les décorations et ce qui n\'est pas la leçon. Si un passage est illisible, écris [illisible]. Réponds uniquement avec la transcription.'});
+    const resp = await fetchAnthropicWithRetry({ model:'claude-sonnet-4-5', max_tokens:4000, messages:[{role:'user', content}] });
+    const data = await resp.json();
+    if(!resp.ok){ status.textContent = '⚠️ Erreur API ' + resp.status + ' : ' + (data.error?.message||''); return; }
+    const text = (data.content?.[0]?.text || '').trim();
+    const ta = document.getElementById('lesson-text');
+    ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + text;
+    status.textContent = '✅ Leçon lue ! Vérifie le texte ci-dessous, puis lance l\'entraînement.';
+  }catch(e){
+    status.textContent = '❌ ' + e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function startLessonExercise(){
+  const text = document.getElementById('lesson-text').value.trim();
+  const status = document.getElementById('lesson-status');
+  if(text.length < 30){ status.textContent = '✏️ Ajoute ta leçon (photo ou texte) avant de commencer.'; return; }
+  const lessonText = text.slice(0, LESSON_MAX_CHARS);
+  // Keep the last lesson of each subject (synced like the rest of the progress)
+  if(!progress.lessons) progress.lessons = {};
+  if(!progress.lessons[currentProfile]) progress.lessons[currentProfile] = {};
+  progress.lessons[currentProfile][currentSubjectObj.id] = {text:lessonText, savedAt:Date.now()};
+  saveData();
+  isAgentMode = false;
+  currentSubject = {
+    id: currentSubjectObj.id,
+    name: currentSubjectObj.name + ' — Ma leçon',
+    icon: '📝',
+    topicId: 'lecon_' + currentSubjectObj.id,
+    topicName: 'Ma leçon',
+    topicDesc: 'leçon fournie par l\'élève',
+    isAdaptive: true,
+    isLesson: true,
+    lessonText,
+    customPrompt: currentSubjectObj.customPrompt || ''
+  };
+  questions=[];answers=[];hintsPerQ=[];feedbacks=[];exoContext='';currentQIdx=0;
+  sessionExoCount++;
+  document.getElementById('exo-info').innerHTML = '📝 Ma leçon <span style="font-size:.65rem;background:#FAEEDA;color:#854F0B;padding:2px 8px;border-radius:99px;font-weight:800;vertical-align:middle">' + (SCAFFOLD_LABELS[getScaffoldDisplayLevel()]||'') + '</span>';
+  showScreen('exercise');
+  showLoadingState();
+  generateExercise();
+}
 
 // ══════════════════════════════════════════════════════════
 // SESSION MANAGER — Répétition espacée (SRS)
@@ -3254,7 +3573,7 @@ function showSessionPlanning(){
   if(totalDue === 0){
     btn.textContent = '✅ Tout est à jour ! Révision libre →';
   } else {
-    btn.textContent = '🚀 Lancer la session (' + Math.min(5, totalDue*3) + ' exercices)';
+    btn.textContent = '🚀 Lancer la session (' + Math.min(5, visiblePlanTopics.length) + ' exercices)';
   }
 
   showScreen('session-screen');
@@ -3329,11 +3648,12 @@ function launchNextSessionExercise(){
     topicName: item.topic.n,
     topicDesc: item.topic.d,
     isAdaptive: true,
-    isSession: true  // mark as session exercise
+    isSession: true, // mark as session exercise
+    customPrompt: subj.customPrompt || ''
   };
 
   sessionExoCount++;
-  const lvl = getScaffoldLevel();
+  const lvl = getScaffoldDisplayLevel();
   const typeLabel = item.isDue ? '🔁 Révision' : item.isNew ? '✨ Nouveau' : '📚 Pratique';
   document.getElementById('exo-info').innerHTML =
     currentSubject.icon + ' ' + item.topic.n +
@@ -3383,7 +3703,7 @@ function endSession(){
 
   // Show upcoming reviews
   const subj = sessionState.subjectObj;
-  const {due, newTopics, notDue} = getDueTopics(currentProfile, subj.id, subj.topics||[]);
+  const {due, newTopics, notDue} = subj ? getDueTopics(currentProfile, subj.id, subj.topics||[]) : {due:[],newTopics:[],notDue:[]};
   const upcoming = [...due, ...notDue.sort((a,b)=>a.daysUntil-b.daysUntil)].slice(0,4);
   document.getElementById('end-upcoming').innerHTML = upcoming.map(t=>`
     <div class="session-topic-item">
@@ -3411,7 +3731,8 @@ function showReport(){
   // Compute global stats
   let totalExos = 0, totalCorrect = 0, totalTopics = 0, masteredTopics = 0;
   const topicScores = {};
-  p.subjects.forEach(s=>{
+  const allSubjects = getProfileSubjects(profile);
+  allSubjects.forEach(s=>{
     const tkey = s.id+'_topics';
     const tscores = (progress[profile] && progress[profile][tkey]) || {};
     (s.topics||[]).forEach(t=>{
@@ -3551,7 +3872,7 @@ function showReport(){
   <div id="report-ai-zone"></div>`;
 
   // Per subject breakdown
-  p.subjects.forEach((s,si)=>{
+  allSubjects.forEach((s,si)=>{
     const tkey = s.id+'_topics';
     const tscores = (progress[profile] && progress[profile][tkey]) || {};
     const srsSubj = srsData;
@@ -3619,7 +3940,7 @@ async function generateAISummary(){
   const tscores = {};
   let weakTopics=[], strongTopics=[], notStarted=[];
 
-  p.subjects.forEach(s=>{
+  getProfileSubjects(profile).forEach(s=>{
     const tkey = s.id+'_topics';
     const scores = (progress[profile]&&progress[profile][tkey])||{};
     (s.topics||[]).forEach(t=>{
@@ -3630,7 +3951,7 @@ async function generateAISummary(){
     });
   });
 
-  const levelName = profile==='cm2'?'CM2':profile==='sec'?'Seconde':'Première';
+  const levelName = profile==='cm2'?'6e':profile==='sec'?'Seconde':'Terminale';
   const prompt = `Tu es un professeur bienveillant. Génère un rapport pédagogique concis (200 mots max) pour un élève de ${levelName}.
 Points forts : ${strongTopics.slice(0,5).join(', ')||'aucun encore'}.
 Points à travailler : ${weakTopics.slice(0,5).join(', ')||'aucun'}.
@@ -3657,7 +3978,7 @@ Rédige en français, sois encourageant, donne 2-3 conseils concrets et personna
 }
 
 // ══════════════════════════════════════════════════════════
-// CM2 GAMIFICATION — Animations, Level Up, Daily Goal
+// 6e (clé cm2) GAMIFICATION — Animations, Level Up, Daily Goal
 // ══════════════════════════════════════════════════════════
 
 function showLevelUp(level){
@@ -3790,6 +4111,15 @@ function stopCM2Session(){
   stopDailyTimer();
   renderCM2Dashboard();
 }
+// Stop the timer when the tab is closed / hidden so the time is not lost
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='hidden' && currentProfile==='cm2'){
+    stopDailyTimer();
+  } else if(document.visibilityState==='visible' && currentProfile==='cm2'){
+    const active=document.querySelector('.screen.active');
+    if(active && (active.id==='exercise'||active.id==='tutor')) startCM2Session();
+  }
+});
 
 // ══════════════════════════════════════════════════════════
 // ADMIN — Custom Subjects Manager
@@ -3935,7 +4265,7 @@ async function fetchGlossaryExplanation(term){
     return;
   }
   const isCM2 = currentProfile==='cm2';
-  const levelName = currentProfile==='cm2'?'CM2 (9-10 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Première (16-17 ans)';
+  const levelName = currentProfile==='cm2'?'6e (11-12 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
 
   const systemPrompt = `Tu es un professeur qui explique des termes complexes à des élèves de ${levelName}.
 Réponds UNIQUEMENT avec un JSON valide, rien d'autre.
@@ -4029,19 +4359,40 @@ function wrapGlossaryTerms(htmlText, profile){
     // Valorant
     'Radiants','Valorant Protocol','Kingdom','Radianite',
   ];
+  // 6e: mots de consigne et de vocabulaire mathématique qu'Amaury peut cliquer
+  const CONSIGNE_TERMS_6E = ['justifier','Justifier','justifie','Justifie','déduire','Déduis','déduis','encadrer','Encadre','encadre',
+    'reformuler','Reformule','vérifier','Vérifie','comparer','Compare','périmètre','aire','quotient','produit','somme','différence',
+    'numérateur','dénominateur','proportionnalité','abscisse','perpendiculaires','parallèles','médiatrice','symétrique'];
 
-  let result = htmlText;
-  ALWAYS_HIGHLIGHT.forEach(term=>{
-    // Only highlight if term appears as a whole word, not already in a tag
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    // Only match term when NOT inside an HTML tag attribute
-    const regex = new RegExp('(?<=[>\s,.(]|^)(' + escaped + ')(?=[<\s,.)!?]|$)', 'gm');
-
-    result = result.replace(regex, (match)=>
-      `<span class="gloss-term" onclick="openGlossary(this.dataset.term)" data-term="${match}" title="Cliquer pour en savoir plus ✨">${match}</span>`
-    );
+  // Walk the text nodes (never tag attributes), skip LaTeX ($...$) so MathJax
+  // still sees intact formulas.
+  const terms = [...new Set(ALWAYS_HIGHLIGHT.concat(profile==='cm2' ? CONSIGNE_TERMS_6E : []))].sort((x,y)=>y.length-x.length);
+  const escRe = t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const termRe = new RegExp('(^|[^\\p{L}\\p{N}])(' + terms.map(escRe).join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
+  const box = document.createElement('div');
+  box.innerHTML = htmlText;
+  const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node=>{
+    if(node.parentElement && node.parentElement.closest('code,pre,a,.gloss-term')) return;
+    const parts = node.nodeValue.split(/(\$\$[\s\S]*?\$\$|\$[^$]*\$)/);
+    let changed = false;
+    const html = parts.map((part,i)=>{
+      const safe = part.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      if(i%2===1) return safe; // LaTeX segment
+      return safe.replace(termRe, (m,pre,term)=>{
+        changed = true;
+        return pre+'<span class="gloss-term" onclick="openGlossary(this.dataset.term)" data-term="'+term.replace(/"/g,'&quot;')+'" title="Cliquer pour en savoir plus ✨">'+term+'</span>';
+      });
+    }).join('');
+    if(changed){
+      const tmp = document.createElement('span');
+      tmp.innerHTML = html;
+      node.replaceWith(...tmp.childNodes);
+    }
   });
-  return result;
+  return box.innerHTML;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4072,6 +4423,7 @@ function suspendExercise(){
     currentQIdx: currentQIdx,
     hintsPerQ: hintsPerQ,
     exoContext: exoContext,
+    readPhaseDone: readPhaseDone,
     sessionExoCount: sessionExoCount,
     suspendedAt: Date.now()
   };
@@ -4227,8 +4579,23 @@ function resumeSuspendedExercise(){
     currentQIdx = state.currentQIdx;
     hintsPerQ = state.hintsPerQ || new Array(questions.length).fill(0);
     exoContext = state.exoContext || '';
+    readPhaseDone = !!state.readPhaseDone;
     sessionExoCount = state.sessionExoCount || 0;
     localStorage.removeItem('edusmart_suspended_exo');
+    // Rebuild the surrounding session / agent queue, otherwise the "next" button
+    // after the correction worked on an empty queue (crash / wrong "all mastered").
+    if(currentSubject.isSession){
+      sessionState.subjectObj = currentSubjectObj;
+      if(restoreDaySessionState()){
+        if(sessionState.timerInterval) clearInterval(sessionState.timerInterval);
+        sessionState.timerInterval = setInterval(updateSessionTimer, 1000);
+      } else {
+        currentSubject.isSession = false;
+      }
+    }
+    if(currentSubject.isAgent){
+      if(!buildAgentQueue()){ currentSubject.isAgent = false; isAgentMode = false; }
+    }
     // Go to exercise screen and show current question
     const lvl = getScaffoldDisplayLevel();
     const bcolor = currentProfile==='cm2'?'background:#EEEDFE;color:#3C3489':
@@ -4251,31 +4618,35 @@ function discardSuspendedExercise(){
   if(banner) banner.style.display='none';
 }
 
-// ── Resume day session ────────────────────────────────────
-function resumeDaySession(){
+// Loads the saved day session of sessionState.subjectObj into sessionState (no launch)
+function restoreDaySessionState(){
   const subj = sessionState.subjectObj;
-  if(!subj) return;
+  if(!subj) return false;
   const saved = loadDaySession(subj.id);
-  if(!saved) { launchSession(); return; }
-
-  // Rebuild queue from saved topic IDs
+  if(!saved) return false;
   const topicMap = {};
   (subj.topics||[]).forEach(t=>topicMap[t.id]=t);
   const queue = saved.queue
     .map(item=>({ topic:topicMap[item.topicId], isDue:item.isDue, isNew:item.isNew }))
     .filter(item=>item.topic);
-
-  if(!queue.length){ clearDaySession(); launchSession(); return; }
-
-  // Restore session state
+  if(!queue.length) return false;
   sessionState.queue = queue;
   sessionState.current = saved.current; // current = nb done, launchNext uses this as index
-  sessionState.total = saved.total;
+  sessionState.total = Math.min(saved.total, queue.length);
   sessionState.correct = saved.correct || 0;
   sessionState.partial = saved.partial || 0;
   sessionState.incorrect = saved.incorrect || 0;
   sessionState.sessionPts = saved.sessionPts || 0;
   sessionState.startTime = Date.now() - (saved.savedAt - (saved.startTime||saved.savedAt));
+  return true;
+}
+
+// ── Resume day session ────────────────────────────────────
+function resumeDaySession(){
+  const subj = sessionState.subjectObj;
+  if(!subj) return;
+  if(!restoreDaySessionState()){ clearDaySession(); launchSession(); return; }
+  const saved = {current:sessionState.current, total:sessionState.total};
 
   // Start timer
   if(sessionState.timerInterval) clearInterval(sessionState.timerInterval);
@@ -4288,8 +4659,17 @@ function resumeDaySession(){
 // ── Agent IA — smart resume after N days ──────────────────
 function resumeAgentWithSRS(){
   // Called instead of plain resumeAgentMode
-  // Merges saved order with SRS due topics
-  if(!currentSubjectObj) return;
+  if(!buildAgentQueue()){
+    showSyncBadge('🎉 Tous les sujets maîtrisés !');
+    goToDash(); return;
+  }
+  saveAgentSession();
+  pickNextAgentTopic();
+}
+
+// Merges saved agent order with SRS due topics into agentWeakTopics; false if nothing left
+function buildAgentQueue(){
+  if(!currentSubjectObj) return false;
   isAgentMode = true;
   agentSessionSubjectId = currentSubjectObj.id;
 
@@ -4331,16 +4711,11 @@ function resumeAgentWithSRS(){
     if(!seen.has(t.id)){ seen.add(t.id); agentWeakTopics.push(t); }
   });
 
-  if(!agentWeakTopics.length){
-    showSyncBadge('🎉 Tous les sujets maîtrisés !');
-    goToDash(); return;
-  }
+  if(!agentWeakTopics.length) return false;
 
   const dueCount = dueSRS.length;
   if(dueCount > 0) showSyncBadge('📅 '+dueCount+' sujet'+( dueCount>1?'s':'')+' à réviser ajouté'+( dueCount>1?'s':'')+' en priorité');
-
-  saveAgentSession();
-  pickNextAgentTopic();
+  return true;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4360,8 +4735,8 @@ async function fetchAnthropicWithRetry(body, maxRetries=3){
         method:'POST', headers,
         body: JSON.stringify(body)
       });
-      // 529 = overloaded, 529 = rate limit → wait and retry
-      if(resp.status === 529 || resp.status === 529){
+      // 529 = overloaded, 429 = rate limit → wait and retry
+      if(resp.status === 529 || resp.status === 429){
         const wait = (attempt+1) * 3000; // 3s, 6s, 9s
         showSyncBadge('⏳ Serveur occupé, nouvel essai dans '+(wait/1000)+'s...');
         await new Promise(r=>setTimeout(r, wait));
@@ -4405,6 +4780,8 @@ function showMemoryExercise(fullText, qIdx){
   const az = document.getElementById('answer-zone');
   az.style.display = 'none'; // hide answer during memo phase
 
+  // Kept outside the onclick attribute: quotes/newlines in the text used to break the button
+  window._pendingRappelText = rappelText;
   // Show memo phase
   function renderMemoPhase(){
     qTextEl.innerHTML = `
@@ -4414,7 +4791,7 @@ function showMemoryExercise(fullText, qIdx){
         <div class="memo-countdown-big" id="memo-countdown-big">${memoryCountdown}</div>
         <div class="memo-timer-bar-bg"><div class="memo-timer-bar" id="memo-timer-bar"></div></div>
         <div class="memo-timer-text" id="memo-timer-text">secondes restantes</div>
-        <button class="memo-ready-btn" onclick="switchToRappel('${rappelText.replace(/'/g,"\\'")}')">
+        <button class="memo-ready-btn" onclick="switchToRappel(window._pendingRappelText)">
           ✅ J'ai mémorisé, passer à la question !
         </button>
         <div class="memo-tip">💡 Astuce : Lis bien, ferme les yeux, récite mentalement.</div>
@@ -4442,6 +4819,92 @@ function showMemoryExercise(fullText, qIdx){
   renderMemoPhase();
 }
 
+// ══════════════════════════════════════════════════════════
+// LIRE PUIS CACHER — jeu de piste, consigne cachée, œil de détective
+// ══════════════════════════════════════════════════════════
+const READ_HIDE_TOPICS = ['jeu_piste','consigne_cachee','details_memoire'];
+let readPhaseDone = false;
+let peekUsed = false;
+
+function isReadHideTopic(){
+  return !!currentSubject && READ_HIDE_TOPICS.includes(currentSubject.topicId);
+}
+
+// Text length, number of questions and reading time follow the adaptive level (1-10)
+function getReadHideDifficulty(){
+  const lvl = currentProfile==='cm2' ? getCM2DifficultyLevel() : getScaffoldDisplayLevel()*2.5;
+  if(lvl <= 3) return {steps:4, questions:3, seconds:75, label:'Débutant'};
+  if(lvl <= 6) return {steps:6, questions:4, seconds:90, label:'Intermédiaire'};
+  if(lvl <= 8) return {steps:8, questions:5, seconds:90, label:'Avancé'};
+  return {steps:10, questions:6, seconds:100, label:'Expert'};
+}
+
+function showReadPhase(){
+  const rh = getReadHideDifficulty();
+  const qTextEl = document.getElementById('q-text');
+  document.getElementById('answer-zone').style.display = 'none';
+  document.getElementById('q-label-text').textContent = 'À lire attentivement';
+  peekUsed = false;
+  memoryCountdown = rh.seconds;
+  memoryTotalSeconds = rh.seconds;
+  qTextEl.innerHTML = `
+    <div class="memo-phase">
+      <div class="memo-badge">📖 Lis bien, le texte va se cacher ! <span class="memo-level-badge">${rh.label}</span></div>
+      <div class="memo-content read-content" id="read-content"></div>
+      <div class="memo-timer-bar-bg"><div class="memo-timer-bar" id="memo-timer-bar"></div></div>
+      <div class="memo-timer-text" id="memo-timer-text">⏱ ${rh.seconds}s pour lire</div>
+      <button class="memo-ready-btn" onclick="endReadPhase()">✅ J'ai bien lu, cache le texte !</button>
+      <div class="memo-tip">💡 Astuce : lis une 2e fois, puis ferme les yeux et raconte-toi l'histoire dans ta tête.</div>
+    </div>`;
+  const rc = document.getElementById('read-content');
+  rc.innerHTML = typeof marked !== 'undefined' ? marked.parse(exoContext) : exoContext;
+  if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([rc]);
+  if(memoryTimer) clearInterval(memoryTimer);
+  memoryTimer = setInterval(()=>{
+    memoryCountdown--;
+    const tt = document.getElementById('memo-timer-text');
+    const tb = document.getElementById('memo-timer-bar');
+    if(tt) tt.textContent = '⏱ '+memoryCountdown+'s pour lire';
+    if(tb) tb.style.width = (memoryCountdown/memoryTotalSeconds*100)+'%';
+    if(memoryCountdown <= 0) endReadPhase();
+  }, 1000);
+}
+
+function endReadPhase(){
+  if(memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
+  readPhaseDone = true;
+  showSyncBadge('🙈 Texte caché — réponds de mémoire !');
+  showCurrentQuestion();
+}
+
+function renderPeekButton(){
+  let btn = document.getElementById('peek-btn');
+  if(!isReadHideTopic()){ if(btn) btn.remove(); return; }
+  if(!btn){
+    btn = document.createElement('button');
+    btn.id = 'peek-btn';
+    btn.className = 'btn-hint';
+    btn.addEventListener('click', peekText);
+    document.querySelector('#answer-zone .exo-actions').prepend(btn);
+  }
+  btn.textContent = peekUsed ? '👀 Joker utilisé' : '👀 Joker : revoir le texte 5 s';
+  btn.disabled = peekUsed;
+}
+
+// One peek per exercise, shown 5 seconds, costs points like a hint
+function peekText(){
+  if(peekUsed) return;
+  peekUsed = true;
+  hintsPerQ[currentQIdx] = (hintsPerQ[currentQIdx]||0) + 1;
+  const hz = document.getElementById('hint-zone');
+  const card = document.createElement('div');
+  card.className = 'hint-card';
+  card.innerHTML = '👀 <strong>Joker (5 s)</strong>' + (typeof marked!=='undefined' ? marked.parse(exoContext) : exoContext);
+  hz.appendChild(card);
+  renderPeekButton();
+  setTimeout(()=>{ card.innerHTML = '👀 Joker utilisé — le texte est de nouveau caché.'; }, 5000);
+}
+
 function switchToRappel(rappelText){
   if(memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
   memoryPhase = 'rappel';
@@ -4459,6 +4922,8 @@ function switchToRappel(rappelText){
 
   // Now show answer zone
   az.style.display = 'block';
+  const mc = document.getElementById('method-card');
+  if(mc) mc.style.display = 'none';
   const input = document.getElementById('answer-input');
   if(input){ input.value=''; input.focus(); }
 
@@ -4499,6 +4964,7 @@ window.resumeDaySession = resumeDaySession;
 window.doUnifiedResume = doUnifiedResume;
 window.doUnifiedDiscard = doUnifiedDiscard;
 window.switchToRappel = switchToRappel;
+window.endReadPhase = endReadPhase;
 window.renderUnifiedResumeBanner = renderUnifiedResumeBanner;
 window.resumeAgentWithSRS = resumeAgentWithSRS;
 window.clearDaySession = clearDaySession;
@@ -4517,6 +4983,7 @@ window.endSession = endSession;
 window.stopAgentSession = stopAgentSession;
 window.resumeAgentMode = resumeAgentMode;
 window.startTutorMode = startTutorMode;
+window.startLessonMode = startLessonMode;
 window.nextExercise = nextExercise;
 window.getHint = getHint;
 window.submitAnswer = submitAnswer;
