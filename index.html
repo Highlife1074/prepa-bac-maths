@@ -559,8 +559,8 @@ setTimeout(function(){
     </div>
     <div class="prof-card pre" data-profile="pre">
       <div class="prof-avatar">🎯</div>
-      <h2>Espace Première</h2>
-      <p class="sublevel">Mode Expert · 16-17 ans</p>
+      <h2>Espace Terminale</h2>
+      <p class="sublevel">Mode Expert · Objectif bac maths</p>
       <div class="prof-subjects">
         <span class="subj math">Maths</span>
         <span class="subj fr">Français</span>
@@ -846,7 +846,7 @@ setTimeout(function(){
       <div class="admin-profile-select">
         <button class="admin-profile-btn active" data-adminprofile="cm2" onclick="selectAdminProfile('cm2')">🌟 6e</button>
         <button class="admin-profile-btn" data-adminprofile="sec" onclick="selectAdminProfile('sec')">🚀 Seconde</button>
-        <button class="admin-profile-btn" data-adminprofile="pre" onclick="selectAdminProfile('pre')">🎯 Première</button>
+        <button class="admin-profile-btn" data-adminprofile="pre" onclick="selectAdminProfile('pre')">🎯 Terminale</button>
       </div>
     </div>
 
@@ -1124,17 +1124,26 @@ const PROFILES = {
     ]
   },
   pre:{
-    name:'Première',emoji:'🎯',color:'var(--pre-color)',light:'var(--pre-light)',
-    welcome:'Espace Première — Niveau expert',
+    name:'Terminale',emoji:'🎯',color:'var(--pre-color)',light:'var(--pre-light)', // clé historique 'pre' conservée (Marie, désormais en Terminale)
+    welcome:'Espace Terminale — Objectif bac de maths',
     sub:'Entraînement type bac, correction exigeante et fiches de révision.',
     subjects:[
-      {id:'math',icon:'∑',name:'Mathématiques',desc:'Suites, dérivées, probabilités',topics:[
-        {id:'suites',e:'∞',n:'Suites',d:'Arithmétiques, géométriques, limites'},
-        {id:'derivees',e:'∂',n:'Dérivation',d:'Calcul, tableaux de variations'},
-        {id:'integrales',e:'∫',n:'Intégration',d:'Primitives, calcul d\'aires'},
-        {id:'proba',e:'🎲',n:'Probabilités',d:'Loi binomiale, conditionnelles'},
-        {id:'trigo',e:'〰️',n:'Trigonométrie',d:'Cercle trigonométrique, formules'},
-        {id:'complexes',e:'ℂ',n:'Nombres complexes',d:'Forme algébrique, module, argument'},
+      {id:'math',icon:'∑',name:'Mathématiques',desc:'Spécialité Terminale — préparation au bac',topics:[
+        {id:'sujet_bac',e:'🏆',n:'Exercice type bac',d:'Exercice complet multi-chapitres, parties A et B, barème'},
+        {id:'qcm_bac',e:'☑️',n:'QCM type bac',d:'4 questions, 4 réponses proposées, sans justification'},
+        {id:'suites',e:'∞',n:'Suites',d:'Récurrence, limites, convergence monotone'},
+        {id:'limites_continuite',e:'↗️',n:'Limites et continuité',d:'Limites de fonctions, asymptotes, TVI'},
+        {id:'derivees',e:'∂',n:'Dérivation et convexité',d:'Composée, dérivée seconde, convexité, inflexion'},
+        {id:'logarithme',e:'㏑',n:'Logarithme népérien',d:'Propriétés, équations, inéquations, étude de fonction'},
+        {id:'exponentielle',e:'📈',n:'Exponentielle',d:'Révision de Première, études de fonctions'},
+        {id:'trigo',e:'〰️',n:'Fonctions trigonométriques',d:'Sinus, cosinus : dérivées, variations, équations'},
+        {id:'primitives_ed',e:'🔁',n:'Primitives et équations différentielles',d:'y\'=ay, y\'=ay+b, primitives usuelles'},
+        {id:'integrales',e:'∫',n:'Calcul intégral',d:'Aires, intégration par parties, valeur moyenne'},
+        {id:'denombrement',e:'🔢',n:'Dénombrement',d:'Listes, arrangements, combinaisons, triangle de Pascal'},
+        {id:'espace',e:'🧊',n:'Géométrie dans l\'espace',d:'Vecteurs, droites, plans, orthogonalité, équations'},
+        {id:'proba',e:'🎲',n:'Loi binomiale',d:'Schéma de Bernoulli, conditionnelles, arbres'},
+        {id:'va_sommes',e:'📊',n:'Sommes de variables aléatoires',d:'Espérance, variance, Bienaymé-Tchebychev, loi des grands nombres'},
+        {id:'algo_python',e:'🐍',n:'Algorithmique Python',d:'Suites, seuils, listes, simulation'},
       ]},
       {id:'fr',icon:'📝',name:'Français',desc:'Dissertation, commentaire composé',topics:[
         {id:'peau',e:'📕',n:'La Peau de chagrin',d:'Balzac — roman, désir, pacte'},
@@ -2155,7 +2164,10 @@ async function generateExercise(){
   const isFrench = currentSubject && (currentSubject.id==='fr' || currentSubject.topicId?.includes('fr') ||
     ['peau','menteur','boetie','forets','methodo','grammaire','conjugaison','accord','vocabulaire',
      'figures','lecture','expression','orthographe'].includes(currentSubject.topicId));
-  const nQuestions = isReadHideTopic() ? getReadHideDifficulty().questions : isCM2 ? 1 : 3; // fixed 3 questions for lycee
+  const nQuestions = isReadHideTopic() ? getReadHideDifficulty().questions
+    : currentProfile==='pre' && currentSubject.topicId==='sujet_bac' ? 5
+    : currentProfile==='pre' && currentSubject.topicId==='qcm_bac' ? 4
+    : isCM2 ? 1 : 3; // fixed 3 questions for lycee
   // Build topic-aware subject prompt
   const basePrompt = getSubjectPrompt();
   // Build adaptive context from topic history
@@ -2197,6 +2209,13 @@ async function generateExercise(){
   if(currentSubject.id==='ortho_cm2' && (currentSubject.topicId==='memoire_visuelle' || currentSubject.topicId==='memoire_auditive')){
     const md = getMemoryDifficulty();
     memoExtra = `DIFFICULTE_MEMO : niveau ${md.label} → utilise EXACTEMENT ${md.items} éléments dans PHASE_MEMO. Mots du quotidien uniquement, un seul mot par élément, séparés par " - ".`;
+  }
+
+  if(currentProfile==='pre' && currentSubject.topicId==='sujet_bac'){
+    memoExtra += `\nEXERCICE TYPE BAC : un exercice complet comme dans un sujet du bac de spécialité maths (environ 5 points), qui MÉLANGE 2 ou 3 chapitres de Terminale (ex : suite + fonction logarithme, probabilités + suite, fonction exponentielle + intégrale, espace + produit scalaire). Le contexte présente la situation et les parties (Partie A / Partie B). Le tableau questions contient EXACTEMENT 5 questions progressives, chacune annonce sa partie et ses points, par exemple « (Partie A — 1 pt) ». Les résultats intermédiaires utiles pour la suite sont donnés dans l énoncé.`;
+  }
+  if(currentProfile==='pre' && currentSubject.topicId==='qcm_bac'){
+    memoExtra += `\nQCM TYPE BAC : comme l exercice QCM des sujets du bac. Le contexte rappelle la règle : « Pour chaque question, une seule des quatre réponses proposées est exacte. Aucune justification n est demandée. » Le tableau questions contient EXACTEMENT 4 questions de chapitres DIFFÉRENTS, chacune avec ses 4 propositions notées a., b., c., d. sur des lignes séparées. L élève répond par la lettre. Les mauvaises réponses correspondent à des erreurs classiques.`;
   }
 
   // Read-then-hide: the text is shown once, then hidden while the questions are asked
@@ -2241,7 +2260,7 @@ REGLES DE CORRECTION STRICTES :
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
 {"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).","questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
-NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
+NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts. Ne fusionne JAMAIS plusieurs questions dans un seul objet.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
 Ne donne PAS les réponses.`;
 
@@ -2533,10 +2552,10 @@ const SCAFFOLD_DESC = {
     4: 'SCAFFOLDING Niveau 4 Seconde : exercice de haut niveau, type concours, démonstration complète attendue, difficulté maximale pour une Seconde.'
   },
   pre: {
-    1: 'SCAFFOLDING Niveau 1 Première : bases de seconde solides, exercice guidé mais pas trivial. Niveau début de première.',
-    2: 'SCAFFOLDING Niveau 2 Programme Premiere standard : exercice type bac classique, 3-4 questions progressives, niveau attendu en premiere.',
-    3: 'SCAFFOLDING Niveau 3 Avance Premiere : exercice difficile type bac, questions ouvertes, justifications rigoureuses exigees, proche des sujets difficiles.',
-    4: 'SCAFFOLDING Niveau 4 Expert Premiere : exercice de haut niveau, sujet de concours ou bac blanc difficile, maîtrise totale attendue, aucune aide.'
+    1: 'SCAFFOLDING Niveau 1 Terminale : application directe du cours, méthode rappelée dans l énoncé, calculs guidés. Niveau début de Terminale.',
+    2: 'SCAFFOLDING Niveau 2 Terminale standard : exercice type bac classique, questions progressives, niveau attendu au bac.',
+    3: 'SCAFFOLDING Niveau 3 Terminale avancé : exercice difficile type bac, moins guidé, justifications rigoureuses exigées, proche des questions qui départagent au bac.',
+    4: 'SCAFFOLDING Niveau 4 Terminale expert : niveau des meilleures copies / bac blanc difficile, questions ouvertes, prise d initiative, aucune aide.'
   }
 };
 
@@ -2546,7 +2565,7 @@ function getLevelDesc(withTheme=true){
   const scaffoldText=(SCAFFOLD_DESC[p]||SCAFFOLD_DESC.cm2)[lvl];
   const LATEX_CM2=`FORMAT 6e : utilise les symboles directs x (multiplication), / (division). LaTeX uniquement pour les fractions: $\\frac{3}{4}$.`;
   const LATEX_SEC=`FORMAT LATEX Seconde : toujours $...$ pour les maths : $\\frac{a}{b}$, $x^2$, $\\sqrt{x}$, $\\vec{u}$, $\\leq$, $\\geq$, $+\\infty$, $\\mathbb{R}$. Formules centrees avec $$...$$. Symboles directs dans le texte : x / - <= >=. JAMAIS de LaTeX sans $.`;
-  const LATEX_PRE=`FORMAT LATEX Premiere : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $e^{i\\theta}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
+  const LATEX_PRE=`FORMAT LATEX Terminale : toujours $...$ pour les maths : $\\frac{u}{v}$, $f'(x)$, $\\int_a^b$, $\\lim_{n\\to+\\infty}$, $u_{n+1}$, $\\ln(x)$, $P(A|B)$, $\\binom{n}{k}$, $\\vec{u}$. Formules centrees avec $$...$$. JAMAIS de LaTeX sans $.`;
   // No narrative theme for hints/corrections, memory drills and consigne/problem decoding:
   // the theme adds reading load exactly where Amaury needs a clean statement.
   const NO_THEME_TOPICS = ['jeu_piste','consigne_cachee','details_memoire','memoire_visuelle','memoire_auditive','vocab_consignes','consignes_etapes','reformuler','donnees_utiles','question_intermediaire'];
@@ -2639,7 +2658,7 @@ function getLevelDesc(withTheme=true){
     return `6e (11-12 ans, collège France). ${scaffoldText} IMPORTANT : intègre le thème suivant dans le contexte narratif de l'exercice : ${theme}. Le thème sert UNIQUEMENT à habiller la situation (noms, lieux, objets) : il ne doit jamais rallonger l'énoncé ni ajouter de vocabulaire difficile. Phrases courtes, une seule consigne par phrase. Sois enthousiaste, utilise quelques emojis. ${LATEX_CM2}`;
   }
   if(p==='sec') return `Seconde (15-16 ans, lycee France). ${scaffoldText} ${LATEX_SEC}`;
-  return `Premiere (16-17 ans, lycee France). ${scaffoldText} ${LATEX_PRE}`;
+  return `Terminale (17-18 ans, lycée France, spécialité mathématiques, bac en juin). ${scaffoldText} ${LATEX_PRE}`;
 }
 
 function getSubjectPrompt(){
@@ -2648,7 +2667,7 @@ function getSubjectPrompt(){
   const subjectMap={
     math:{cm2:'Maths 6e (programme cycle 3) - exercices courts et ciblés sur UNE notion : nombres décimaux (comparer, ranger, droite graduée), calcul posé et mental sur les décimaux, fractions (partage, fraction d une quantité), proportionnalité, problème à 1-3 étapes avec contexte concret (pas plus de 4 lignes d\'énoncé), géométrie (constructions décrites avec des mots, symétrie axiale), grandeurs (périmètre, aire, angles, durées, conversions). Pour un problème : la question est toujours la DERNIÈRE phrase, clairement séparée. INTERDIT : plusieurs notions mélangées, énoncés de plus de 5 lignes, figures impossibles à dessiner en texte.',
       sec:'Algèbre (équations 1er/2nd degré), fonctions affines/polynômes, géométrie dans le plan et l\'espace, statistiques descriptives, trigonométrie. Propose un exercice complet avec une ou deux questions.',
-      pre:'Suites numériques, dérivées, intégrales, probabilités conditionnelles, géométrie dans l\'espace. Exercice de niveau baccalauréat avec justification attendue.'},
+      pre:'Mathématiques, spécialité Terminale (programme officiel, sans maths expertes : PAS de nombres complexes, PAS d arithmétique, PAS de matrices). Chapitres : suites et récurrence, limites et continuité, dérivation et convexité, logarithme népérien, exponentielle, fonctions sinus/cosinus, primitives et équations différentielles, calcul intégral, dénombrement, géométrie dans l espace, loi binomiale, sommes de variables aléatoires et loi des grands nombres, algorithmique Python. Style des sujets du bac de spécialité (épreuve écrite de 4 h) : énoncé rédigé comme au bac, questions numérotées, résultats intermédiaires donnés (« Montrer que... ») pour ne pas bloquer la suite, justification et rédaction attendues. Exercices de type bac souvent en contexte (population, médicament, entreprise, jeu).'},
     fr:{cm2:'Français 6e : accord sujet-verbe, accords dans le groupe nominal, conjugaison (présent, imparfait, passé simple, futur, passé composé), classes de mots, fonctions (sujet, COD, COI, compléments circonstanciels), homophones, vocabulaire. Pour la lecture : extrait court (5-8 lignes) de mythe, conte ou récit d aventure + 1 question précise. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
       sec:'Grammaire (propositions subordonnées, syntaxe), conjugaison (tous temps), vocabulaire, rédaction courte, analyse d\'un court extrait littéraire. Pose une question ouverte sur un texte ou un exercice de rédaction guidée.',
       pre:'Français Première - oeuvres au programme de cette élève : (1) La Peau de chagrin de Balzac (roman, realisme, pacte faustien, critique sociale), (2) Le Menteur de Corneille (comedie classique, mensonge et honneur), (3) Discours de la servitude volontaire de La Boetie (essai humaniste, liberte, tyrannie), (4) Mes forets de Helene Dorion (poesie contemporaine, nature, memoire, identite). Varie entre ces oeuvres a chaque exercice. Types : dissertation (problematique + plan detaille), commentaire compose d un extrait fourni, question de grammaire sur un passage, analyse lineaire guidee, question sur le parcours associe. Niveau exigence baccalaureat.'},
@@ -2832,7 +2851,7 @@ async function submitAnswer(){
     ? '6e (11-12 ans), difficultés de compréhension de consignes et de mémoire. Encourage beaucoup, emojis, sois positif meme si erreur. Si la réponse est fausse parce que la consigne a été mal comprise, dis-le clairement et reformule la consigne simplement avant de donner la bonne réponse.'
     : currentProfile==='sec'
       ? 'Seconde (15-16 ans). Rigoureux et pédagogue.'
-      : 'Premiere (16-17 ans). Exigeant et pédagogue, niveau bac.';
+      : 'Terminale spécialité maths (17-18 ans). Exigeant et pédagogue, niveau bac. En maths, corrige comme un correcteur du bac : pour chaque question, donne une estimation des points obtenus sur le barème si indiqué, signale les manques de rédaction ou de justification qui coûtent des points (théorème non cité, hypothèse non vérifiée, conclusion absente) et donne la rédaction attendue.';
 
   const systemPrompt=`Tu es un professeur correcteur. Niveau eleve : ${corrLevelDesc}.
 ROLE UNIQUE : corriger les reponses mathematiques ou litteraires de l eleve. Tu ne commentes PAS le contexte narratif de l exercice (histoire, jeux video, personnages). Tu corriges UNIQUEMENT la reponse sur le plan mathematique ou grammatical.
@@ -3196,7 +3215,7 @@ async function callTutor(userMsg){
   const lvl = getScaffoldDisplayLevel();
   const prof = currentProfile;
   const isCM2 = prof === 'cm2';
-  const levelName = prof==='cm2'?'6e (11-12 ans)':prof==='sec'?'Seconde (15-16 ans)':'Première (16-17 ans)';
+  const levelName = prof==='cm2'?'6e (11-12 ans)':prof==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
 
   // Build topic context
   const topicScores = (progress[prof] && progress[prof][tutorSubject.id+'_topics']) || {};
@@ -3925,7 +3944,7 @@ async function generateAISummary(){
     });
   });
 
-  const levelName = profile==='cm2'?'6e':profile==='sec'?'Seconde':'Première';
+  const levelName = profile==='cm2'?'6e':profile==='sec'?'Seconde':'Terminale';
   const prompt = `Tu es un professeur bienveillant. Génère un rapport pédagogique concis (200 mots max) pour un élève de ${levelName}.
 Points forts : ${strongTopics.slice(0,5).join(', ')||'aucun encore'}.
 Points à travailler : ${weakTopics.slice(0,5).join(', ')||'aucun'}.
@@ -4239,7 +4258,7 @@ async function fetchGlossaryExplanation(term){
     return;
   }
   const isCM2 = currentProfile==='cm2';
-  const levelName = currentProfile==='cm2'?'6e (11-12 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Première (16-17 ans)';
+  const levelName = currentProfile==='cm2'?'6e (11-12 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
 
   const systemPrompt = `Tu es un professeur qui explique des termes complexes à des élèves de ${levelName}.
 Réponds UNIQUEMENT avec un JSON valide, rien d'autre.
