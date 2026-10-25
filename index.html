@@ -165,6 +165,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .exo-card{background:var(--card);border-radius:20px;padding:2rem;border:1.5px solid var(--border);margin-bottom:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,.04)}
 .exo-card .label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:6px}
 .exo-question{font-size:1.05rem;line-height:1.85;font-weight:500}
+.geo-fig-wrap{margin:.8rem 0;text-align:center}
+.geo-fig{display:block;margin:0 auto;width:100%;max-width:520px;height:auto;border:1.5px solid var(--border);border-radius:12px;background:#fff}
+.geo-fig-tip{font-size:.78rem;color:var(--muted);margin-top:.3rem;line-height:1.4}
 .exo-loading{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem;padding:.5rem 0}
 .dot-anim span{display:inline-block;animation:dotBounce .8s infinite}
 .dot-anim span:nth-child(2){animation-delay:.15s}
@@ -1099,6 +1102,7 @@ const PROFILES = {
         {id:'fractions',e:'🍕',n:'Fractions',d:'Partage, fraction d\'une quantité, droite graduée'},
         {id:'proportionnalite',e:'⚖️',n:'Proportionnalité',d:'Tableaux, recettes, pourcentages simples'},
         {id:'problemes',e:'🧩',n:'Problèmes',d:'Problèmes à plusieurs étapes'},
+        {id:'droites',e:'📏',n:'Parallèles et perpendiculaires',d:'Reconnaître, nommer et vérifier sur une figure'},
         {id:'geometrie',e:'📐',n:'Géométrie',d:'Droites, cercles, triangles, symétrie axiale'},
         {id:'mesures',e:'📏',n:'Grandeurs et mesures',d:'Périmètres, aires, angles, durées, conversions'},
       ]},
@@ -2357,6 +2361,9 @@ async function generateExercise(){
     if(currentSubject.profRole==='echauffement') memoExtra += ' ÉCHAUFFEMENT : un cran plus facile que le niveau indiqué, pour démarrer par une réussite.';
   }
 
+  const figMode = figureTopic();
+  if(figMode==='required') memoExtra += '\n'+FIGURE_PROMPT_RULE+'\nFIGURE OBLIGATOIRE pour cet exercice : chaque question porte sur ce que l élève voit sur la figure (nommer, reconnaître, vérifier avec l équerre ou la règle, compléter une phrase avec les noms des droites ou des points).';
+  else if(figMode==='optional') memoExtra += '\n'+FIGURE_PROMPT_RULE+'\nFIGURE FACULTATIVE : ajoute le champ "figure" seulement si l exercice parle d une figure (géométrie, périmètre, aire, angle). Sinon ne mets pas de champ figure.';
   const subjectPrompt = [basePrompt, topicExtra, adaptiveExtra, memoExtra].filter(Boolean).join('\n');
 
   const systemPrompt=`Tu es un professeur expert qui crée des exercices complets et rigoureux pour des élèves français.
@@ -2381,7 +2388,7 @@ REGLES DE CORRECTION STRICTES :
 5. Plusieurs fautes -> INCORRECT avec chaque erreur expliquée et la bonne réponse donnée.
 6. TOUJOURS donner la forme correcte dans la correction.
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
-{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).","questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
+{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
 NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts. Ne fusionne JAMAIS plusieurs questions dans un seul objet.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
@@ -2389,7 +2396,7 @@ Ne donne PAS les réponses.`;
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens: isCM2 ? 1200 : 2500,
+      model:'claude-sonnet-4-5', max_tokens: (isCM2 ? 1200 : 2500) + (figMode ? 500 : 0),
       system:systemPrompt,
       messages:[{role:'user',content:'Génère un exercice.'}]
     });
@@ -2411,8 +2418,10 @@ Ne donne PAS les réponses.`;
         // Fallback: extract with regex - find context and questions manually
         const ctxMatch=clean.match(/"context"\s*:\s*"((?:[^"\\]|\\.)*)"/s);
         const qMatches=[...clean.matchAll(/"q"\s*:\s*"((?:[^"\\]|\\.)*)"/gs)];
+        const figMatch=clean.match(/"figure"\s*:\s*"((?:[^"\\]|\\.)*)"/s);
         if(qMatches.length>0){
           parsed={
+            figure: figMatch ? figMatch[1].replace(/\\n/g,'\n') : '',
             context: ctxMatch ? ctxMatch[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : '',
             questions: qMatches.map(m=>({q:m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"')}))
           };
@@ -2433,6 +2442,8 @@ Ne donne PAS les réponses.`;
       return;
     }
     exoContext=parsed.context||'';
+    const figSrc = Array.isArray(parsed.figure) ? parsed.figure.join('\n') : String(parsed.figure||'').trim();
+    if(figSrc) exoContext += '\n\n```figure\n'+figSrc.replace(/`/g,'')+'\n```';
     readPhaseDone=false; peekUsed=false;
     let rawQs = (parsed.questions||[]).slice(0, nQuestions); // cap to max
     // If not enough questions generated, request is still valid — show what we have
@@ -2482,6 +2493,7 @@ function showCurrentQuestion(){
   }
   let fullText='';
   if(currentQIdx===0 && exoContext && !isReadHideTopic()) fullText=exoContext+'\n\n';
+  else if(exoContext) fullText=(exoContext.match(/```figure\s*\n[\s\S]*?```/g)||[]).join('\n\n')+'\n\n'; // keep the figure in view
   fullText+=(total>1?'**Question '+(currentQIdx+1)+' :** ':'')+q.q;
 
   // 2-phase memory exercise detection
@@ -2791,7 +2803,7 @@ function getSubjectPrompt(){
   const s=currentSubject.id;
   const p=currentProfile;
   const subjectMap={
-    math:{cm2:'Maths 6e (programme cycle 3) - exercices courts et ciblés sur UNE notion : nombres décimaux (comparer, ranger, droite graduée), calcul posé et mental sur les décimaux, fractions (partage, fraction d une quantité), proportionnalité, problème à 1-3 étapes avec contexte concret (pas plus de 4 lignes d\'énoncé), géométrie (constructions décrites avec des mots, symétrie axiale), grandeurs (périmètre, aire, angles, durées, conversions). Pour un problème : la question est toujours la DERNIÈRE phrase, clairement séparée. INTERDIT : plusieurs notions mélangées, énoncés de plus de 5 lignes, figures impossibles à dessiner en texte.',
+    math:{cm2:'Maths 6e (programme cycle 3) - exercices courts et ciblés sur UNE notion : nombres décimaux (comparer, ranger, droite graduée), calcul posé et mental sur les décimaux, fractions (partage, fraction d une quantité), proportionnalité, problème à 1-3 étapes avec contexte concret (pas plus de 4 lignes d\'énoncé), géométrie sur une FIGURE dessinée par l application (droites parallèles et perpendiculaires, segments, cercles, triangles, quadrilatères, symétrie axiale, angles), grandeurs (périmètre, aire, angles, durées, conversions). Pour un problème : la question est toujours la DERNIÈRE phrase, clairement séparée. INTERDIT : plusieurs notions mélangées, énoncés de plus de 5 lignes, figure décrite seulement avec des mots (utilise le champ figure), construction à tracer sur papier que l application ne peut pas vérifier.',
       sec:'Algèbre (équations 1er/2nd degré), fonctions affines/polynômes, géométrie dans le plan et l\'espace, statistiques descriptives, trigonométrie. Propose un exercice complet avec une ou deux questions.',
       pre:'Mathématiques, spécialité Terminale (programme officiel, sans maths expertes : PAS de nombres complexes, PAS d arithmétique, PAS de matrices). Chapitres : suites et récurrence, limites et continuité, dérivation et convexité, logarithme népérien, exponentielle, fonctions sinus/cosinus, primitives et équations différentielles, calcul intégral, dénombrement, géométrie dans l espace, loi binomiale, sommes de variables aléatoires et loi des grands nombres, algorithmique Python. Style des sujets du bac de spécialité (épreuve écrite de 4 h) : énoncé rédigé comme au bac, questions numérotées, résultats intermédiaires donnés (« Montrer que... ») pour ne pas bloquer la suite, justification et rédaction attendues. Exercices de type bac souvent en contexte (population, médicament, entreprise, jeu).'},
     fr:{cm2:'Français 6e : accord sujet-verbe, accords dans le groupe nominal, conjugaison (présent, imparfait, passé simple, futur, passé composé), classes de mots, fonctions (sujet, COD, COI, compléments circonstanciels), homophones, vocabulaire. Pour la lecture : extrait court (5-8 lignes) de mythe, conte ou récit d aventure + 1 question précise. TYPES AUTORISES UNIQUEMENT : (1) donner l\'infinitif ou conjuguer 5-6 verbes isolés, (2) accorder 5-6 groupes nominaux, (3) trouver le mot intrus, (4) compléter 3-4 phrases courtes avec le bon mot, (5) trouver synonyme/antonyme de 5 mots, (6) identifier la nature de 5 mots soulignés. INTERDIT : recopier un texte entier, écrire une rédaction longue, dictée longue. Chaque exercice doit être faisable en 5 minutes max et cibler UNE seule notion précise.',
@@ -2906,6 +2918,230 @@ function mdToHtml(text){
   const t = convertEnglishMarkers(text);
   return typeof marked !== 'undefined' ? marked.parse(t) : t.replace(/\n/g,'<br>');
 }
+
+// ══════════════════════════════════════════════════════════
+// FIGURES DE GÉOMÉTRIE — l'IA décrit la figure dans un petit langage
+// (bloc ```figure ... ``` ajouté à l'énoncé) et l'app la dessine en SVG
+// exact : les perpendiculaires sont vraiment perpendiculaires.
+// ══════════════════════════════════════════════════════════
+const FIGURE_PROMPT_RULE = `FIGURE (dessinée par l'application) : mets dans le champ "figure" du JSON la description de la figure, une instruction par ligne (séparées par \\n). Repère invisible pour l'élève : x de 0 à 12, y de 0 à 8 (y vers le haut). Instructions :
+point A 2 3 → point visible nommé A (ajoute « cache » à la fin pour un point invisible qui sert juste à construire)
+droite (d1) A B → droite infinie passant par A et B, nommée (d1) ; sans nom : droite A B
+perp (d2) M (d1) → droite passant par M, perpendiculaire à (d1) (calcul exact)
+para (d3) M (d1) → droite passant par M, parallèle à (d1) (calcul exact)
+inter I (d1) (d2) → point I à l'intersection de deux droites (pour une droite sans nom écris (AB))
+segment A B 5 cm → segment [AB], le texte après les points est écrit à côté (facultatif)
+demidroite A B → demi-droite [AB)
+polygone A B C → triangle, quadrilatère...
+cercle O 3 → cercle de centre O et de rayon 3 ; cercle O A → cercle de centre O passant par A
+angledroit (d1) (d2) → codage d'angle droit à l'intersection ; angledroit A H B → codage en H
+angle A B C 60° → arc d'angle en B (texte facultatif, ? pour l'angle cherché)
+egal A B 2 → codage de longueurs égales sur [AB] (1, 2 ou 3 traits)
+grille → quadrillage en fond (symétrie, reproduction)
+texte 5 7 mot → petit texte en (5;7)
+Options en fin de ligne : rouge, bleu, vert, orange, violet, pointilles.
+RÈGLES FIGURE : utilise perp et para pour les droites perpendiculaires et parallèles (jamais à l'œil). Pour un piège, une droite PRESQUE perpendiculaire se fait avec deux points (droite A B). Ne mets le codage d'angle droit que si l'énoncé le donne ; si la question est « sont-elles perpendiculaires ? », l'élève doit pouvoir vérifier avec son équerre sur la figure, ne code pas l'angle. Garde les points bien écartés (au moins 1,5 unité) et noms courts. Ne recopie JAMAIS les coordonnées dans l'énoncé : l'élève voit seulement le dessin. L'énoncé dit « Observe la figure ».`;
+
+function figureTopic(){
+  if(!currentSubject) return '';
+  const t = currentSubject.topicId;
+  if(currentSubject.id==='math' && ['geometrie','droites'].includes(t)) return 'required';
+  if(currentSubject.id==='logique' && t==='geometrie_log') return 'required';
+  if(currentSubject.id==='math' && currentProfile!=='pre') return 'optional';
+  return '';
+}
+
+function renderFigureSVG(src){
+  const P = {}, L = {}, ops = [];
+  const COLORS = {rouge:'#D63B3B',bleu:'#2F6FD0',vert:'#1D9E75',orange:'#E08A1E',violet:'#7F77DD'};
+  const num = s => parseFloat(String(s).replace(',', '.'));
+  const lineRef = ref => {
+    if(L[ref]) return L[ref];
+    const m = /^\(?([A-Z]'?)([A-Z]'?)\)?$/.exec(ref||'');
+    if(m && P[m[1]] && P[m[2]]) return {p:P[m[1]], d:[P[m[2]].x-P[m[1]].x, P[m[2]].y-P[m[1]].y]};
+    return null;
+  };
+  for(const rawLine of String(src||'').split(/\n|;/)){
+    let tk = rawLine.trim().split(/\s+/).filter(Boolean);
+    if(!tk.length) continue;
+    const cmd = tk.shift().toLowerCase().replace(/[-_]/g,'');
+    const st = {color:'#1a1a1a', dash:false, hidden:false};
+    tk = tk.filter(w=>{
+      const lw = w.toLowerCase();
+      if(COLORS[lw]){ st.color = COLORS[lw]; return false; }
+      if(/^pointill/.test(lw)){ st.dash = true; return false; }
+      if(lw==='cache'||lw==='caché'){ st.hidden = true; return false; }
+      return true;
+    });
+    const name = tk[0] && tk[0].startsWith('(') ? tk.shift() : null;
+    try{
+      if(cmd==='point' && tk.length>=3){
+        P[tk[0]] = {x:num(tk[1]), y:num(tk[2]), hidden:st.hidden, color:st.color};
+      } else if(cmd==='inter' && tk.length>=3){
+        const a = lineRef(tk[1]), b = lineRef(tk[2]);
+        const det = a && b ? a.d[0]*b.d[1]-a.d[1]*b.d[0] : 0;
+        if(Math.abs(det)>1e-9){
+          const t = ((b.p.x-a.p.x)*b.d[1]-(b.p.y-a.p.y)*b.d[0])/det;
+          P[tk[0]] = {x:a.p.x+t*a.d[0], y:a.p.y+t*a.d[1], hidden:st.hidden, color:st.color};
+        }
+      } else if(cmd==='droite' && P[tk[0]] && P[tk[1]]){
+        const ln = {p:P[tk[0]], d:[P[tk[1]].x-P[tk[0]].x, P[tk[1]].y-P[tk[0]].y], name, st};
+        if(name) L[name] = ln; ops.push({k:'line', ln});
+      } else if((cmd==='perp'||cmd==='para') && P[tk[0]] && lineRef(tk[1])){
+        const ref = lineRef(tk[1]);
+        const d = cmd==='perp' ? [-ref.d[1], ref.d[0]] : ref.d.slice();
+        const ln = {p:P[tk[0]], d, name, st};
+        if(name) L[name] = ln; ops.push({k:'line', ln});
+      } else if(cmd==='segment' || cmd==='demidroite'){
+        if(P[tk[0]] && P[tk[1]]) ops.push({k:cmd, a:tk[0], b:tk[1], txt:tk.slice(2).join(' '), st});
+      } else if(cmd==='polygone'){
+        ops.push({k:'poly', pts:tk.filter(n=>P[n]), st});
+      } else if(cmd==='cercle' && P[tk[0]]){
+        const r = P[tk[1]] ? Math.hypot(P[tk[1]].x-P[tk[0]].x, P[tk[1]].y-P[tk[0]].y) : num(tk[1]);
+        if(r>0) ops.push({k:'circle', c:tk[0], r, st});
+      } else if(cmd==='angledroit'){
+        if(tk.length>=3 && P[tk[0]] && P[tk[1]] && P[tk[2]]) ops.push({k:'right', a:tk[0], h:tk[1], b:tk[2], st});
+        else {
+          const r1 = lineRef(name||tk[0]), r2 = lineRef(name?tk[0]:tk[1]);
+          if(r1 && r2) ops.push({k:'rightL', r1, r2, st});
+        }
+      } else if(cmd==='angle' && P[tk[0]] && P[tk[1]] && P[tk[2]]){
+        ops.push({k:'angle', a:tk[0], o:tk[1], b:tk[2], txt:tk.slice(3).join(' '), st});
+      } else if(cmd==='egal' && P[tk[0]] && P[tk[1]]){
+        ops.push({k:'ticks', a:tk[0], b:tk[1], n:Math.max(1,Math.min(3,parseInt(tk[2])||1)), st});
+      } else if(cmd==='grille'){
+        ops.unshift({k:'grid'});
+      } else if(cmd==='texte' && tk.length>=3){
+        ops.push({k:'text', x:num(tk[0]), y:num(tk[1]), txt:tk.slice(2).join(' '), st});
+      }
+    }catch(e){ console.warn('figure: ligne ignorée', rawLine, e); }
+  }
+  const pts = Object.values(P).filter(p=>isFinite(p.x)&&isFinite(p.y));
+  if(!pts.length) return '';
+  // Cadre : tous les points + cercles, avec une marge
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  const grow=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  pts.forEach(p=>grow(p.x,p.y));
+  ops.filter(o=>o.k==='circle').forEach(o=>{const c=P[o.c];grow(c.x-o.r,c.y-o.r);grow(c.x+o.r,c.y+o.r);});
+  ops.filter(o=>o.k==='text').forEach(o=>grow(o.x,o.y));
+  const pad = 1.2;
+  x0-=pad; x1+=pad; y0-=pad; y1+=pad;
+  if(x1-x0<6){const c=(x0+x1)/2;x0=c-3;x1=c+3;}
+  if(y1-y0<4){const c=(y0+y1)/2;y0=c-2;y1=c+2;}
+  const S = 40, W = (x1-x0)*S, H = (y1-y0)*S;
+  const X = x=>((x-x0)*S).toFixed(1), Y = y=>((y1-y)*S).toFixed(1);
+  const esc = t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const strokeAttr = st=>`stroke="${st.color}" stroke-width="2.5"${st.dash?' stroke-dasharray="6 5"':''} fill="none"`;
+  const unit = (dx,dy)=>{const n=Math.hypot(dx,dy)||1;return [dx/n,dy/n];};
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  // Découpe d'une droite (ou demi-droite si tmin=0) dans le cadre
+  const clip = (p,d,tmin)=>{
+    let lo = tmin===0 ? 0 : -Infinity, hi = Infinity;
+    [[d[0],p.x,x0,x1],[d[1],p.y,y0,y1]].forEach(([dd,pp,a,b])=>{
+      if(Math.abs(dd)<1e-12){ if(pp<a||pp>b){lo=1;hi=0;} return; }
+      let t1=(a-pp)/dd, t2=(b-pp)/dd; if(t1>t2)[t1,t2]=[t2,t1];
+      lo=Math.max(lo,t1); hi=Math.min(hi,t2);
+    });
+    return lo<hi ? [lo,hi] : null;
+  };
+  let body = '', labels = '';
+  const placed = [];
+  for(const o of ops){
+    if(o.k==='grid'){
+      let g='';
+      for(let x=Math.ceil(x0);x<=x1;x++) g+=`<line x1="${X(x)}" y1="0" x2="${X(x)}" y2="${H.toFixed(1)}"/>`;
+      for(let y=Math.ceil(y0);y<=y1;y++) g+=`<line x1="0" y1="${Y(y)}" x2="${W.toFixed(1)}" y2="${Y(y)}"/>`;
+      body+=`<g stroke="#cfe0f2" stroke-width="1">${g}</g>`;
+    } else if(o.k==='line'){
+      const {p,d,name,st} = o.ln, c = clip(p,d);
+      if(!c) continue;
+      const a=[p.x+c[0]*d[0],p.y+c[0]*d[1]], b=[p.x+c[1]*d[0],p.y+c[1]*d[1]];
+      body+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" ${strokeAttr(st)}/>`;
+      if(name){
+        // nom posé le long de la droite, là où il gêne le moins (loin des points et des autres noms)
+        const u=unit(d[0],d[1]), nx=-u[1], ny=u[0], len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+        let bx=b[0], by=b[1], best=-1;
+        for(let i=1;i<=9;i++){
+          const f=0.05+0.09*(i-1)+(i===9?0.03:0), qx=a[0]+(b[0]-a[0])*f+nx*0.38, qy=a[1]+(b[1]-a[1])*f+ny*0.38;
+          if(len*Math.min(f,1-f)<0.5) continue;
+          const sc=Math.min(...pts.map(p=>Math.hypot(p.x-qx,p.y-qy)), ...placed.map(p=>Math.hypot(p[0]-qx,p[1]-qy)), 9)+f*0.01;
+          if(sc>best){best=sc;bx=qx;by=qy;}
+        }
+        placed.push([bx,by]);
+        labels+=`<text x="${X(bx)}" y="${Y(by)}" fill="${st.color}" font-style="italic" text-anchor="middle" dominant-baseline="middle">${esc(name)}</text>`;
+      }
+    } else if(o.k==='segment' || o.k==='demidroite'){
+      const A=P[o.a], B=P[o.b];
+      let e=B;
+      if(o.k==='demidroite'){ const d=[B.x-A.x,B.y-A.y], c=clip(A,d,0); if(c) e={x:A.x+c[1]*d[0],y:A.y+c[1]*d[1]}; }
+      body+=`<line x1="${X(A.x)}" y1="${Y(A.y)}" x2="${X(e.x)}" y2="${Y(e.y)}" ${strokeAttr(o.st)}/>`;
+      if(o.txt){
+        let [nx,ny]=unit(-(B.y-A.y),B.x-A.x);
+        const mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+        if((mx-cx)*nx+(my-cy)*ny<0){nx=-nx;ny=-ny;}
+        labels+=`<text x="${X(mx+nx*0.4)}" y="${Y(my+ny*0.4)}" fill="${o.st.color}" text-anchor="middle" dominant-baseline="middle" font-size="19">${esc(o.txt)}</text>`;
+      }
+    } else if(o.k==='poly'){
+      if(o.pts.length>=2) body+=`<polygon points="${o.pts.map(n=>X(P[n].x)+','+Y(P[n].y)).join(' ')}" ${strokeAttr(o.st)}/>`;
+    } else if(o.k==='circle'){
+      const C=P[o.c];
+      body+=`<circle cx="${X(C.x)}" cy="${Y(C.y)}" r="${(o.r*S).toFixed(1)}" ${strokeAttr(o.st)}/>`;
+    } else if(o.k==='right' || o.k==='rightL'){
+      let h, u, v;
+      if(o.k==='right'){ h=P[o.h]; u=unit(P[o.a].x-h.x,P[o.a].y-h.y); v=unit(P[o.b].x-h.x,P[o.b].y-h.y); }
+      else {
+        const a=o.r1, b=o.r2, det=a.d[0]*b.d[1]-a.d[1]*b.d[0];
+        if(Math.abs(det)<1e-9) continue;
+        const t=((b.p.x-a.p.x)*b.d[1]-(b.p.y-a.p.y)*b.d[0])/det;
+        h={x:a.p.x+t*a.d[0], y:a.p.y+t*a.d[1]};
+        u=unit(a.d[0],a.d[1]); v=unit(b.d[0],b.d[1]);
+        // codage tourné vers le centre de la figure
+        if((cx-h.x)*u[0]+(cy-h.y)*u[1]<0) u=[-u[0],-u[1]];
+        if((cx-h.x)*v[0]+(cy-h.y)*v[1]<0) v=[-v[0],-v[1]];
+      }
+      const k=0.35, q1=[h.x+u[0]*k,h.y+u[1]*k], q2=[h.x+(u[0]+v[0])*k,h.y+(u[1]+v[1])*k], q3=[h.x+v[0]*k,h.y+v[1]*k];
+      body+=`<polyline points="${X(q1[0])},${Y(q1[1])} ${X(q2[0])},${Y(q2[1])} ${X(q3[0])},${Y(q3[1])}" stroke="${o.st.color==='#1a1a1a'?'#D63B3B':o.st.color}" stroke-width="1.8" fill="none"/>`;
+    } else if(o.k==='angle'){
+      const O=P[o.o], r=0.7;
+      let a1=Math.atan2(P[o.a].y-O.y,P[o.a].x-O.x), a2=Math.atan2(P[o.b].y-O.y,P[o.b].x-O.x);
+      let da=a2-a1; while(da<=-Math.PI) da+=2*Math.PI; while(da>Math.PI) da-=2*Math.PI;
+      const s=[O.x+r*Math.cos(a1),O.y+r*Math.sin(a1)], e=[O.x+r*Math.cos(a1+da),O.y+r*Math.sin(a1+da)];
+      const col=o.st.color==='#1a1a1a'?'#E08A1E':o.st.color;
+      // y inversé à l'écran : le sens de balayage s'inverse
+      body+=`<path d="M${X(s[0])},${Y(s[1])} A${(r*S).toFixed(1)},${(r*S).toFixed(1)} 0 0 ${da>0?0:1} ${X(e[0])},${Y(e[1])}" stroke="${col}" stroke-width="2" fill="none"/>`;
+      if(o.txt){ const m=a1+da/2; labels+=`<text x="${X(O.x+1.25*Math.cos(m))}" y="${Y(O.y+1.25*Math.sin(m))}" fill="${col}" text-anchor="middle" dominant-baseline="middle" font-size="19">${esc(o.txt)}</text>`; }
+    } else if(o.k==='ticks'){
+      const A=P[o.a], B=P[o.b], u=unit(B.x-A.x,B.y-A.y), n=[-u[1],u[0]], mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+      for(let i=0;i<o.n;i++){
+        const off=(i-(o.n-1)/2)*0.13, px=mx+u[0]*off, py=my+u[1]*off;
+        body+=`<line x1="${X(px-n[0]*0.18)}" y1="${Y(py-n[1]*0.18)}" x2="${X(px+n[0]*0.18)}" y2="${Y(py+n[1]*0.18)}" stroke="${o.st.color==='#1a1a1a'?'#7F77DD':o.st.color}" stroke-width="2"/>`;
+      }
+    } else if(o.k==='text'){
+      labels+=`<text x="${X(o.x)}" y="${Y(o.y)}" fill="${o.st.color}" text-anchor="middle" dominant-baseline="middle" font-size="19">${esc(o.txt)}</text>`;
+    }
+  }
+  // Points : croix + nom, placé à l'opposé du centre de la figure
+  for(const [n,p] of Object.entries(P)){
+    if(p.hidden || !isFinite(p.x)) continue;
+    let [ux,uy]=unit(p.x-cx,p.y-cy); if(!ux&&!uy) uy=1;
+    const c=p.color, k=0.12;
+    body+=`<path d="M${X(p.x-k)},${Y(p.y-k)}L${X(p.x+k)},${Y(p.y+k)}M${X(p.x-k)},${Y(p.y+k)}L${X(p.x+k)},${Y(p.y-k)}" stroke="${c}" stroke-width="2"/>`;
+    labels+=`<text x="${X(p.x+ux*0.5)}" y="${Y(p.y+uy*0.5)}" fill="${c}" font-weight="700" text-anchor="middle" dominant-baseline="middle">${esc(n)}</text>`;
+  }
+  return `<svg class="geo-fig" viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Figure de l'exercice" font-family="Nunito,sans-serif" font-size="22">`
+    + `<rect width="100%" height="100%" fill="#fff"/>${body}<g paint-order="stroke" stroke="#fff" stroke-width="4" stroke-linejoin="round">${labels}</g></svg>`;
+}
+
+// Remplace chaque bloc ```figure ... ``` du texte par son dessin
+function withFigures(text, render){
+  const figs = [];
+  const t = String(text||'').replace(/```figure\s*\n([\s\S]*?)```/g, (m, src)=>{ figs.push(src); return '\n\n@@FIG'+(figs.length-1)+'@@\n\n'; });
+  let html = render(t);
+  return html.replace(/(?:<br>\s*)*(?:<p>)?@@FIG(\d+)@@(?:<\/p>)?(?:\s*<br>)*/g, (m, i)=>{
+    const svg = renderFigureSVG(figs[+i]);
+    return svg ? '<div class="geo-fig-wrap">'+svg+'<div class="geo-fig-tip">📐 Pour vérifier un angle droit, pose ton équerre (ou le coin d\'une feuille) sur l\'écran.</div></div>' : '';
+  });
+}
 let englishVoice = null;
 function pickEnglishVoice(){
   if(!window.speechSynthesis) return null;
@@ -2982,9 +3218,12 @@ function renderMarkdownMath(text, elementId){
   const el = document.getElementById(elementId);
   if(!el) return;
   // Parse markdown then render math
-  let html = mdToHtml(text);
-  // Wrap glossary terms (only for exercise questions)
-  if(elementId==='q-text') html = wrapGlossaryTerms(html, currentProfile);
+  // Geometry figures (```figure``` blocks) are drawn as SVG after markdown + glossary
+  let html = withFigures(text, t=>{
+    const h = mdToHtml(t);
+    // Wrap glossary terms (only for exercise questions)
+    return elementId==='q-text' ? wrapGlossaryTerms(h, currentProfile) : h;
+  });
   el.innerHTML = html;
   if(window.MathJax && MathJax.typesetPromise){
     MathJax.typesetPromise([el]).catch(err=>console.log(err));
@@ -3019,7 +3258,7 @@ async function getHint(){
   const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
-2-4 lignes max. LaTeX si nécessaire.`;
+2-4 lignes max. LaTeX si nécessaire.${exoContext.includes('```figure') ? '\nLe bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).' : ''}`;
   try{
     const resp=await fetchAnthropicWithRetry({
       model:'claude-sonnet-4-5', max_tokens:400,
@@ -3086,7 +3325,7 @@ async function submitAnswer(){
       : 'Terminale spécialité maths (17-18 ans). Exigeant et pédagogue, niveau bac. En maths, corrige comme un correcteur du bac : pour chaque question, donne une estimation des points obtenus sur le barème si indiqué, signale les manques de rédaction ou de justification qui coûtent des points (théorème non cité, hypothèse non vérifiée, conclusion absente) et donne la rédaction attendue.';
 
   const systemPrompt=`Tu es un professeur correcteur. Niveau eleve : ${corrLevelDesc}.
-ROLE UNIQUE : corriger les reponses mathematiques ou litteraires de l eleve. Tu ne commentes PAS le contexte narratif de l exercice (histoire, jeux video, personnages). Tu corriges UNIQUEMENT la reponse sur le plan mathematique ou grammatical.
+${exoContext.includes('```figure') ? 'Le bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).\n' : ''}ROLE UNIQUE : corriger les reponses mathematiques ou litteraires de l eleve. Tu ne commentes PAS le contexte narratif de l exercice (histoire, jeux video, personnages). Tu corriges UNIQUEMENT la reponse sur le plan mathematique ou grammatical.
 REGLE ABSOLUE : si l eleve a bien calcule ou bien repondu, dis CORRECT meme si le contexte narratif de l enonce te semble incohérent. L incohérence narrative n est PAS une erreur de l eleve.
 
 Reponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou apres.
