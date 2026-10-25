@@ -473,6 +473,16 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .prof-step.done{opacity:.75}
 .prof-step-role{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);width:86px;flex-shrink:0}
 .prof-step-name{flex:1}
+.subjects-wrap>summary{cursor:pointer;font-weight:800;font-size:.95rem;padding:.9rem 1.1rem;background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:1rem;list-style-position:inside}
+.parents-bar{margin-top:1.5rem;padding-top:1rem;border-top:1.5px dashed var(--border);font-size:.78rem;color:var(--muted);font-weight:700;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.parents-bar button{font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)}
+.en-text{color:#185FA5;font-weight:700}
+.say-btn{border:none;background:#E6F1FB;border-radius:99px;padding:1px 7px;margin:0 3px;cursor:pointer;font-size:.85em;vertical-align:baseline}
+.say-btn:hover{background:#B5D4F4}
+.ecoute .en-text{filter:blur(6px);cursor:pointer;user-select:none}
+.ecoute .en-text.revealed{filter:none}
+.btn-mic{padding:10px 18px;border-radius:10px;border:none;background:#E24B4A;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer}
+.btn-mic.listening{animation:pulse 1s infinite;background:#A32D2D}
 .lesson-banner{background:linear-gradient(135deg,#BA7517,#E0A040);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
 .lesson-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(186,117,23,.3)}
 .suspended-banner{background:linear-gradient(135deg,#185FA5,#2E86DE);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;color:#fff}
@@ -655,18 +665,26 @@ setTimeout(function(){
     <button class="dash-back" data-action="goHome">← Accueil</button>
     <span class="dash-title" id="dash-title">Mon Espace</span>
     <span class="dash-score" id="dash-score">⭐ 0 pts</span>
-    <button data-action="showReport" style="font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);margin-left:.5rem">📊 Rapport</button>
-    <button data-action="showAdminLogin" style="font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);margin-left:.3rem">⚙️ +Matière</button>
+    <button id="hdr-report-btn" data-action="showReport" style="font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);margin-left:.5rem">📊 Rapport</button>
+    <button id="hdr-admin-btn" data-action="showAdminLogin" style="font-family:Nunito,sans-serif;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);margin-left:.3rem">⚙️ +Matière</button>
   </div>
   <div class="dash-body">
     <div class="dash-welcome">
       <h2 id="dash-welcome-title">Bonjour !</h2>
       <p id="dash-welcome-sub"></p>
     </div>
-    <div class="subjects-grid" id="subjects-grid"></div>
-    <div class="progress-section">
-      <h3>Ma progression</h3>
-      <div id="progress-bars"></div>
+    <details id="subjects-wrap" class="subjects-wrap" open>
+      <summary id="subjects-summary">📚 Mes autres matières <span style="font-weight:600;color:var(--muted);font-size:.8rem">— réviser mes cours, anglais</span></summary>
+      <div class="subjects-grid" id="subjects-grid"></div>
+      <div class="progress-section">
+        <h3>Ma progression</h3>
+        <div id="progress-bars"></div>
+      </div>
+    </details>
+    <div id="parents-bar" class="parents-bar" style="display:none">
+      👪 Espace parents :
+      <button data-action="showReport">📊 Rapport</button>
+      <button data-action="showAdminLogin">⚙️ +Matière</button>
     </div>
   </div>
 </div>
@@ -1060,8 +1078,8 @@ async function ensureApiKey(){
 const PROFILES = {
   cm2:{ // clé historique 'cm2' conservée pour garder la progression d'Amaury (désormais en 6e)
     name:'6e',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
-    welcome:'Super ! Prêt pour une nouvelle aventure ?',
-    sub:'Choisis une matière et laisse l\'IA créer des exercices juste pour toi !',
+    welcome:'Salut Amaury ! Prêt pour ta séance ?',
+    sub:'Clique sur Prof Max : il a préparé ta séance du jour.',
     subjects:[
       {id:'consignes',icon:'🎯',name:'Consignes & Problèmes',desc:'Comprendre ce qu\'on me demande, résoudre pas à pas',topics:[
         {id:'vocab_consignes',e:'🔑',n:'Les mots des consignes',d:'Calculer, justifier, compléter, déduire, comparer...'},
@@ -1106,6 +1124,15 @@ const PROFILES = {
         {id:'matiere',e:'💧',n:'La matière',d:'États, mélanges, masse et volume'},
         {id:'energie',e:'⚡',n:'Énergie et mouvement',d:'Sources d\'énergie, trajectoires'},
         {id:'terre',e:'🌎',n:'La planète Terre',d:'Système solaire, saisons, environnement'},
+      ]},
+      {id:'anglais',icon:'🇬🇧',name:'Anglais',desc:'Avec la vraie voix anglaise 🔊 et le micro 🎤',topics:[
+        {id:'parler_repeter',e:'🎤',n:'Répéter et bien prononcer',d:'J\'écoute 🔊 puis je le dis au micro 🎤'},
+        {id:'parler_repondre',e:'💬',n:'Répondre à l\'oral',d:'On me pose une question en anglais, je réponds au micro'},
+        {id:'ecoute',e:'🎧',n:'Écouter et comprendre',d:'J\'écoute sans voir le texte, puis je réponds'},
+        {id:'se_presenter',e:'🙋',n:'Me présenter',d:'Name, age, family, likes'},
+        {id:'vocabulaire_en',e:'🎨',n:'Vocabulaire',d:'Couleurs, nombres, animaux, école, famille, corps'},
+        {id:'grammaire_en',e:'🔧',n:'Grammaire',d:'To be, have got, présent simple, there is / there are'},
+        {id:'lecture_en',e:'📖',n:'Lire un petit texte',d:'Comprendre un court texte en anglais'},
       ]},
       {id:'logique',icon:'🧩',name:'Logique & Énigmes',desc:'Raisonnement, énigmes, stratégie',topics:[
         {id:'suites_log',e:'🔢',n:'Suites logiques',d:'Trouver la règle et continuer'},
@@ -1954,7 +1981,7 @@ function showDashboard(){
       profCard.id='prof-dash-card';
       profCard.className='prof-dash-card';
       profCard.addEventListener('click', startProfSeance);
-      document.getElementById('subjects-grid').insertAdjacentElement('beforebegin', profCard);
+      document.getElementById('subjects-wrap').insertAdjacentElement('beforebegin', profCard);
     }
     const st=loadProfSeance();
     const doneToday = st && st.idx>=st.plan.length;
@@ -1962,6 +1989,14 @@ function showDashboard(){
     profCard.innerHTML=`<div class="agent-icon" style="font-size:2.6rem">🧑‍🏫</div><div class="agent-text"><div class="agent-title">${doneToday?'Séance du jour terminée ✅':inProgress?'Reprendre ma séance ('+st.idx+'/5)':'Ma séance avec '+PROF_NAME}</div><div class="agent-desc">${doneToday?'Bravo ! Tu peux faire une séance bonus ou réviser une leçon.':'Mémoire & compréhension · 5 exercices · 15 min'}</div></div><div class="agent-arrow">▶️</div>`;
     profCard.style.display='';
   } else if(profCard){ profCard.style.display='none'; }
+  // 6e: only the prof card stands out; subjects folded, parent buttons at the bottom
+  const is6e = currentProfile==='cm2';
+  const wrap=document.getElementById('subjects-wrap');
+  document.getElementById('subjects-summary').style.display = is6e ? '' : 'none';
+  wrap.open = !is6e;
+  document.getElementById('parents-bar').style.display = is6e ? '' : 'none';
+  document.getElementById('hdr-report-btn').style.display = is6e ? 'none' : '';
+  document.getElementById('hdr-admin-btn').style.display = is6e ? 'none' : '';
   // Subjects → click opens topic picker
   const grid=document.getElementById('subjects-grid');
   grid.innerHTML='';
@@ -2456,6 +2491,8 @@ function showCurrentQuestion(){
   }
 
   renderMarkdownMath(fullText,'q-text');
+  document.getElementById('q-text').classList.toggle('ecoute', currentSubject.topicId==='ecoute');
+  renderMicButton();
   const az=document.getElementById('answer-zone');
   az.style.display='block';
   // Problem-solving checklist for Amaury (6e) on consignes / problems / logic
@@ -2773,6 +2810,16 @@ function getSubjectPrompt(){
       sec:'Logique et raisonnement Seconde : raisonnement par cas, implications, contraposée, syllogismes, initiation algo (pseudo-code simple), combinatoire de base, enigmes avec justification rigoureuse. 2-3 questions progressives.',
       pre:'Logique et démonstration Terminale : raisonnement par récurrence, par l absurde, contraposée, logique propositionnelle, optimisation avec modélisation, complexité algorithmique, problèmes ouverts avec démonstration. Niveau baccalauréat exigeant.'
     },
+    anglais:{
+      cm2:`ANGLAIS 6e (niveau A1, programme de cycle 3) : vocabulaire du quotidien (couleurs, nombres, animaux, école, famille, corps, jours, mois, météo, nourriture), se présenter, to be, have got, présent simple, there is / there are, can, questions simples (What / Where / How old / Do you like...).
+Les consignes sont en FRANÇAIS, courtes. Phrases anglaises courtes (3 à 8 mots).
+TYPES selon le sujet :
+- parler_repeter : 3 à 5 phrases ou mots anglais à répéter (avec 1 ou 2 sons difficiles : th, h aspiré, -ing, voyelles longues). L élève écoute avec 🔊 puis dit les phrases au micro 🎤 ; sa réponse est la transcription de sa voix. Indique sous chaque phrase sa traduction en français entre parenthèses.
+- parler_repondre : 2 à 3 questions simples en anglais auxquelles l élève répond à l oral par une phrase complète (ex : [[What is your favourite colour?]]). Donne un modèle de début de réponse en anglais.
+- ecoute : un mini-texte ou dialogue anglais de 3 à 5 phrases dans le contexte (il sera flouté : l élève l écoute avec 🔊 sans le lire), puis une question en FRANÇAIS sur ce qu il a entendu.
+- se_presenter / vocabulaire_en / grammaire_en / lecture_en : exercice écrit court (compléter, traduire 4-5 mots, choisir la bonne forme, répondre à une question sur un texte de 3-4 phrases).`,
+      sec:'', pre:''
+    },
     consignes:{
       cm2:`CONSIGNES & PROBLÈMES 6e — objectif : apprendre à Amaury à COMPRENDRE ce qu on lui demande avant de répondre (bilan orthophonique : compréhension de texte et de consignes fragiles, mémoire de travail faible).
 REGLES : énoncés courts (3-5 lignes max), phrases simples, contextes du quotidien (cantine, sport, courses, jeux). Une seule compétence par exercice. La réponse attendue est courte (quelques mots, un nombre ou une phrase).
@@ -2829,18 +2876,113 @@ TYPES D EXERCICES selon le sujet :
     }
   };
   // Check for custom subject prompt
+  const enRule = isEnglishSubject() ? '\n'+ENGLISH_MARKER_RULE : '';
   if(currentSubject && currentSubject.customPrompt){
-    return currentSubject.customPrompt;
+    return currentSubject.customPrompt + enRule;
   }
-  return (subjectMap[s]&&subjectMap[s][p])||'Un exercice adapté au niveau.';
+  return ((subjectMap[s]&&subjectMap[s][p])||'Un exercice adapté au niveau.') + enRule;
 }
 
+
+// ══════════════════════════════════════════════════════════
+// ANGLAIS — vraie voix anglaise (🔊) et micro en anglais (🎤)
+// L'IA écrit l'anglais entre [[...]] : affiché en bleu, lang="en", avec un
+// bouton qui le prononce via la synthèse vocale du navigateur en en-GB.
+// ══════════════════════════════════════════════════════════
+const ENGLISH_MARKER_RULE = "ANGLAIS — RÈGLE D'AFFICHAGE OBLIGATOIRE : écris CHAQUE mot, expression ou phrase en anglais entre doubles crochets, par exemple [[Hello, my name is Tom.]] ou [[a red apple]]. Le français n'est jamais entre crochets. Un bouton 🔊 prononcera ce texte avec l'accent anglais.";
+function isEnglishSubject(){
+  return !!currentSubject && (currentSubject.id==='anglais' || /angl|english/i.test(currentSubject.name||''));
+}
+function isSpeakingTopic(){
+  return !!currentSubject && ['parler_repeter','parler_repondre'].includes(currentSubject.topicId);
+}
+function escAttr(t){ return String(t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function convertEnglishMarkers(text){
+  return String(text||'').replace(/\[\[([^\[\]\n]{1,300}?)\]\]/g, (m, en)=>
+    `<span class="en-text" lang="en">${escAttr(en)}</span><button type="button" class="say-btn" data-say="${escAttr(en)}" title="Écouter en anglais">🔊</button>`);
+}
+// Markdown + English markers (used for questions, hints, corrections, tutor)
+function mdToHtml(text){
+  const t = convertEnglishMarkers(text);
+  return typeof marked !== 'undefined' ? marked.parse(t) : t.replace(/\n/g,'<br>');
+}
+let englishVoice = null;
+function pickEnglishVoice(){
+  if(!window.speechSynthesis) return null;
+  const voices = speechSynthesis.getVoices();
+  englishVoice = voices.find(v=>/^en[-_]GB/i.test(v.lang)) || voices.find(v=>/^en[-_](US|AU|IE|CA)/i.test(v.lang)) || voices.find(v=>/^en/i.test(v.lang)) || null;
+  return englishVoice;
+}
+if(window.speechSynthesis){ pickEnglishVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', pickEnglishVoice); }
+function speakEnglish(text){
+  if(!window.speechSynthesis){ showSyncBadge('🔇 La voix n\'est pas disponible sur cet appareil'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  const v = englishVoice || pickEnglishVoice();
+  if(v) u.voice = v; else showSyncBadge('⚠️ Pas de voix anglaise installée : réglages du téléphone > Synthèse vocale');
+  u.rate = 0.85; // a bit slower for a 6e pupil
+  speechSynthesis.speak(u);
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('.say-btn');
+  if(b){ e.preventDefault(); speakEnglish(b.dataset.say); return; }
+  const hidden = e.target.closest && e.target.closest('.ecoute .en-text');
+  if(hidden && !hidden.classList.contains('revealed')){
+    if(confirm('Voir le texte ? Essaie d\'abord de bien écouter 🔊 (ça coûte un indice).')){
+      hidden.classList.add('revealed');
+      hintsPerQ[currentQIdx] = (hintsPerQ[currentQIdx]||0) + 1;
+    }
+  }
+});
+
+// 🎤 Speech recognition in English: the transcript goes into the answer box
+let micRecognizer = null;
+function renderMicButton(){
+  let btn = document.getElementById('mic-btn');
+  if(!isEnglishSubject()){ if(btn) btn.remove(); return; }
+  if(!btn){
+    btn = document.createElement('button');
+    btn.id = 'mic-btn';
+    btn.type = 'button';
+    btn.className = 'btn-mic';
+    btn.addEventListener('click', toggleMic);
+    document.querySelector('#answer-zone .exo-actions').prepend(btn);
+  }
+  btn.classList.remove('listening');
+  btn.textContent = isSpeakingTopic() ? '🎤 Parler en anglais' : '🎤 Dire ma réponse';
+}
+function toggleMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic-btn');
+  if(!SR){ alert('Le micro en anglais ne marche pas dans ce navigateur. Utilise Chrome (Android, ordinateur) ou Safari (iPhone, iPad).'); return; }
+  if(micRecognizer){ micRecognizer.stop(); return; }
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  micRecognizer = new SR();
+  micRecognizer.lang = 'en-GB';
+  micRecognizer.interimResults = false;
+  micRecognizer.maxAlternatives = 1;
+  micRecognizer.continuous = false;
+  btn.classList.add('listening');
+  btn.textContent = '🔴 Je t\'écoute... (clique pour arrêter)';
+  micRecognizer.onresult = ev=>{
+    const said = Array.from(ev.results).map(r=>r[0].transcript).join(' ').trim();
+    const ta = document.getElementById('answer-input');
+    ta.value = (ta.value.trim() ? ta.value.trim()+'\n' : '') + said;
+  };
+  micRecognizer.onerror = ev=>{
+    if(ev.error==='not-allowed' || ev.error==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
+    else if(ev.error==='no-speech') showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort');
+  };
+  micRecognizer.onend = ()=>{ micRecognizer = null; renderMicButton(); };
+  micRecognizer.start();
+}
 
 function renderMarkdownMath(text, elementId){
   const el = document.getElementById(elementId);
   if(!el) return;
   // Parse markdown then render math
-  let html = typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g,'<br>');
+  let html = mdToHtml(text);
   // Wrap glossary terms (only for exercise questions)
   if(elementId==='q-text') html = wrapGlossaryTerms(html, currentProfile);
   el.innerHTML = html;
@@ -2874,7 +3016,7 @@ async function getHint(){
   const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
   const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.`;
@@ -2890,7 +3032,7 @@ ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consign
     const hid='h-'+currentQIdx+'-'+hintNum;
     hz.innerHTML+=`<div class="hint-card" id="${hid}">💡 <strong>Indice ${hintNum} :</strong> <span></span></div>`;
     const span=document.querySelector('#'+hid+' span');
-    span.innerHTML=typeof marked!=='undefined'?marked.parse(hintText):hintText;
+    span.innerHTML=mdToHtml(hintText);
     if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetPromise([document.getElementById(hid)]);}
     document.getElementById('hint-btn').textContent='💡 Autre indice';
     document.getElementById('hint-btn').disabled=false;
@@ -2934,7 +3076,7 @@ async function submitAnswer(){
   const ctx=(currentSubject.isLesson?'**Leçon de référence (corrige selon cette leçon) :**\n'+currentSubject.lessonText+'\n\n':'')
     +(exoContext?'**Contexte :**\n'+exoContext+'\n\n':'');
   const qaList=questions.map((q,i)=>
-    `**Question ${i+1}:** ${q.q}\n**Réponse élève :** ${answers[i]||'(pas de réponse)'}`
+    `**Question ${i+1}:** ${q.q}\n**Réponse élève${isSpeakingTopic()?' (transcription de sa voix)':''} :** ${answers[i]||'(pas de réponse)'}`
   ).join('\n\n');
   // Build a clean correction prompt without leaking theme context
   const corrLevelDesc = isCM2
@@ -2952,7 +3094,7 @@ Format : {"total":"CORRECT","items":[{"v":"CORRECT","c":"Bravo ! ${isCM2?'🎉 '
 Valeurs de v : CORRECT / PARTIEL / INCORRECT
 Valeurs de total : CORRECT si tout bon, PARTIEL si mixte, INCORRECT si tout faux
 
-${currentSubject.isProf ? 'SEANCE AVEC LE PROF : termine la correction de chaque question par une phrase courte qui rappelle l astuce du prof : « '+currentSubject.profTip+' ». Si l eleve s est trompe, montre comment l astuce l aurait aide.\n' : ''}REGLES STRICTES :
+${isEnglishSubject() ? 'ANGLAIS : ecris tout mot ou phrase en anglais entre doubles crochets [[...]] (un bouton les prononce avec l accent anglais).'+(isSpeakingTopic() ? ' Les reponses de cet exercice sont la TRANSCRIPTION AUTOMATIQUE de la voix de l eleve (reconnaissance vocale anglaise) : ignore ponctuation et majuscules. Un mot mal transcrit signale en general un mot mal prononce : cite ces mots, explique comment les prononcer avec une aide simple a la francaise entre parentheses, ex [[thirteen]] (feur-tiine), et propose de le redire. Si tout est reconnu, felicite la prononciation.' : '')+'\n' : ''}${currentSubject.isProf ? 'SEANCE AVEC LE PROF : termine la correction de chaque question par une phrase courte qui rappelle l astuce du prof : « '+currentSubject.profTip+' ». Si l eleve s est trompe, montre comment l astuce l aurait aide.\n' : ''}REGLES STRICTES :
 1. CALCUL CORRECT = CORRECT. Jamais remettre en cause un calcul juste.
 2. Ne jamais mentionner de confusion ou d incoherence dans le contexte.
 3. Temps verbaux : verifier le temps demande. Orthographe : verifier lettre par lettre.
@@ -3047,11 +3189,11 @@ function showAllFeedbacks(raw,isCM2){
     const cardId='fd'+i;
     fz.innerHTML+=`<div class="feedback-card ${cls}">
       <div class="feedback-title">${emoji} Q${i+1} — ${label}</div>
-      <div class="feedback-q-recap">${(q.q||'').length>90?(q.q).slice(0,90)+'…':q.q}</div>
+      <div class="feedback-q-recap">${(()=>{const t=(q.q||'').replace(/\[\[|\]\]/g,''); return t.length>90?t.slice(0,90)+'…':t;})()}</div>
       <div class="feedback-text" id="${cardId}"></div>
     </div>`;
     const el=document.getElementById(cardId);
-    if(el) el.innerHTML=typeof marked!=='undefined'?marked.parse(correction):correction.replace(/\n/g,'<br>');
+    if(el) el.innerHTML=mdToHtml(correction);
   });
   if(window.MathJax&&MathJax.typesetPromise){MathJax.typesetPromise([fz]);}
   totalScore[currentProfile]+=totalPts;
@@ -3265,9 +3407,9 @@ function addTutorMsg(role, text, method){
   if(role === 'tutor' && method){
     const m = TUTOR_METHODS[method];
     const badge = m ? `<span class="tutor-method-badge ${m.badge}">${m.label}</span>` : '';
-    div.innerHTML = (typeof marked !== 'undefined' ? marked.parse(text) : text) + badge;
+    div.innerHTML = mdToHtml(text) + badge;
   } else if(role === 'tutor'){
-    div.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
+    div.innerHTML = mdToHtml(text);
   } else {
     div.textContent = text;
   }
@@ -4377,10 +4519,9 @@ function renderCM2Dashboard(){
   if(!gSection){
     gSection = document.createElement('div');
     gSection.id = 'cm2-gamif-section';
-    const welcomeCard = document.getElementById('dash-welcome-sub');
-    if(welcomeCard && welcomeCard.parentElement){
-      welcomeCard.parentElement.insertAdjacentElement('afterend', gSection);
-    }
+    // Below the prof card (which stays right under the welcome message)
+    const wrapEl = document.getElementById('subjects-wrap');
+    if(wrapEl) wrapEl.insertAdjacentElement('beforebegin', gSection);
   }
 
   gSection.innerHTML = `
