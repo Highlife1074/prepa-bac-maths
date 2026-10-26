@@ -463,6 +463,42 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .prof-banner,.prof-dash-card{background:linear-gradient(135deg,#534AB7,#7F77DD);border-radius:18px;padding:1.3rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;color:#fff;box-shadow:0 8px 24px rgba(83,74,183,.3);transition:transform .2s}
 .prof-banner:hover,.prof-dash-card:hover{transform:translateY(-3px)}
 .prof-dash-card .agent-title{font-size:1.25rem}
+.ck-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-bottom:1rem}
+@media(min-width:640px){.ck-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.ck-tile{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:.8rem .9rem}
+.ck-tile-label{font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.ck-tile-value{font-size:1.6rem;font-weight:900;line-height:1.3;color:var(--text)}
+.ck-tile-sub{font-size:.72rem;color:var(--muted)}
+.ck-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.ck-title{font-weight:800;font-size:.95rem;margin-bottom:.6rem}
+.ck-sub{font-size:.72rem;font-weight:800;color:var(--muted);margin:.6rem 0 .3rem;text-transform:uppercase}
+.ck-muted{color:var(--muted);font-weight:600;font-size:.78rem}
+.ck-chart{position:relative}
+.ck-chart svg{width:100%;height:auto;display:block}
+.ck-axis{font-size:10px;fill:#6b6b6b;font-family:Nunito,sans-serif}
+.ck-hit{cursor:pointer}.ck-hit.on{fill:rgba(0,0,0,.04)}
+.ck-tip{display:none;position:absolute;top:0;background:#1a1a1a;color:#fff;font-size:.75rem;font-weight:700;padding:5px 9px;border-radius:8px;white-space:nowrap;pointer-events:none}
+.ck-list{list-style:none;padding:0;margin:0;font-size:.84rem;line-height:1.5}
+.ck-list li{padding:.25rem 0;border-bottom:1px solid var(--border)}.ck-list li:last-child{border-bottom:none}
+.ck-legend{display:flex;flex-wrap:wrap;gap:.3rem .8rem;font-size:.7rem;color:var(--muted);font-weight:700;margin-bottom:.8rem}
+.ck-legend span{display:inline-flex;align-items:center;gap:.3rem}
+.ck-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.ck-subj{margin-bottom:.9rem}
+.ck-subj-head{display:flex;justify-content:space-between;font-weight:800;font-size:.86rem;margin-bottom:.3rem}
+.ck-bar{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;margin-bottom:.5rem}
+.ck-bar div{height:100%;background:#1D9E75;border-radius:99px}
+.ck-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px}
+.ck-cell{border-radius:8px;padding:.4rem .55rem;font-size:.74rem;font-weight:700;display:flex;flex-direction:column;gap:.1rem;line-height:1.25}
+.ck-cell-lvl{font-weight:800;font-size:.7rem;opacity:.9}
+.ck-memo-row{display:flex;align-items:center;gap:.6rem;font-size:.82rem;padding:.3rem 0;border-bottom:1px solid var(--border)}
+.ck-memo-row:last-child{border-bottom:none}.ck-memo-row.locked{opacity:.55}
+.ck-memo-name{flex:1;font-weight:700}
+.ck-meter{width:90px;height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.ck-meter span{display:block;height:100%;background:#7F77DD;border-radius:99px}
+.ck-memo-lvl{font-weight:800;font-size:.75rem;width:36px;text-align:right}
+.ck-tl{display:flex;gap:.5rem;align-items:center;font-size:.8rem;padding:.3rem 0;border-bottom:1px solid var(--border)}
+.ck-tl:last-child{border-bottom:none}
+.ck-tl-date{width:78px;flex-shrink:0}.ck-tl-what{flex:1;font-weight:700;min-width:0}.ck-tl-res{flex-shrink:0}
 .prof-dash-card.coach-card{background:linear-gradient(135deg,#0F6E56,#1D9E75);box-shadow:0 8px 24px rgba(15,110,86,.3)}
 #coach-screen{flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 #coach-screen.active{display:flex}
@@ -697,6 +733,7 @@ setTimeout(function(){
     </details>
     <div id="parents-bar" class="parents-bar" style="display:none">
       👪 Espace parents :
+      <button data-action="showCockpit">🧭 Cockpit</button>
       <button data-action="showReport">📊 Rapport</button>
       <button data-action="showAdminLogin">⚙️ +Matière</button>
     </div>
@@ -835,6 +872,15 @@ setTimeout(function(){
     <textarea id="tutor-input" class="tutor-input" placeholder="Écris ta réponse..." rows="2"></textarea>
     <button class="tutor-send" data-action="sendTutorMessage">→</button>
   </div>
+</div>
+
+<!-- COCKPIT SCREEN (suivi de l'avancement, parents 6e) -->
+<div id="cockpit-screen" class="screen">
+  <div class="dash-header">
+    <button class="dash-back" data-action="goToDash">← Retour</button>
+    <span class="dash-title">🧭 Cockpit · Amaury</span>
+  </div>
+  <div class="dash-body" id="cockpit-body"></div>
 </div>
 
 <!-- COACH SCREEN (circuit Cours 6e, chat avec Prof Léo) -->
@@ -3836,7 +3882,7 @@ document.addEventListener('DOMContentLoaded', function(){
     closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
     copyExportCode, doImport, goHome, goToPickerBack, startAgentMode: ()=>startAgentMode(false),
     startTutorMode, startLessonMode, startProfSeance, leaveProf, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
-    sendTutorMessage, goToDash, startCoach, leaveCoach, sendCoachMessage, toggleCoachMic
+    sendTutorMessage, goToDash, showCockpit, startCoach, leaveCoach, sendCoachMessage, toggleCoachMic
   };
 
   // Wire all data-action elements
@@ -4434,6 +4480,139 @@ function toggleCoachMic(){
   coachMic.onerror = ev=>{ if(ev.error==='not-allowed') alert('Autorise le micro pour ce site, puis réessaie.'); };
   coachMic.onend = ()=>{ coachMic = null; btn.classList.remove('listening'); };
   coachMic.start();
+}
+
+// ══════════════════════════════════════════════════════════
+// COCKPIT PARENTS (6e) — l'avancement d'Amaury d'un coup d'œil :
+// temps et réussite, activité sur 14 jours, niveau de chaque notion
+// des deux circuits, ce qu'il faut surveiller, dernières séances.
+// ══════════════════════════════════════════════════════════
+const COCKPIT_GOAL_MIN = 30;
+function cockpitDayKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function cockpitDays(n, offset){
+  const out = [];
+  for(let i=n-1+(offset||0); i>=(offset||0); i--){ const d = new Date(); d.setDate(d.getDate()-i); out.push(d); }
+  return out;
+}
+function cockpitLevelBand(lvl, practised){
+  if(!practised) return {bg:'var(--bg)', fg:'var(--muted)', label:'Pas encore travaillé'};
+  if(lvl<=3) return {bg:'#E1F5EE', fg:'#0F6E56', label:'Niveau 1-3 : guidé'};
+  if(lvl<=6) return {bg:'#9FE1CB', fg:'#0B4D3C', label:'Niveau 4-6 : 6e standard'};
+  if(lvl<=8) return {bg:'#3DBF94', fg:'#06291F', label:'Niveau 7-8 : exigeant'};
+  return {bg:'#0F6E56', fg:'#fff', label:'Niveau 9-10 : expert'};
+}
+function cockpitEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function showCockpit(){
+  const g = getGamification(), log = g.dailyLog || {};
+  const sum = (days, f)=>days.reduce((a,d)=>a+((log[cockpitDayKey(d)]||{})[f]||0), 0);
+  const wk = cockpitDays(7), prevWk = cockpitDays(7, 7);
+  const min7 = Math.round(sum(wk,'minutes')), minPrev = Math.round(sum(prevWk,'minutes'));
+  const ok7 = sum(wk,'correct'), tot7 = sum(wk,'total');
+  const wkKeys = new Set(wk.map(cockpitDayKey));
+  const memo = getProfHistory().history || [], cours = getCoachData().sessions || [];
+  const memo7 = memo.filter(x=>wkKeys.has(x.date)).length, cours7 = cours.filter(x=>wkKeys.has(x.date)).length;
+  const trend = min7===minPrev ? '= comme la semaine d\'avant' : (min7>minPrev ? '▲ ' : '▼ ') + Math.abs(min7-minPrev) + ' min vs semaine d\'avant';
+  let h = '';
+
+  // 1. Tuiles
+  const tile = (label, value, sub)=>`<div class="ck-tile"><div class="ck-tile-label">${label}</div><div class="ck-tile-value">${value}</div><div class="ck-tile-sub">${sub}</div></div>`;
+  h += `<div class="ck-tiles">
+    ${tile('Temps · 7 jours', min7+' min', trend)}
+    ${tile('Réponses justes · 7 j', tot7 ? Math.round(ok7/tot7*100)+' %' : '—', tot7 ? ok7+' sur '+tot7 : 'aucune réponse')}
+    ${tile('Série de jours', (g.streak||0)+' j', 'record : '+(g.bestStreak||g.streak||0)+' j')}
+    ${tile('Séances · 7 jours', memo7+cours7, '🧠 Mémoire '+memo7+' · 📚 Cours '+cours7)}
+  </div>`;
+
+  // 2. Activité 14 jours (minutes par jour, ligne d'objectif)
+  const days = cockpitDays(14);
+  const data = days.map(d=>{ const e = log[cockpitDayKey(d)]||{}; return {d, min:Math.round(e.minutes||0), ok:e.correct||0, tot:e.total||0}; });
+  const W = 360, H = 190, padL = 26, padB = 24, padT = 14, plotH = H-padB-padT, plotW = W-padL-8;
+  const maxV = Math.max(COCKPIT_GOAL_MIN+10, ...data.map(x=>x.min));
+  const step = Math.ceil(maxV/4/10)*10, top = step*4;
+  const y = v=>padT + plotH - v/top*plotH, colW = plotW/data.length, bw = Math.min(26, colW-8);
+  let svg = '';
+  for(let v=0; v<=top; v+=step) svg += `<line x1="${padL}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="#ece9e2" stroke-width="1"/><text x="${padL-6}" y="${y(v)+4}" text-anchor="end" class="ck-axis">${v}</text>`;
+  data.forEach((x,i)=>{
+    const cx = padL + colW*i + colW/2, bh = x.min ? Math.max(3, plotH - (y(x.min)-padT)) : 0, today = i===data.length-1;
+    if(bh) svg += `<path d="M${cx-bw/2},${y(0)} v${-(bh-4)} q0,-4 4,-4 h${bw-8} q4,0 4,4 v${bh-4} z" fill="${x.min>=COCKPIT_GOAL_MIN?'#1D9E75':'#9FE1CB'}"/>`;
+    svg += `<text x="${cx}" y="${H-8}" text-anchor="middle" class="ck-axis"${today?' font-weight="800"':''}>${today?'auj.':x.d.toLocaleDateString('fr-FR',{weekday:'narrow'})+x.d.getDate()}</text>`;
+    const tip = `${x.d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})} · ${x.min} min${x.tot?' · '+x.ok+'/'+x.tot+' justes':''}`;
+    svg += `<rect x="${padL+colW*i}" y="${padT}" width="${colW}" height="${plotH}" fill="transparent" class="ck-hit" data-tip="${cockpitEsc(tip)}"/>`;
+  });
+  svg += `<line x1="${padL}" x2="${W-8}" y1="${y(COCKPIT_GOAL_MIN)}" y2="${y(COCKPIT_GOAL_MIN)}" stroke="#E08A1E" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${padL+4}" y="${y(COCKPIT_GOAL_MIN)-5}" class="ck-axis" style="fill:#B5650A;paint-order:stroke;stroke:#fff;stroke-width:3px">objectif ${COCKPIT_GOAL_MIN} min</text>`;
+  const daysOn = data.filter(x=>x.min>0).length;
+  h += `<div class="ck-card"><div class="ck-title">Activité des 14 derniers jours <span class="ck-muted">· ${daysOn} jour${daysOn>1?'s':''} travaillé${daysOn>1?'s':''}, minutes par jour</span></div>
+    <div class="ck-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Minutes de travail par jour sur 14 jours">${svg}</svg><div class="ck-tip" id="ck-tip"></div></div>
+    <div class="ck-muted" style="font-size:.72rem">Barre foncée : objectif atteint. Touche une barre pour le détail.</div></div>`;
+
+  // 3. À surveiller
+  const now = Date.now(), skills = coachSkills();
+  const watch = [];
+  skills.forEach(sk=>{
+    const srs = getSRSData('cm2', sk.key);
+    if(srs.lastReview && srs.nextReview <= now) watch.push({p:2, html:`⏰ <strong>${sk.e} ${cockpitEsc(sk.n)}</strong> — révision prévue ${Math.max(0,Math.floor((now-srs.nextReview)/86400000)) ? 'depuis '+Math.floor((now-srs.nextReview)/86400000)+' j' : 'aujourd\'hui'}`});
+    else if(srs.lastReview && coachScore(sk) < 40) watch.push({p:1, html:`⚠️ <strong>${sk.e} ${cockpitEsc(sk.n)}</strong> — maîtrise faible (${coachScore(sk)} %)`});
+  });
+  const notes = Object.entries(getCoachData().notes).flatMap(([k,v])=>v.map(n=>({k, ...n}))).sort((a,b)=>a.d<b.d?1:-1).slice(0,4);
+  const watchHtml = watch.sort((a,b)=>b.p-a.p).slice(0,6).map(w=>`<li>${w.html}</li>`).join('');
+  const notesHtml = notes.map(n=>{ const sk = skills.find(s=>s.key===n.k); return `<li>📝 <strong>${sk?sk.e+' '+cockpitEsc(sk.n):cockpitEsc(n.k)}</strong> — ${cockpitEsc(n.t)}</li>`; }).join('');
+  h += `<div class="ck-card"><div class="ck-title">À surveiller</div>
+    <ul class="ck-list">${watchHtml || '<li class="ck-muted">Rien en retard 👍</li>'}</ul>
+    ${notesHtml ? `<div class="ck-sub">Dernières observations de ${COACH_NAME}</div><ul class="ck-list">${notesHtml}</ul>` : ''}</div>`;
+
+  // 4. Circuit Cours : niveau de chaque notion
+  const legendBands = [cockpitLevelBand(0,false), cockpitLevelBand(2,true), cockpitLevelBand(5,true), cockpitLevelBand(8,true), cockpitLevelBand(10,true)];
+  let cours_ = '';
+  getProfileSubjects('cm2').filter(s=>COACH_SUBJECTS.includes(s.id)).forEach(s=>{
+    const list = skills.filter(k=>k.subj===s.id);
+    if(!list.length) return;
+    const avg = Math.round(list.reduce((a,k)=>a+coachScore(k),0)/list.length);
+    cours_ += `<div class="ck-subj"><div class="ck-subj-head"><span>${s.icon} ${cockpitEsc(s.name)}</span><span class="ck-muted">maîtrise moyenne ${avg} %</span></div>
+      <div class="ck-bar"><div style="width:${avg}%"></div></div><div class="ck-cells">` +
+      list.map(k=>{
+        const srs = getSRSData('cm2', k.key), practised = !!srs.lastReview, lvl = coachLevel(k), b = cockpitLevelBand(lvl, practised);
+        const due = practised && srs.nextReview <= now;
+        return `<div class="ck-cell" style="background:${b.bg};color:${b.fg}${practised?'':';border:1.5px dashed var(--border)'}" title="${cockpitEsc(k.n+' · '+(practised?'niveau '+lvl+'/10, maîtrise '+coachScore(k)+' %':'pas encore travaillé'))}"><span>${k.e} ${cockpitEsc(k.n)}</span><span class="ck-cell-lvl">${practised?'niv. '+lvl:'—'}${due?' · ⏰':''}</span></div>`;
+      }).join('') + `</div></div>`;
+  });
+  h += `<div class="ck-card"><div class="ck-title">📚 Circuit Cours · ${COACH_NAME} <span class="ck-muted">· niveau de chaque notion (1 à 10)</span></div>
+    <div class="ck-legend">${legendBands.map(b=>`<span><i style="background:${b.bg};${b.bg==='var(--bg)'?'border:1.5px dashed var(--border)':''}"></i>${b.label}</span>`).join('')}<span>⏰ à réviser</span></div>
+    ${cours_}</div>`;
+
+  // 5. Circuit Mémoire
+  const phase = profUnlockedPhase();
+  const memoRows = Object.entries(PROF_SKILLS).map(([id,sk])=>{
+    const locked = sk.phase > phase, srs = getSRSData('cm2', sk.subj+'_'+id), practised = !!srs.lastReview;
+    const lvl = Math.round(((progress.scaffolding&&progress.scaffolding.cm2)||{})[id] || 1);
+    return `<div class="ck-memo-row${locked?' locked':''}"><span class="ck-memo-name">${sk.e} ${sk.n}</span>
+      ${locked ? `<span class="ck-muted">🔒 étape ${sk.phase}</span>` : practised ? `<span class="ck-meter" title="niveau ${lvl}/10"><span style="width:${lvl*10}%"></span></span><span class="ck-memo-lvl">${lvl}/10</span>` : '<span class="ck-muted">à découvrir</span>'}</div>`;
+  }).join('');
+  h += `<div class="ck-card"><div class="ck-title">🧠 Circuit Mémoire · ${PROF_NAME} <span class="ck-muted">· étape ${phase}/3 · ${memo.length} séance${memo.length>1?'s':''}</span></div>${memoRows}</div>`;
+
+  // 6. Dernières séances, les deux circuits
+  const fmt = d=>new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+  const glyphs = r=>(r||[]).map(v=>v==='CORRECT'?'✅':v==='PARTIEL'?'🟡':'🔁').join('');
+  const timeline = [
+    ...memo.map(x=>({date:x.date, c:'🧠', what:(PROF_SKILLS[x.focus]||{}).n || x.focus, r:x.results})),
+    ...cours.map(x=>({date:x.date, c:'📚', what:(x.worked&&x.worked.length?x.worked:[x.focus]).map(k=>(skills.find(s=>s.key===k)||{}).n||k).join(', '), r:x.results}))
+  ].sort((a,b)=>a.date<b.date?1:-1).slice(0,10);
+  h += `<div class="ck-card"><div class="ck-title">Dernières séances</div>${timeline.map(t=>`<div class="ck-tl"><span class="ck-muted ck-tl-date">${fmt(t.date)}</span><span>${t.c}</span><span class="ck-tl-what">${cockpitEsc(t.what)}</span><span class="ck-tl-res">${glyphs(t.r)}</span></div>`).join('') || '<div class="ck-muted">Aucune séance terminée pour l\'instant.</div>'}</div>`;
+
+  document.getElementById('cockpit-body').innerHTML = h;
+  // Infobulle des barres (survol à la souris, toucher au doigt)
+  const tipEl = document.getElementById('ck-tip'), chart = tipEl.parentElement;
+  chart.querySelectorAll('.ck-hit').forEach(r=>{
+    const show = ()=>{
+      const box = r.getBoundingClientRect(), cb = chart.getBoundingClientRect();
+      tipEl.textContent = r.dataset.tip; tipEl.style.display = 'block';
+      tipEl.style.left = Math.min(cb.width - tipEl.offsetWidth, Math.max(0, box.left - cb.left + box.width/2 - tipEl.offsetWidth/2)) + 'px';
+      chart.querySelectorAll('.ck-hit').forEach(o=>o.classList.toggle('on', o===r));
+    };
+    r.addEventListener('pointerenter', show); r.addEventListener('click', show);
+  });
+  chart.addEventListener('pointerleave', ()=>{ tipEl.style.display='none'; chart.querySelectorAll('.ck-hit').forEach(o=>o.classList.remove('on')); });
+  showScreen('cockpit-screen');
 }
 
 // Carnet du coach, pour le bilan des parents
@@ -5229,7 +5408,7 @@ document.addEventListener('visibilitychange', ()=>{
     stopDailyTimer();
   } else if(document.visibilityState==='visible' && currentProfile==='cm2'){
     const active=document.querySelector('.screen.active');
-    if(active && (active.id==='exercise'||active.id==='tutor')) startCM2Session();
+    if(active && ['exercise','tutor','prof-screen','coach-screen'].includes(active.id)) startCM2Session();
   }
 });
 
