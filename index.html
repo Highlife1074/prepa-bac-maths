@@ -463,6 +463,17 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .prof-banner,.prof-dash-card{background:linear-gradient(135deg,#534AB7,#7F77DD);border-radius:18px;padding:1.3rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;color:#fff;box-shadow:0 8px 24px rgba(83,74,183,.3);transition:transform .2s}
 .prof-banner:hover,.prof-dash-card:hover{transform:translateY(-3px)}
 .prof-dash-card .agent-title{font-size:1.25rem}
+.prof-dash-card.coach-card{background:linear-gradient(135deg,#0F6E56,#1D9E75);box-shadow:0 8px 24px rgba(15,110,86,.3)}
+#coach-screen{flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+#coach-screen.active{display:flex}
+#coach-screen .tutor-msg{position:relative}
+#coach-screen .tutor-msg.tutor{padding-right:2.4rem}
+.coach-say{position:absolute;top:.4rem;right:.4rem;border:none;background:transparent;font-size:1rem;cursor:pointer;opacity:.6}
+.coach-chips{flex-shrink:0;display:flex;gap:.4rem;overflow-x:auto;padding:.5rem 1rem 0;background:var(--card);border-top:1.5px solid var(--border)}
+.coach-chips + .tutor-input-bar{border-top:none}
+.coach-chip{flex-shrink:0;border:1.5px solid var(--border);background:var(--bg);border-radius:99px;padding:6px 12px;font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.coach-mic{width:48px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);font-size:1.2rem;cursor:pointer}
+.coach-mic.listening{background:#FCEBEB;border-color:#E24B4A;animation:pulse 1s infinite}
 .prof-bubble{display:flex;gap:.9rem;align-items:flex-start;margin-bottom:1rem}
 .prof-avatar{font-size:2.6rem;flex-shrink:0;line-height:1}
 .prof-text{background:var(--card);border:1.5px solid var(--border);border-radius:18px;border-top-left-radius:4px;padding:1rem 1.2rem;font-size:1rem;line-height:1.6;flex:1}
@@ -826,6 +837,27 @@ setTimeout(function(){
   </div>
 </div>
 
+<!-- COACH SCREEN (circuit Cours 6e, chat avec Prof Léo) -->
+<div id="coach-screen" class="screen">
+  <div class="exo-header">
+    <button class="exo-back" data-action="leaveCoach">← Accueil</button>
+    <span class="exo-info" id="coach-info" style="font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">📚 Prof Léo</span>
+    <span class="exo-pts" id="coach-level-badge" style="font-size:.7rem;font-weight:800;padding:2px 10px;border-radius:99px;background:#E1F5EE;color:#0F6E56"></span>
+  </div>
+  <div class="tutor-body" id="coach-body">
+    <div id="coach-messages" style="display:flex;flex-direction:column;gap:.7rem"></div>
+    <div class="tutor-typing" id="coach-typing" style="display:none">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+  </div>
+  <div id="coach-chips" class="coach-chips"></div>
+  <div class="tutor-input-bar">
+    <button class="coach-mic" id="coach-mic" data-action="toggleCoachMic" title="Répondre au micro">🎤</button>
+    <textarea id="coach-input" class="tutor-input" placeholder="Écris ta réponse à Prof Léo..." rows="2"></textarea>
+    <button class="tutor-send" data-action="sendCoachMessage">→</button>
+  </div>
+</div>
+
 <!-- PROF SCREEN (séance guidée 6e) -->
 <div id="prof-screen" class="screen">
   <div class="dash-header">
@@ -1082,7 +1114,7 @@ const PROFILES = {
   cm2:{ // clé historique 'cm2' conservée pour garder la progression d'Amaury (désormais en 6e)
     name:'6e',emoji:'🌟',color:'var(--cm2-color)',light:'var(--cm2-light)',
     welcome:'Salut Amaury ! Prêt pour ta séance ?',
-    sub:'Clique sur Prof Max : il a préparé ta séance du jour.',
+    sub:'Choisis ton circuit : la Mémoire avec Prof Max ou tes Cours avec Prof Léo.',
     subjects:[
       {id:'consignes',icon:'🎯',name:'Consignes & Problèmes',desc:'Comprendre ce qu\'on me demande, résoudre pas à pas',topics:[
         {id:'vocab_consignes',e:'🔑',n:'Les mots des consignes',d:'Calculer, justifier, compléter, déduire, comparer...'},
@@ -1873,7 +1905,7 @@ async function checkPwd(){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='exercise' || id==='tutor' || id==='prof-screen') startCM2Session();
+  if(id==='exercise' || id==='tutor' || id==='prof-screen' || id==='coach-screen') startCM2Session();
   if(id!=='exercise' && memoryTimer){ clearInterval(memoryTimer); memoryTimer=null; }
 }
 function goHome(){stopCM2Session();currentProfile=null;window._currentProfileKey=null;showScreen('home')}
@@ -1990,9 +2022,24 @@ function showDashboard(){
     const st=loadProfSeance();
     const doneToday = st && st.idx>=st.plan.length;
     const inProgress = st && st.idx>0 && !doneToday;
-    profCard.innerHTML=`<div class="agent-icon" style="font-size:2.6rem">🧑‍🏫</div><div class="agent-text"><div class="agent-title">${doneToday?'Séance du jour terminée ✅':inProgress?'Reprendre ma séance ('+st.idx+'/5)':'Ma séance avec '+PROF_NAME}</div><div class="agent-desc">${doneToday?'Bravo ! Tu peux faire une séance bonus ou réviser une leçon.':'Mémoire & compréhension · 5 exercices · 15 min'}</div></div><div class="agent-arrow">▶️</div>`;
+    profCard.innerHTML=`<div class="agent-icon" style="font-size:2.6rem">🧠</div><div class="agent-text"><div class="agent-title">${doneToday?'Circuit Mémoire fait ✅':inProgress?'Reprendre ma séance Mémoire ('+st.idx+'/5)':'Circuit Mémoire · '+PROF_NAME}</div><div class="agent-desc">${doneToday?'Bravo ! Tu peux faire une séance bonus.':'Mémoire & compréhension · 5 exercices · 15 min'}</div></div><div class="agent-arrow">▶️</div>`;
     profCard.style.display='';
   } else if(profCard){ profCard.style.display='none'; }
+  // 6e: second circuit, the course coach (chat)
+  let coachCard=document.getElementById('coach-dash-card');
+  if(currentProfile==='cm2'){
+    if(!coachCard){
+      coachCard=document.createElement('div');
+      coachCard.id='coach-dash-card';
+      coachCard.className='prof-dash-card coach-card';
+      coachCard.addEventListener('click', startCoach);
+      document.getElementById('subjects-wrap').insertAdjacentElement('beforebegin', coachCard);
+    }
+    const cs=loadCoachSession();
+    const cDone = cs && cs.ended, cGoing = cs && !cs.ended && cs.answers.length>0;
+    coachCard.innerHTML=`<div class="agent-icon" style="font-size:2.6rem">📚</div><div class="agent-text"><div class="agent-title">${cDone?'Circuit Cours fait ✅':cGoing?'Reprendre avec '+COACH_NAME:'Circuit Cours · '+COACH_NAME}</div><div class="agent-desc">${cDone?'Bravo ! Tu peux refaire une séance si tu veux.':'Ton coach de 6e : il t\'explique et te fait réviser ce dont tu as besoin, en discutant'}</div></div><div class="agent-arrow">💬</div>`;
+    coachCard.style.display='';
+  } else if(coachCard){ coachCard.style.display='none'; }
   // 6e: only the prof card stands out; subjects folded, parent buttons at the bottom
   const is6e = currentProfile==='cm2';
   const wrap=document.getElementById('subjects-wrap');
@@ -2586,14 +2633,14 @@ function getCM2DifficultyLevel(){
 // ── Continuous difficulty score (1.0 - 10.0 for CM2, 1-4 for lycée) ──
 const _scaffoldStreak = {}; // topicKey -> consecutive corrects
 
-function updateScaffoldLevel(verdict){
+function updateScaffoldLevel(verdict, topicKeyOverride, startLevel){
   const prof = currentProfile || 'cm2';
   if(!progress.scaffolding) progress.scaffolding={cm2:{},sec:{},pre:{}};
   if(!progress.scaffolding[prof]) progress.scaffolding[prof]={};
-  const topicKey = currentSubject?.topicId || currentSubject?.id || 'general';
+  const topicKey = topicKeyOverride || currentSubject?.topicId || currentSubject?.id || 'general';
   const isCM2 = prof === 'cm2';
   const defaultLevel = isCM2 ? 1.0 : 2;
-  const current = progress.scaffolding[prof][topicKey] || defaultLevel;
+  const current = progress.scaffolding[prof][topicKey] || startLevel || defaultLevel;
 
   if(isCM2){
     // CM2: 1-10 float scale, persistent across sessions
@@ -3789,7 +3836,7 @@ document.addEventListener('DOMContentLoaded', function(){
     closeImportModal: ()=>document.getElementById('import-modal').classList.remove('open'),
     copyExportCode, doImport, goHome, goToPickerBack, startAgentMode: ()=>startAgentMode(false),
     startTutorMode, startLessonMode, startProfSeance, leaveProf, resumeAgentMode, startSessionMode, launchSession, endSession, showReport, generateAISummary, showAdminLogin, suspendExercise, exitExercise, getHint, submitAnswer, nextExercise, goToPrevQuestion,
-    sendTutorMessage, goToDash
+    sendTutorMessage, goToDash, startCoach, leaveCoach, sendCoachMessage, toggleCoachMic
   };
 
   // Wire all data-action elements
@@ -3842,6 +3889,10 @@ document.addEventListener('DOMContentLoaded', function(){
   const tutorInput = document.getElementById('tutor-input');
   if(tutorInput) tutorInput.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendTutorMessage(); }
+  });
+  const coachInput = document.getElementById('coach-input');
+  if(coachInput) coachInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendCoachMessage(); }
   });
 });
 
@@ -4061,6 +4112,348 @@ function leaveProf(){
   if(currentSubject && currentSubject.isProf) currentSubject = null;
   stopCM2Session();
   showDashboard();
+}
+
+// ══════════════════════════════════════════════════════════
+// PROF LÉO — circuit « Cours de 6e » : un coach en chat qui choisit
+// ce qu'Amaury doit apprendre ou réviser, le fait pratiquer question
+// par question au bon niveau (scaffolding 1-10 par notion, partagé avec
+// les exercices) et garde un carnet de ce qu'il a retenu de ses réponses.
+// ══════════════════════════════════════════════════════════
+const COACH_NAME = 'Prof Léo';
+const COACH_SUBJECTS = ['math','fr','hist','sci','anglais'];
+const COACH_SESSION_ANSWERS = 8; // ~15 min : bilan proposé après 8 réponses évaluées
+const COACH_CHIPS = [
+  ['🤔 Je ne comprends pas','Je ne comprends pas la question.'],
+  ['💡 Un indice','Tu peux me donner un indice ?'],
+  ['🔁 Réexplique','Tu peux me réexpliquer autrement ?'],
+  ['🏁 J\'arrête','On s\'arrête là pour aujourd\'hui.']
+];
+let coachSession = null;
+let coachBusy = false;
+
+function getCoachData(){
+  if(!progress.coach) progress.coach = {};
+  if(!progress.coach.cm2) progress.coach.cm2 = {notes:{}, profil:[], log:[], sessions:[]};
+  const c = progress.coach.cm2;
+  c.notes = c.notes || {}; c.profil = c.profil || []; c.log = c.log || []; c.sessions = c.sessions || [];
+  return c;
+}
+// Notions de cours du coach (celles que les parents n'ont pas marquées « pas encore vu »)
+function coachSkills(){
+  const out = [];
+  getProfileSubjects('cm2').filter(s=>COACH_SUBJECTS.includes(s.id)).forEach(s=>{
+    (s.topics||[]).forEach(t=>{
+      if(isTopicNotSeen('cm2', s.id, t.id)) return;
+      out.push({key:s.id+'_'+t.id, subj:s.id, subjName:s.name, topic:t.id, n:t.n, d:t.d, e:t.e});
+    });
+  });
+  return out;
+}
+function coachSkill(key){ return coachSkills().find(k=>k.key===key) || null; }
+function coachLevel(sk){
+  const sc = (progress.scaffolding && progress.scaffolding.cm2) || {};
+  return Math.min(10, Math.max(1, Math.round(sc[sk.topic] || getInitialScaffoldLevel('cm2', sk.subj, sk.topic))));
+}
+function coachScore(sk){ return ((progress.cm2 && progress.cm2[sk.subj+'_topics']) || {})[sk.topic] || 0; }
+
+// Notion du jour : une révision en retard, sinon la plus faible, sinon une nouvelle ;
+// on évite la matière de la séance précédente pour varier.
+function buildCoachPlan(){
+  const c = getCoachData(), now = Date.now();
+  const lastSubj = (c.sessions[c.sessions.length-1]||{}).focus?.split('_')[0];
+  const rank = coachSkills().map(sk=>{
+    const srs = getSRSData('cm2', sk.key), sc = coachScore(sk);
+    let prio;
+    if(srs.lastReview && srs.nextReview <= now) prio = 300 + Math.min(99, (now-srs.nextReview)/86400000);
+    else if(srs.lastReview && sc < 50) prio = 200 + (50-sc);
+    else if(!srs.lastReview) prio = 100 + Math.random()*10;
+    else prio = Math.max(0, 80 - sc) + Math.random()*5;
+    if(sk.subj === lastSubj) prio -= 60;
+    if((c.notes[sk.key]||[]).length) prio += 15; // le carnet signale une difficulté
+    return {sk, prio};
+  }).sort((a,b)=>b.prio-a.prio);
+  const focus = rank[0]?.sk;
+  const rappel = rank.find(r=>r.sk.subj!==focus?.subj && getSRSData('cm2', r.sk.key).lastReview)?.sk
+    || rank.find(r=>r.sk.subj!==focus?.subj)?.sk || null;
+  return {focus: focus?.key || null, rappel: rappel?.key || null};
+}
+
+function loadCoachSession(){
+  try{
+    const s = JSON.parse(localStorage.getItem('edusmart_coach_session')||'null');
+    if(s && s.date===getTodayKey()) return s;
+  }catch(e){}
+  return null;
+}
+function saveCoachSession(){ try{ localStorage.setItem('edusmart_coach_session', JSON.stringify(coachSession)); }catch(e){} }
+
+function startCoach(){
+  currentProfile = currentProfile || 'cm2';
+  coachSession = loadCoachSession();
+  if(coachSession && coachSession.ended && !confirm('Ta séance de cours du jour est finie 🎉\nEn faire une autre ?')) return;
+  const fresh = !coachSession || coachSession.ended;
+  if(fresh){
+    const plan = buildCoachPlan();
+    coachSession = {date:getTodayKey(), plan, current:plan.focus, messages:[], answers:[], ended:false};
+  }
+  document.getElementById('coach-messages').innerHTML = '';
+  coachSession.messages.forEach(m=>{ if(!m.hidden) addCoachMsg(m.role, m.content); });
+  renderCoachChips();
+  updateCoachBadge();
+  showScreen('coach-screen');
+  if(fresh){
+    coachSession.messages.push({role:'user', content:'(Amaury ouvre le chat avec toi.)', hidden:true});
+    saveCoachSession();
+    callCoach();
+  } else {
+    addTutorSystemMsgTo('coach-messages', 'On reprend là où on s\'était arrêtés 👍');
+  }
+}
+function leaveCoach(){
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopCM2Session();
+  showDashboard();
+}
+
+function addTutorSystemMsgTo(id, text){
+  const div = document.createElement('div');
+  div.className = 'tutor-msg system';
+  div.textContent = text;
+  document.getElementById(id).appendChild(div);
+}
+function addCoachMsg(role, text){
+  const msgs = document.getElementById('coach-messages');
+  const div = document.createElement('div');
+  div.className = 'tutor-msg ' + (role==='assistant' ? 'tutor' : 'user');
+  if(role==='assistant'){
+    div.innerHTML = withFigures(text, mdToHtml);
+    const say = document.createElement('button');
+    say.type = 'button'; say.className = 'coach-say'; say.textContent = '🔊'; say.title = 'Écouter';
+    say.addEventListener('click', ()=>speakFrench(text));
+    div.appendChild(say);
+  } else div.textContent = text;
+  msgs.appendChild(div);
+  if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([div]).catch(()=>{});
+  document.getElementById('coach-body').scrollTo({top:99999, behavior:'smooth'});
+}
+// Lecture à voix haute en français (sans les blocs figure, le LaTeX ni les balises)
+function speakFrench(text){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const clean = String(text).replace(/```figure[\s\S]*?```/g,'').replace(/\[\[([^\]]*)\]\]/g,'$1')
+    .replace(/\$+([^$]*)\$+/g,'$1').replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g,'$1 sur $2').replace(/[*_#>`\\]/g,'');
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'fr-FR'; u.rate = 0.95;
+  const v = speechSynthesis.getVoices().find(v=>/^fr/i.test(v.lang));
+  if(v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function renderCoachChips(){
+  const z = document.getElementById('coach-chips');
+  z.innerHTML = '';
+  COACH_CHIPS.forEach(([label,t])=>{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'coach-chip'; b.textContent = label;
+    b.addEventListener('click', ()=>sendCoachMessage(t));
+    z.appendChild(b);
+  });
+}
+function updateCoachBadge(){
+  const sk = coachSession && coachSkill(coachSession.current);
+  document.getElementById('coach-info').textContent = sk ? sk.e + ' ' + sk.n : '📚 ' + COACH_NAME;
+  document.getElementById('coach-level-badge').textContent = sk ? 'Niveau ' + coachLevel(sk) + '/10' : '';
+}
+
+async function sendCoachMessage(preset){
+  if(coachBusy) return;
+  const input = document.getElementById('coach-input');
+  const text = (typeof preset==='string' ? preset : input.value).trim();
+  if(!text) return;
+  input.value = '';
+  addCoachMsg('user', text);
+  coachSession.messages.push({role:'user', content:text});
+  saveCoachSession();
+  await callCoach();
+}
+
+function coachSystemPrompt(){
+  const c = getCoachData(), s = coachSession;
+  const skills = coachSkills();
+  const nowSk = coachSkill(s.current), focus = coachSkill(s.plan.focus), rappel = coachSkill(s.plan.rappel);
+  const desc = sk=>`${sk.key} : ${sk.n} (${sk.subjName}) — niveau ${coachLevel(sk)}/10, maîtrise ${coachScore(sk)}%`;
+  const notesOf = sk=>(c.notes[sk.key]||[]).map(n=>'  · '+n.t).join('\n');
+  const recent = c.log.filter(l=>nowSk && l.skill===nowSk.key).slice(-6)
+    .map(l=>`  · [${l.v}] Q : ${l.q} → Amaury : ${l.a}`).join('\n');
+  const lastSess = c.sessions.slice(-3).map(x=>`  · ${x.date} : ${x.summary||x.focus}`).join('\n');
+  const evaluated = s.answers.length;
+  const lvl = nowSk ? coachLevel(nowSk) : 3;
+  return `Tu es ${COACH_NAME}, le coach de cours d'Amaury, élève de 6e (11-12 ans, collège en France). Tu lui fais apprendre et réviser SES COURS de 6e en discutant avec lui, comme un prof particulier bienveillant et motivant.
+Amaury (bilan orthophonique) : compréhension des consignes et de texte fragile, mémoire de travail faible. Donc :
+- Messages TRÈS COURTS : 4 phrases maximum, mots simples, une seule idée à la fois. Quelques emojis.
+- UNE SEULE question à la fois, clairement à la fin du message, en **gras**.
+- Jamais de pavé de cours : un rappel tient en 2-3 phrases + un exemple.
+
+DÉROULÉ DE LA SÉANCE (~15 min) :
+1. Accueil (2 phrases) : annonce la notion du jour et demande s'il a une leçon ou un contrôle en ce moment sur autre chose. S'il en a un, travaille cette notion-là à la place (choisis la notion la plus proche dans la liste).
+2. Pour la notion : petit rappel de cours (2-3 phrases, avec un exemple), puis vérifie qu'il a compris par une question simple.
+3. Pratique : questions une par une. Après chaque réponse : dis tout de suite si c'est juste ; si c'est faux, explique l'erreur simplement et donne la bonne réponse ou une piste, puis repose une question proche (plus facile si besoin).
+4. Vers la fin, une question de RÉVISION sur ${rappel ? rappel.n+' ('+rappel.key+')' : 'une notion déjà vue'}.
+5. Après environ ${COACH_SESSION_ANSWERS} réponses évaluées (déjà ${evaluated}), ou s'il veut arrêter : bilan en 3 lignes (ce qu'il sait faire, ce qu'on retravaillera) et félicite-le.
+
+SCAFFOLDING (niveau de difficulté de la notion en cours : ${lvl}/10, recalculé par l'application après chaque réponse) :
+- 1-3 : très guidé, petits nombres, question fermée ou à trous, méthode rappelée juste avant.
+- 4-6 : niveau 6e standard, une étape de raisonnement, il explique en une phrase.
+- 7-10 : exigeant, 2-3 étapes, pièges classiques, il justifie.
+- S'il se trompe 2 fois de suite : redescends d'un cran et réexplique autrement (exemple concret, dessin, analogie). S'il réussit 2 fois : monte d'un cran.
+- « Je ne comprends pas » : reformule la question avec d'autres mots, plus courte. « Indice » : donne une piste sans la réponse.
+
+NOTION DU JOUR : ${focus ? desc(focus) : 'au choix selon ses besoins'}
+NOTION EN COURS : ${nowSk ? desc(nowSk) : 'aucune'}
+TOUTES SES NOTIONS (clé : nom — niveau, maîtrise) :
+${skills.map(desc).join('\n')}
+
+TON CARNET (ce que tu as retenu d'Amaury lors des séances précédentes, à utiliser pour l'aider) :
+Profil : ${c.profil.map(p=>p.t).join(' / ') || 'pas encore de note'}
+${nowSk ? 'Sur '+nowSk.n+' :\n'+(notesOf(nowSk)||'  · rien encore') : ''}
+Ses dernières réponses sur cette notion :
+${recent || '  · aucune'}
+Dernières séances :
+${lastSess || '  · première séance'}
+
+${'En géométrie (ou pour un périmètre, une aire, un angle), montre toujours une figure. ' + FIGURE_PROMPT_RULE.replace(/mets dans le champ "figure" du JSON la description de la figure, une instruction par ligne \(séparées par \\n\)/, 'écris la figure dans un bloc qui commence par ```figure sur sa propre ligne et finit par ``` (une instruction par ligne)')}
+En anglais : ${ENGLISH_MARKER_RULE}
+Maths : symboles directs × ÷ −, LaTeX seulement pour les fractions $\\frac{3}{4}$.
+
+PROTOCOLE OBLIGATOIRE (invisible pour Amaury) : termine CHAQUE message par une dernière ligne exactement de cette forme :
+<<<{"skill":"clé de la notion travaillée","verdict":"AUCUN","note":"","fin":false}>>>
+- skill : une clé de la liste ci-dessus (celle de la question que tu poses ou que tu corriges).
+- verdict : CORRECT, PARTIEL ou INCORRECT UNIQUEMENT quand ton message corrige une réponse d'Amaury à une question d'exercice ; sinon AUCUN.
+- note : une observation courte à retenir pour les prochaines séances (erreur typique, méthode qui l'aide, ce qu'il a enfin compris, ce qui le motive) ; laisse vide s'il n'y a rien de nouveau. Commence par « PROFIL: » si c'est une observation générale (pas liée à la notion).
+- fin : true seulement dans le message de bilan final.`;
+}
+
+async function callCoach(){
+  if(!ANTHROPIC_KEY) await ensureApiKey();
+  if(!ANTHROPIC_KEY){ addCoachMsg('assistant', "⚠️ Clé API non configurée. Demande à un parent."); return; }
+  coachBusy = true;
+  const typing = document.getElementById('coach-typing');
+  document.getElementById('coach-messages').appendChild(typing);
+  typing.style.display = 'flex';
+  document.getElementById('coach-body').scrollTo({top:99999});
+  // Les 20 derniers messages, en commençant par un message d'Amaury (exigé par l'API)
+  let msgs = coachSession.messages.slice(-20).map(m=>({role:m.role, content:m.content}));
+  while(msgs.length && msgs[0].role!=='user') msgs.shift();
+  try{
+    const resp = await fetchAnthropicWithRetry({model:'claude-sonnet-4-5', max_tokens:900, system:coachSystemPrompt(), messages:msgs});
+    const data = await resp.json();
+    typing.style.display = 'none';
+    if(!resp.ok){ addTutorSystemMsgTo('coach-messages', '⚠️ Erreur ('+resp.status+'). Renvoie ton message.'); return; }
+    handleCoachReply(data.content?.[0]?.text || '');
+  }catch(e){
+    typing.style.display = 'none';
+    addTutorSystemMsgTo('coach-messages', '❌ Pas de connexion. Renvoie ton message.');
+  }finally{ coachBusy = false; }
+}
+
+function handleCoachReply(raw){
+  let meta = null;
+  const tags = [...raw.matchAll(/<<<\s*(\{[\s\S]*?\})\s*>>>/g)];
+  if(tags.length){ try{ meta = JSON.parse(tags[tags.length-1][1]); }catch(e){} }
+  const text = raw.replace(/<<<[\s\S]*?>>>/g,'').trim();
+  const s = coachSession, c = getCoachData();
+  const prevQ = [...s.messages].reverse().find(m=>m.role==='assistant');
+  const lastA = [...s.messages].reverse().find(m=>m.role==='user' && !m.hidden);
+  s.messages.push({role:'assistant', content:text});
+  addCoachMsg('assistant', text);
+  if(meta){
+    const sk = coachSkill(meta.skill);
+    if(sk) s.current = sk.key;
+    const v = String(meta.verdict||'').toUpperCase();
+    if(sk && ['CORRECT','PARTIEL','INCORRECT'].includes(v)) recordCoachAnswer(sk, v, prevQ?.content, lastA?.content);
+    const note = String(meta.note||'').trim();
+    if(note){
+      const entry = {d:getTodayKey(), t:note.replace(/^PROFIL:\s*/i,'').slice(0,200)};
+      if(/^PROFIL:/i.test(note) || !sk){ c.profil.push(entry); c.profil = c.profil.slice(-8); }
+      else { (c.notes[sk.key] = c.notes[sk.key]||[]).push(entry); c.notes[sk.key] = c.notes[sk.key].slice(-6); }
+      saveData();
+    }
+    if(meta.fin && !s.ended) endCoachSession(text);
+  }
+  updateCoachBadge();
+  saveCoachSession();
+}
+
+// Une réponse évaluée = même effet qu'un exercice : niveau (scaffolding), maîtrise, révision espacée, XP
+function recordCoachAnswer(sk, v, q, a){
+  const s = coachSession, c = getCoachData();
+  s.answers.push({skill:sk.key, v});
+  updateScaffoldLevel(v, sk.topic, coachLevel(sk));
+  const tkey = sk.subj+'_topics';
+  if(!progress.cm2[tkey]) progress.cm2[tkey] = {};
+  progress.cm2[tkey][sk.topic] = Math.max(0, Math.min(100, (progress.cm2[tkey][sk.topic]||0) + (v==='CORRECT'?8:v==='PARTIEL'?3:-3)));
+  if(v!=='INCORRECT') progress.cm2[sk.subj] = Math.min(100, (progress.cm2[sk.subj]||0) + (v==='CORRECT'?2:1));
+  updateSRS('cm2', sk.key, v);
+  const short = t=>String(t||'').replace(/```figure[\s\S]*?```/g,'[figure]').replace(/\s+/g,' ').trim().slice(-160);
+  c.log.push({d:getTodayKey(), skill:sk.key, v, q:short(q), a:short(a).slice(0,120)});
+  c.log = c.log.slice(-80);
+  const xp = v==='CORRECT'?15:v==='PARTIEL'?6:2;
+  totalScore.cm2 = (totalScore.cm2||0) + xp;
+  addCM2XP(xp, v);
+  updateDailyStreak();
+  if(v==='CORRECT') showCorrectAnimation(xp);
+}
+
+function endCoachSession(text){
+  const s = coachSession, c = getCoachData();
+  s.ended = true;
+  const ok = s.answers.filter(x=>x.v==='CORRECT').length;
+  const summary = String(text||'').replace(/```figure[\s\S]*?```/g,'').replace(/[*_#]/g,'').replace(/\s+/g,' ').trim().slice(0,240);
+  c.sessions.push({date:s.date, focus:s.plan.focus, worked:[...new Set(s.answers.map(x=>x.skill))], results:s.answers.map(x=>x.v), ok, summary});
+  c.sessions = c.sessions.slice(-30);
+  saveData();
+  addTutorSystemMsgTo('coach-messages', '🏁 Séance terminée · '+ok+'/'+s.answers.length+' réponses justes · Prof Léo a tout noté dans son carnet');
+}
+
+// 🎤 Micro en français pour répondre sans taper
+let coachMic = null;
+function toggleCoachMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('coach-mic');
+  if(!SR){ alert('Le micro ne marche pas dans ce navigateur. Utilise Chrome ou Safari.'); return; }
+  if(coachMic){ coachMic.stop(); return; }
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  coachMic = new SR();
+  coachMic.lang = 'fr-FR'; coachMic.interimResults = false; coachMic.continuous = false;
+  btn.classList.add('listening');
+  coachMic.onresult = ev=>{
+    const said = Array.from(ev.results).map(r=>r[0].transcript).join(' ').trim();
+    const ta = document.getElementById('coach-input');
+    ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + said;
+  };
+  coachMic.onerror = ev=>{ if(ev.error==='not-allowed') alert('Autorise le micro pour ce site, puis réessaie.'); };
+  coachMic.onend = ()=>{ coachMic = null; btn.classList.remove('listening'); };
+  coachMic.start();
+}
+
+// Carnet du coach, pour le bilan des parents
+function renderCoachReport(){
+  const c = getCoachData();
+  const skills = coachSkills();
+  const name = k=>{ const sk = skills.find(x=>x.key===k); return sk ? sk.e+' '+sk.n : k; };
+  const esc = t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const sess = c.sessions.slice(-8).reverse().map(x=>{
+    const d = new Date(x.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    return `<div style="font-size:.82rem;margin-bottom:.45rem"><div style="display:flex;gap:.6rem"><span style="width:90px;color:var(--muted)">${d}</span><span style="flex:1;font-weight:700">${(x.worked&&x.worked.length?x.worked:[x.focus]).map(name).join(', ')}</span><span>${x.results.map(r=>r==='CORRECT'?'✅':r==='PARTIEL'?'🟡':'🔁').join('')}</span></div>${x.summary?`<div style="color:var(--muted);font-size:.75rem;margin-left:90px">${esc(x.summary)}</div>`:''}</div>`;
+  }).join('');
+  const notes = Object.entries(c.notes).filter(([k,v])=>v.length).map(([k,v])=>
+    `<div style="font-size:.8rem;margin-bottom:.4rem"><strong>${name(k)}</strong> · niveau ${skills.find(x=>x.key===k)?coachLevel(skills.find(x=>x.key===k)):'?'}/10<br>${v.slice(-3).map(n=>'· '+esc(n.t)).join('<br>')}</div>`).join('');
+  const prof = c.profil.slice(-4).map(n=>'· '+esc(n.t)).join('<br>');
+  return `<div class="ortho-report-card">
+    <div class="ortho-report-title">📚 Circuit Cours avec ${COACH_NAME} — ${c.sessions.length} séance${c.sessions.length>1?'s':''}</div>
+    ${sess || '<div style="color:var(--muted);font-size:.82rem;font-style:italic">Aucune séance terminée pour l\'instant.</div>'}
+    ${prof||notes ? `<div style="font-size:.75rem;font-weight:800;color:var(--muted);margin:.7rem 0 .4rem">CE QUE ${COACH_NAME.toUpperCase()} A RETENU</div>${prof?`<div style="font-size:.8rem;margin-bottom:.4rem">${prof}</div>`:''}${notes}` : ''}
+  </div>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4582,6 +4975,7 @@ function showReport(){
       <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem">Compétence travaillée (notion du jour) et résultat des 5 exercices</div>
       ${rows || '<div style="color:var(--muted);font-size:.82rem;font-style:italic">Aucune séance terminée pour l\'instant.</div>'}
     </div>`;
+    html += renderCoachReport();
   }
 
   // AI summary button
