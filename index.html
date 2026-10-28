@@ -3266,6 +3266,19 @@ document.addEventListener('click', e=>{
 });
 
 // 🎤 Speech recognition in English: the transcript goes into the answer box
+// Android Chrome fires onresult several times with cumulative results (each one
+// repeating the previous): rebuild the transcript without repeats, never append it.
+function speechTranscript(results){
+  let text = '';
+  for(const r of Array.from(results)){
+    const t = r[0].transcript.trim();
+    if(!t) continue;
+    const low = t.toLowerCase(), prev = text.toLowerCase();
+    if(low.startsWith(prev)) text = t;            // cumulative result: replaces the previous
+    else if(!prev.endsWith(low)) text = (text+' '+t).trim();
+  }
+  return text;
+}
 let micRecognizer = null;
 function renderMicButton(){
   let btn = document.getElementById('mic-btn');
@@ -3294,11 +3307,9 @@ function toggleMic(){
   micRecognizer.continuous = false;
   btn.classList.add('listening');
   btn.textContent = '🔴 Je t\'écoute... (clique pour arrêter)';
-  micRecognizer.onresult = ev=>{
-    const said = Array.from(ev.results).map(r=>r[0].transcript).join(' ').trim();
-    const ta = document.getElementById('answer-input');
-    ta.value = (ta.value.trim() ? ta.value.trim()+'\n' : '') + said;
-  };
+  const ta = document.getElementById('answer-input');
+  const before = ta.value.trim() ? ta.value.trim()+'\n' : '';
+  micRecognizer.onresult = ev=>{ ta.value = before + speechTranscript(ev.results); };
   micRecognizer.onerror = ev=>{
     if(ev.error==='not-allowed' || ev.error==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
     else if(ev.error==='no-speech') showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort');
@@ -4472,11 +4483,9 @@ function toggleCoachMic(){
   coachMic = new SR();
   coachMic.lang = 'fr-FR'; coachMic.interimResults = false; coachMic.continuous = false;
   btn.classList.add('listening');
-  coachMic.onresult = ev=>{
-    const said = Array.from(ev.results).map(r=>r[0].transcript).join(' ').trim();
-    const ta = document.getElementById('coach-input');
-    ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + said;
-  };
+  const ta = document.getElementById('coach-input');
+  const before = ta.value.trim() ? ta.value.trim()+' ' : '';
+  coachMic.onresult = ev=>{ ta.value = before + speechTranscript(ev.results); };
   coachMic.onerror = ev=>{ if(ev.error==='not-allowed') alert('Autorise le micro pour ce site, puis réessaie.'); };
   coachMic.onend = ()=>{ coachMic = null; btn.classList.remove('listening'); };
   coachMic.start();
