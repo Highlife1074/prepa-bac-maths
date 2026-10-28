@@ -533,6 +533,19 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .ecoute .en-text.revealed{filter:none}
 .btn-mic{padding:10px 18px;border-radius:10px;border:none;background:#E24B4A;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer}
 .btn-mic.listening{animation:pulse 1s infinite;background:#A32D2D}
+#pron-zone{margin:.6rem 0}
+.pron-card{background:#F3F8FD;border:1px solid #B5D4F4;border-radius:12px;padding:.8rem 1rem;font-size:.95rem}
+.pron-head{display:flex;justify-content:space-between;font-weight:800;margin-bottom:.3rem}
+.pron-line{font-size:1.15rem;line-height:2;margin:.2rem 0}
+.pron-w{padding:2px 6px;border-radius:6px;font-weight:700;cursor:pointer}
+.pron-w.ok{background:#E1F5EE;color:#0F6E56}
+.pron-w.near{background:#FDF0DC;color:#8A5A0B}
+.pron-w.bad{background:#FBE3E3;color:#A32D2D;text-decoration:underline wavy}
+.pron-heard,.pron-legend{color:var(--muted);font-size:.85rem;margin:.3rem 0}
+.pron-actions{display:flex;flex-wrap:wrap;gap:6px;margin:.5rem 0}
+.pron-actions button{border:none;border-radius:99px;padding:6px 12px;background:#E6F1FB;color:#185FA5;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer}
+.pron-actions button:disabled{opacity:.45;cursor:default}
+.pron-tip{background:#fff;border-radius:8px;padding:.5rem .7rem;margin-top:.3rem;line-height:1.5}
 .lesson-banner{background:linear-gradient(135deg,#BA7517,#E0A040);border-radius:16px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;cursor:pointer;margin-bottom:1rem;transition:transform .2s,box-shadow .2s;color:#fff}
 .lesson-banner:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(186,117,23,.3)}
 .suspended-banner{background:linear-gradient(135deg,#185FA5,#2E86DE);border-radius:16px;padding:1.1rem 1.4rem;display:flex;align-items:center;gap:1rem;color:#fff}
@@ -2598,6 +2611,7 @@ function showCurrentQuestion(){
   renderMarkdownMath(fullText,'q-text');
   document.getElementById('q-text').classList.toggle('ecoute', currentSubject.topicId==='ecoute');
   renderMicButton();
+  resetPronZone();
   const az=document.getElementById('answer-zone');
   az.style.display='block';
   // Problem-solving checklist for Amaury (6e) on consignes / problems / logic
@@ -3243,14 +3257,14 @@ function pickEnglishVoice(){
   return englishVoice;
 }
 if(window.speechSynthesis){ pickEnglishVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', pickEnglishVoice); }
-function speakEnglish(text){
+function speakEnglish(text, rate){
   if(!window.speechSynthesis){ showSyncBadge('🔇 La voix n\'est pas disponible sur cet appareil'); return; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-GB';
   const v = englishVoice || pickEnglishVoice();
   if(v) u.voice = v; else showSyncBadge('⚠️ Pas de voix anglaise installée : réglages du téléphone > Synthèse vocale');
-  u.rate = 0.85; // a bit slower for a 6e pupil
+  u.rate = rate || 0.85; // a bit slower for a 6e pupil
   speechSynthesis.speak(u);
 }
 document.addEventListener('click', e=>{
@@ -3288,35 +3302,252 @@ function renderMicButton(){
     btn.id = 'mic-btn';
     btn.type = 'button';
     btn.className = 'btn-mic';
-    btn.addEventListener('click', toggleMic);
+    btn.addEventListener('click', ()=>toggleMic());
     document.querySelector('#answer-zone .exo-actions').prepend(btn);
   }
   btn.classList.remove('listening');
   btn.textContent = isSpeakingTopic() ? '🎤 Parler en anglais' : '🎤 Dire ma réponse';
 }
-function toggleMic(){
+// retry: the new attempt replaces the previous one in the answer box
+function toggleMic(retry){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById('mic-btn');
   if(!SR){ alert('Le micro en anglais ne marche pas dans ce navigateur. Utilise Chrome (Android, ordinateur) ou Safari (iPhone, iPad).'); return; }
   if(micRecognizer){ micRecognizer.stop(); return; }
   if(window.speechSynthesis) speechSynthesis.cancel();
+  const coach = isSpeakingTopic(), qIdx = currentQIdx;
   micRecognizer = new SR();
   micRecognizer.lang = 'en-GB';
   micRecognizer.interimResults = false;
-  micRecognizer.maxAlternatives = 1;
+  micRecognizer.maxAlternatives = coach ? 5 : 1; // other guesses of the recognizer = words it hesitated on
   micRecognizer.continuous = false;
   btn.classList.add('listening');
   btn.textContent = '🔴 Je t\'écoute... (clique pour arrêter)';
   const ta = document.getElementById('answer-input');
+  if(retry && lastMicBefore!==null) ta.value = lastMicBefore;
   const before = ta.value.trim() ? ta.value.trim()+'\n' : '';
-  micRecognizer.onresult = ev=>{ ta.value = before + speechTranscript(ev.results); };
+  let alts = [];
+  micRecognizer.onstart = ()=>{ if(coach) startVoiceRecording(); };
+  micRecognizer.onresult = ev=>{
+    ta.value = before + speechTranscript(ev.results);
+    if(coach) alts = speechAlternatives(ev.results);
+  };
   micRecognizer.onerror = ev=>{
     if(ev.error==='not-allowed' || ev.error==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
     else if(ev.error==='no-speech') showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort');
+    else if(ev.error==='audio-capture' && voiceRecordOk && coach){
+      // this device can't share the mic between recognition and recording: keep the coach, drop "Ma voix"
+      voiceRecordOk = false;
+      showSyncBadge('🔁 Réessaie : ton appareil ne peut pas enregistrer ta voix en même temps');
+    }
   };
-  micRecognizer.onend = ()=>{ micRecognizer = null; renderMicButton(); };
+  micRecognizer.onend = ()=>{
+    stopVoiceRecording();
+    micRecognizer = null; renderMicButton();
+    if(coach && alts.length && qIdx===currentQIdx){ lastMicBefore = before.trim(); coachPronunciation(alts); }
+  };
   micRecognizer.start();
 }
+
+// ══════════════════════════════════════════════════════════
+// 🎧 COACH DE PRONONCIATION (sujets « parler ») — Claude ne reçoit pas
+// l'audio : on compare ce que la reconnaissance anglaise a compris (avec
+// ses autres hypothèses) à la phrase attendue, mot par mot. Un mot non
+// reconnu = un mot mal prononcé. L'élève réécoute le modèle et sa voix,
+// et le coach (Claude) explique comment bien dire les mots ratés.
+// ══════════════════════════════════════════════════════════
+let lastMicBefore = null, voiceRecordOk = true, voiceRecorder = null, voiceUrl = null;
+function speechAlternatives(results){
+  const list = Array.from(results).filter(r=>r[0] && r[0].transcript.trim());
+  if(!list.length) return [];
+  const best = speechTranscript(results), last = list[list.length-1], lastBest = last[0].transcript.trim();
+  const prefix = best.endsWith(lastBest) ? best.slice(0, best.length-lastBest.length) : '';
+  const out = [{t:best, c:last[0].confidence||0}];
+  for(let j=1; j<last.length; j++){
+    const t = (prefix+last[j].transcript).trim();
+    if(t && !out.some(a=>a.t.toLowerCase()===t.toLowerCase())) out.push({t, c:last[j].confidence||0});
+  }
+  return out;
+}
+async function startVoiceRecording(){
+  if(voiceUrl){ URL.revokeObjectURL(voiceUrl); voiceUrl = null; }
+  if(!voiceRecordOk || !window.MediaRecorder || !navigator.mediaDevices) return;
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    if(!micRecognizer){ stream.getTracks().forEach(t=>t.stop()); return; }
+    const chunks = [], rec = new MediaRecorder(stream);
+    rec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+    rec.onstop = ()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      if(!chunks.length) return;
+      voiceUrl = URL.createObjectURL(new Blob(chunks, {type:rec.mimeType||'audio/webm'}));
+      const b = document.getElementById('pron-myvoice'); if(b) b.disabled = false;
+    };
+    rec.start(); voiceRecorder = rec;
+  }catch(e){ voiceRecordOk = false; }
+}
+function stopVoiceRecording(){
+  if(voiceRecorder && voiceRecorder.state!=='inactive') voiceRecorder.stop();
+  voiceRecorder = null;
+}
+
+const EN_CONTRACTIONS = {"i'm":"i am","you're":"you are","he's":"he is","she's":"she is","it's":"it is","we're":"we are","they're":"they are","isn't":"is not","aren't":"are not","don't":"do not","doesn't":"does not","can't":"cannot","i've":"i have","haven't":"have not","hasn't":"has not","what's":"what is","there's":"there is","that's":"that is","where's":"where is","who's":"who is","let's":"let us","i'll":"i will"};
+const EN_SPELLING = {color:'colour',favorite:'favourite',mom:'mum',gray:'grey',ok:'okay'};
+const EN_UNITS = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
+const EN_TENS = ',,twenty,thirty,forty,fifty,sixty,seventy,eighty,ninety'.split(',');
+function enNumber(n){
+  if(n<20) return EN_UNITS[n];
+  if(n<100) return EN_TENS[Math.floor(n/10)]+(n%10 ? ' '+EN_UNITS[n%10] : '');
+  if(n<1000) return EN_UNITS[Math.floor(n/100)]+' hundred'+(n%100 ? ' and '+enNumber(n%100) : '');
+  return String(n);
+}
+// One spoken token → comparable words ("I'm" → i am, "13" → thirteen, "twenty-one" → twenty one)
+function enWords(token){
+  let t = String(token).toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9'\- ]/g,' ').replace(/-/g,' ');
+  return t.split(/\s+/).filter(Boolean).flatMap(w=>{
+    w = w.replace(/^'+|'+$/g,'');
+    if(/^\d+$/.test(w)) return enNumber(+w).split(' ');
+    if(EN_CONTRACTIONS[w]) return EN_CONTRACTIONS[w].split(' ');
+    return w ? [EN_SPELLING[w]||w] : [];
+  });
+}
+function enWordList(text){ return String(text).split(/\s+/).flatMap(enWords); }
+// Longest common subsequence: for each target word, the index of the heard word it matches (-1 if none)
+function alignWords(target, heard){
+  const n = target.length, m = heard.length, L = Array.from({length:n+1}, ()=>new Array(m+1).fill(0));
+  for(let i=n-1; i>=0; i--) for(let j=m-1; j>=0; j--)
+    L[i][j] = target[i]===heard[j] ? L[i+1][j+1]+1 : Math.max(L[i+1][j], L[i][j+1]);
+  const match = new Array(n).fill(-1);
+  for(let i=0, j=0; i<n && j<m;){
+    if(target[i]===heard[j]){ match[i]=j; i++; j++; }
+    else if(L[i+1][j] >= L[i][j+1]) i++; else j++;
+  }
+  return match;
+}
+// Grades each word of a target sentence: ok (heard), near (only in another guess), bad (not heard)
+function gradeSentence(target, alts){
+  const tokens = target.split(/\s+/).filter(t=>enWords(t).length);
+  const words = tokens.flatMap((tok, k)=>enWords(tok).map(w=>({w, k})));
+  const heard = enWordList(alts[0].t), match = alignWords(words.map(x=>x.w), heard);
+  const otherAlts = alts.slice(1).map(a=>enWordList(a.t));
+  words.forEach((x, i)=>{
+    if(match[i]>=0){ x.s = 'ok'; return; }
+    // what was heard instead: the heard words between the matched neighbours,
+    // one for one when the missed run and the gap have the same length
+    let lo = -1, hi = heard.length, first = 0, last = words.length-1;
+    for(let p=i-1; p>=0; p--) if(match[p]>=0){ lo = match[p]; first = p+1; break; }
+    for(let p=i+1; p<words.length; p++) if(match[p]>=0){ hi = match[p]; last = p-1; break; }
+    const gap = heard.slice(lo+1, hi);
+    x.instead = gap.length===last-first+1 ? gap[i-first] : gap.join(' ');
+    x.s = otherAlts.some(a=>a.includes(x.w)) ? 'near' : 'bad'; // near: one of the recognizer's other guesses had it
+  });
+  const rank = {ok:0, near:1, bad:2};
+  const tokStatus = tokens.map((tok, k)=>words.filter(x=>x.k===k).reduce((s, x)=>rank[x.s]>rank[s] ? x.s : s, 'ok'));
+  const ratio = words.length ? words.filter(x=>x.s==='ok').length/words.length : 0;
+  return {target, tokens, tokStatus, words, ratio};
+}
+
+function resetPronZone(){
+  let z = document.getElementById('pron-zone');
+  if(!isSpeakingTopic()){ if(z) z.remove(); return; }
+  if(!z){
+    z = document.createElement('div');
+    z.id = 'pron-zone';
+    document.getElementById('answer-input').insertAdjacentElement('afterend', z);
+  }
+  const q = questions[currentQIdx];
+  z.innerHTML = (q && q.pron) ? q.pron.html : '';
+  lastMicBefore = null;
+}
+
+async function coachPronunciation(alts){
+  const q = questions[currentQIdx], zone = document.getElementById('pron-zone');
+  if(!q || !zone) return;
+  const repeat = currentSubject.topicId==='parler_repeter';
+  const targets = [...String(q.q).matchAll(/\[\[([^\[\]\n]{1,300}?)\]\]/g)].map(m=>m[1].trim()).filter(Boolean);
+  let lines = '', problems = [], pct = 1, modelText = '';
+  if(repeat && targets.length){
+    // keep the sentences he actually tried to say (or the closest one)
+    const graded = targets.map(t=>gradeSentence(t, alts));
+    let said = graded.filter(g=>g.ratio>=0.5);
+    if(!said.length) said = [graded.reduce((a, b)=>b.ratio>a.ratio ? b : a)];
+    modelText = said.map(g=>g.target).join(' ');
+    lines = said.map(g=>'<div class="pron-line">'
+      + g.tokens.map((tok, k)=>`<span class="pron-w ${g.tokStatus[k]}" data-word="${escAttr(tok.replace(/[^\w'’-]/g,''))}">${escAttr(tok)}</span>`).join(' ')
+      + `<button type="button" class="say-btn" data-say="${escAttr(g.target)}" title="Écouter en anglais">🔊</button></div>`).join('');
+    const words = said.flatMap(g=>g.words);
+    problems = words.filter(x=>x.s!=='ok');
+    pct = words.length ? (words.length-problems.length + 0.5*problems.filter(x=>x.s==='near').length)/words.length : 0;
+  } else {
+    // free answer: words the recognizer hesitated on (absent from one of its other guesses) are uncertain
+    const others = alts.slice(1).map(a=>enWordList(a.t));
+    const toks = alts[0].t.split(/\s+/).filter(Boolean);
+    lines = '<div class="pron-line">' + toks.map(tok=>{
+      const unsure = enWords(tok).some(w=>others.some(o=>!o.includes(w)));
+      if(unsure) problems.push({w:enWords(tok).join(' '), s:'near'});
+      return `<span class="pron-w ${unsure?'near':'ok'}" data-word="${escAttr(tok.replace(/[^\w'’-]/g,''))}">${escAttr(tok)}</span>`;
+    }).join(' ') + '</div>';
+  }
+  const conf = alts[0].c;
+  const blurry = conf>0 && conf<0.55;
+  const stars = !problems.length && !blurry ? '⭐⭐⭐' : pct>=0.6 ? '⭐⭐' : '⭐';
+  zone.innerHTML = `<div class="pron-card">
+    <div class="pron-head"><span>🎧 Coach prononciation</span><span>${repeat ? stars : ''}</span></div>
+    ${lines}
+    <div class="pron-heard">👂 Le micro a compris : « ${escAttr(alts[0].t)} »${blurry ? ' (pas très net)' : ''}</div>
+    <div class="pron-legend">🟢 bien dit · 🟠 presque · 🔴 à retravailler — touche un mot pour l'écouter</div>
+    <div class="pron-actions">
+      ${modelText ? `<button type="button" data-pron="model" data-text="${escAttr(modelText)}">🐢 Modèle lent</button>` : ''}
+      <button type="button" id="pron-myvoice" data-pron="voice" ${voiceUrl ? '' : 'disabled'}>▶️ Ma voix</button>
+      <button type="button" data-pron="retry">🔁 Je réessaie</button>
+    </div>
+    <div class="pron-tip" id="pron-tip">🧑‍🏫 Le coach écoute ce que tu as dit...</div>
+  </div>`;
+  if(!voiceRecordOk){ const b = document.getElementById('pron-myvoice'); if(b) b.remove(); }
+  const note = repeat
+    ? (problems.length ? 'à retravailler : '+problems.map(x=>x.w+(x.instead ? ' (entendu « '+x.instead+' »)' : ' (pas entendu)')).join(', ') : 'tous les mots reconnus')
+    : 'hypothèses du micro : '+alts.map(a=>'« '+a.t+' »').join(' / ');
+  const save = ()=>{ q.pron = {html: zone.innerHTML, note}; };
+  const tipEl = document.getElementById('pron-tip');
+  if(repeat && !problems.length){
+    tipEl.innerHTML = blurry
+      ? '🧑‍🏫 Tous les mots sont reconnus 👍 mais le micro a hésité : redis-le en articulant bien chaque mot, pas trop vite.'
+      : '🧑‍🏫 🎉 Tous les mots sont reconnus, ta prononciation est claire ! Passe à la suite ou essaie une autre phrase.';
+    save(); return;
+  }
+  save();
+  const systemPrompt = `Tu es un coach de prononciation anglaise bienveillant pour un élève de 6e francophone qui parle au micro. Tu n'entends PAS sa voix : tu reçois ce que la reconnaissance vocale anglaise a compris (plusieurs hypothèses, la première est la plus probable). Un mot non reconnu, ou remplacé par un autre mot, signale presque toujours une prononciation à corriger.
+${ENGLISH_MARKER_RULE}
+${repeat ? '' : "L'élève répondait à une question en anglais : dis d'abord en une phrase s'il a compris la question (sa réponse va-t-elle avec ?) et si c'est une phrase complète, puis donne la bonne phrase modèle entre [[...]] qu'il peut écouter et répéter. Ensuite la prononciation des mots où le micro a hésité.\n"}Pour chaque mot à retravailler (2 maximum, les plus importants) : dis ce que le micro a cru entendre, puis comment bien le dire avec une prononciation à la française entre parenthèses, ex [[three]] (fri, la langue entre les dents), et le geste de la bouche (th : langue entre les dents ; h : souffle comme sur une vitre ; -ing : le son reste dans le nez ; voyelle longue : tiens le son ; finale : prononce bien la dernière lettre).
+Termine en l'invitant à redire la phrase. 2 à 5 lignes courtes, français simple, 1 ou 2 emojis. Ne parle jamais de ponctuation ni de majuscules.`;
+  const userMsg = (repeat ? 'Phrase à dire : '+modelText : 'Question posée : '+q.q)
+    + '\nHypothèses du micro : '+alts.map((a, i)=>(i+1)+'. « '+a.t+' »'+(a.c ? ' (confiance '+a.c.toFixed(2)+')' : '')).join(' ')
+    + (problems.length ? '\nMots à retravailler : '+problems.map(x=>x.w+(x.instead ? ' → entendu « '+x.instead+' »' : x.s==='bad' ? ' → pas entendu' : ' → le micro a hésité')).join(' ; ') : '');
+  try{
+    const resp = await fetchAnthropicWithRetry({
+      model:'claude-sonnet-4-5', max_tokens:400,
+      system:systemPrompt,
+      messages:[{role:'user', content:userMsg}]
+    });
+    const data = await resp.json();
+    const text = (data.content||[]).map(b=>b.text||'').join('').trim();
+    if(!text) throw new Error('empty');
+    if(document.getElementById('pron-tip')!==tipEl) return; // another attempt or question since
+    tipEl.innerHTML = '🧑‍🏫 '+mdToHtml(text);
+  }catch(e){
+    tipEl.innerHTML = '🧑‍🏫 Écoute le modèle 🐢, puis ta voix ▶️, et redis les mots en orange ou en rouge.';
+  }
+  save();
+}
+document.addEventListener('click', e=>{
+  const w = e.target.closest && e.target.closest('.pron-w');
+  if(w){ speakEnglish(w.dataset.word, 0.7); return; }
+  const b = e.target.closest && e.target.closest('[data-pron]');
+  if(!b) return;
+  if(b.dataset.pron==='model') speakEnglish(b.dataset.text, 0.65);
+  else if(b.dataset.pron==='voice' && voiceUrl){ if(window.speechSynthesis) speechSynthesis.cancel(); new Audio(voiceUrl).play(); }
+  else if(b.dataset.pron==='retry') toggleMic(true);
+});
 
 function renderMarkdownMath(text, elementId){
   const el = document.getElementById(elementId);
@@ -3419,7 +3650,7 @@ async function submitAnswer(){
   const ctx=(currentSubject.isLesson?'**Leçon de référence (corrige selon cette leçon) :**\n'+currentSubject.lessonText+'\n\n':'')
     +(exoContext?'**Contexte :**\n'+exoContext+'\n\n':'');
   const qaList=questions.map((q,i)=>
-    `**Question ${i+1}:** ${q.q}\n**Réponse élève${isSpeakingTopic()?' (transcription de sa voix)':''} :** ${answers[i]||'(pas de réponse)'}`
+    `**Question ${i+1}:** ${q.q}\n**Réponse élève${isSpeakingTopic()?' (transcription de sa voix)':''} :** ${answers[i]||'(pas de réponse)'}${q.pron ? '\n**Analyse du micro :** '+q.pron.note : ''}`
   ).join('\n\n');
   // Build a clean correction prompt without leaking theme context
   const corrLevelDesc = isCM2
