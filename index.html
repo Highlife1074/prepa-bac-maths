@@ -3362,8 +3362,9 @@ function speechTranscript(results){
     const t = r[0].transcript.trim();
     if(!t) continue;
     const low = t.toLowerCase(), prev = text.toLowerCase();
-    if(low.startsWith(prev)) text = t;            // cumulative result: replaces the previous
-    else if(!prev.endsWith(low)) text = (text+' '+t).trim();
+    // whole words only: "I" then "is it" are two different words, not a repeat
+    if(!prev || low===prev || low.startsWith(prev+' ')) text = t;   // cumulative result: replaces the previous
+    else if(!prev.endsWith(' '+low)) text = (text+' '+t).trim();
   }
   return text;
 }
@@ -3382,6 +3383,57 @@ function renderMicButton(){
   btn.classList.remove('listening');
   btn.textContent = isSpeakingTopic() ? '🎤 Parler en anglais' : '🎤 Dire ma réponse';
 }
+// 🎤 Dictation shared by every mic button. The browser recognizer stops at the
+// first pause (a child often pauses after one word): it listens in continuous
+// mode, shows the words as they come, restarts itself if the browser cuts it,
+// and stops on its own after a few seconds of silence (or on a click).
+function startDictation(o){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const join = (a,b)=> a && b ? a+' '+b : (a||b);
+  const t0 = Date.now();
+  let committed = '', alts = [], stopped = false, done = false, rec = null, timer = null;
+  function armTimer(ms){ clearTimeout(timer); timer = setTimeout(stop, ms); }
+  function stop(){ stopped = true; clearTimeout(timer); try{ rec && rec.stop(); }catch(e){} }
+  function finish(){
+    if(done) return; done = true; clearTimeout(timer);
+    o.onEnd && o.onEnd(committed, alts);
+  }
+  function session(first){
+    let text = '';
+    rec = new SR();
+    rec.lang = o.lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = o.maxAlternatives || 1;
+    if(first) rec.onstart = ()=>{ o.onStart && o.onStart(); };
+    rec.onresult = ev=>{
+      const all = Array.from(ev.results);
+      text = speechTranscript(all);
+      const finals = all.filter(r=>r.isFinal);
+      if(o.maxAlternatives > 1 && finals.length) alts = speechAlternatives(finals).map(a=>({t:join(committed, a.t), c:a.c}));
+      o.onText(join(committed, text));
+      if(text) armTimer(o.silenceMs || 4000);
+    };
+    rec.onerror = ev=>{
+      if(ev.error==='no-speech' || ev.error==='aborted') return; // handled by the timers
+      stopped = true;
+      o.onError && o.onError(ev.error);
+    };
+    rec.onend = ()=>{
+      committed = join(committed, text);
+      // the browser stopped by itself (pause, Android limit): keep listening
+      if(!stopped && Date.now()-t0 < (o.maxMs || 60000)){
+        try{ session(false); return; }catch(e){}
+      }
+      finish();
+    };
+    rec.start();
+  }
+  armTimer(o.waitMs || 8000); // nothing said at all: give up after 8 s
+  try{ session(true); }catch(e){ finish(); }
+  return {stop};
+}
+
 // retry: the new attempt replaces the previous one in the answer box
 function toggleMic(retry){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3390,37 +3442,37 @@ function toggleMic(retry){
   if(micRecognizer){ micRecognizer.stop(); return; }
   if(window.speechSynthesis) speechSynthesis.cancel();
   const coach = isSpeakingTopic(), qIdx = currentQIdx;
-  micRecognizer = new SR();
-  micRecognizer.lang = 'en-GB';
-  micRecognizer.interimResults = false;
-  micRecognizer.maxAlternatives = coach ? 5 : 1; // other guesses of the recognizer = words it hesitated on
-  micRecognizer.continuous = false;
   btn.classList.add('listening');
   btn.textContent = '🔴 Je t\'écoute... (clique pour arrêter)';
   const ta = document.getElementById('answer-input');
   if(retry && lastMicBefore!==null) ta.value = lastMicBefore;
   const before = ta.value.trim() ? ta.value.trim()+'\n' : '';
-  let alts = [];
-  micRecognizer.onstart = ()=>{ if(coach) startVoiceRecording(); };
-  micRecognizer.onresult = ev=>{
-    ta.value = before + speechTranscript(ev.results);
-    if(coach) alts = speechAlternatives(ev.results);
-  };
-  micRecognizer.onerror = ev=>{
-    if(ev.error==='not-allowed' || ev.error==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
-    else if(ev.error==='no-speech') showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort');
-    else if(ev.error==='audio-capture' && voiceRecordOk && coach){
-      // this device can't share the mic between recognition and recording: keep the coach, drop "Ma voix"
-      voiceRecordOk = false;
-      showSyncBadge('🔁 Réessaie : ton appareil ne peut pas enregistrer ta voix en même temps');
+  const recording = coach && voiceRecordOk;
+  micRecognizer = startDictation({
+    lang:'en-GB',
+    maxAlternatives: coach ? 5 : 1, // other guesses of the recognizer = words it hesitated on
+    onStart: ()=>{ if(recording) startVoiceRecording(); },
+    onText: t=>{ ta.value = before + t; },
+    onError: err=>{
+      if(err==='not-allowed' || err==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
+      else if(err==='network') showSyncBadge('📶 Le micro a besoin d\'internet, vérifie la connexion');
+      else if(err==='audio-capture' && recording){
+        voiceRecordOk = false;
+        showSyncBadge('🔁 Réessaie : ton appareil ne peut pas enregistrer ta voix en même temps');
+      }
+    },
+    onEnd: (text, alts)=>{
+      stopVoiceRecording();
+      micRecognizer = null; renderMicButton();
+      if(!text){
+        // recording may have taken the mic away from the recognizer: drop "Ma voix" and retry without it
+        if(recording){ voiceRecordOk = false; showSyncBadge('🔁 Réessaie : le micro marchera mieux sans enregistrer ta voix'); }
+        else showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort, près du micro');
+        return;
+      }
+      if(coach && alts.length && qIdx===currentQIdx){ lastMicBefore = before.trim(); coachPronunciation(alts); }
     }
-  };
-  micRecognizer.onend = ()=>{
-    stopVoiceRecording();
-    micRecognizer = null; renderMicButton();
-    if(coach && alts.length && qIdx===currentQIdx){ lastMicBefore = before.trim(); coachPronunciation(alts); }
-  };
-  micRecognizer.start();
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3430,7 +3482,7 @@ function toggleMic(retry){
 // reconnu = un mot mal prononcé. L'élève réécoute le modèle et sa voix,
 // et le coach (Claude) explique comment bien dire les mots ratés.
 // ══════════════════════════════════════════════════════════
-let lastMicBefore = null, voiceRecordOk = true, voiceRecorder = null, voiceUrl = null;
+let lastMicBefore = null, voiceRecordOk = !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && !(navigator.maxTouchPoints>1 && /Macintosh/.test(navigator.userAgent)), voiceRecorder = null, voiceUrl = null;
 function speechAlternatives(results){
   const list = Array.from(results).filter(r=>r[0] && r[0].transcript.trim());
   if(!list.length) return [];
@@ -4785,15 +4837,21 @@ function toggleCoachMic(){
   if(!SR){ alert('Le micro ne marche pas dans ce navigateur. Utilise Chrome ou Safari.'); return; }
   if(coachMic){ coachMic.stop(); return; }
   if(window.speechSynthesis) speechSynthesis.cancel();
-  coachMic = new SR();
-  coachMic.lang = 'fr-FR'; coachMic.interimResults = false; coachMic.continuous = false;
   btn.classList.add('listening');
   const ta = document.getElementById('coach-input');
   const before = ta.value.trim() ? ta.value.trim()+' ' : '';
-  coachMic.onresult = ev=>{ ta.value = before + speechTranscript(ev.results); };
-  coachMic.onerror = ev=>{ if(ev.error==='not-allowed') alert('Autorise le micro pour ce site, puis réessaie.'); };
-  coachMic.onend = ()=>{ coachMic = null; btn.classList.remove('listening'); };
-  coachMic.start();
+  coachMic = startDictation({
+    lang:'fr-FR',
+    onText: t=>{ ta.value = before + t; },
+    onError: err=>{
+      if(err==='not-allowed' || err==='service-not-allowed') alert('Autorise le micro pour ce site, puis réessaie.');
+      else if(err==='network') showSyncBadge('📶 Le micro a besoin d\'internet, vérifie la connexion');
+    },
+    onEnd: text=>{
+      coachMic = null; btn.classList.remove('listening');
+      if(!text) showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort, près du micro');
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════════
