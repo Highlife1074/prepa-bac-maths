@@ -2443,6 +2443,16 @@ PHASE_MEMO: ${items.join(' - ')}
 PHASE_RAPPEL: ${rappel}
 ${md.mode==='envers'?'La bonne réponse est la liste en partant du DERNIER élément jusqu au premier. ':''}Le contexte reste vide. Une seule question.`;
   }
+  // Mémoire de travail: the code is shown alone, then hidden while the pupil does a mental calculation
+  if(currentSubject.topicId==='memoire_travail'){
+    const wm = getWorkingMemoryDifficulty();
+    const code = pickWorkingMemoryCode(wm.digits);
+    memoExtra += `\nMÉMOIRE DE TRAVAIL : niveau ${wm.label}. CODE IMPOSÉ. La question contient EXACTEMENT ce format :
+PHASE_MEMO: 🔐 CODE SECRET : **${code.join(' - ')}**
+PHASE_RAPPEL: (une mini-mission de 2 phrases maximum avec UN calcul mental simple de 6e, par exemple ${wm.calc}, dans un contexte jeu vidéo, sport ou animaux, qui se termine par « Puis écris le code secret. »)
+INTERDIT : le code ou ses chiffres ne doivent JAMAIS apparaître dans PHASE_RAPPEL ni dans le contexte (l élève doit l avoir gardé en tête). Les nombres du calcul ne contiennent pas les chiffres du code.
+La bonne réponse attendue contient le résultat du calcul ET le code ${code.join('-')}. Le contexte reste vide. Une seule question.`;
+  }
 
   if(currentProfile==='pre' && currentSubject.topicId==='sujet_bac'){
     memoExtra += `\nEXERCICE TYPE BAC : un exercice complet comme dans un sujet du bac de spécialité maths (environ 5 points), qui MÉLANGE 2 ou 3 chapitres de Terminale (ex : suite + fonction logarithme, probabilités + suite, fonction exponentielle + intégrale, espace + produit scalaire). Le contexte présente la situation et les parties (Partie A / Partie B). Le tableau questions contient EXACTEMENT 5 questions progressives, chacune annonce sa partie et ses points, par exemple « (Partie A — 1 pt) ». Les résultats intermédiaires utiles pour la suite sont donnés dans l énoncé.`;
@@ -2761,6 +2771,25 @@ function getMemoryDifficulty(){
   return {items, seconds, label, score, mode, replays};
 }
 
+// Mémoire de travail: code length and display time follow the level (max 3-4 items per the speech therapist's rules, 5 for experts)
+function getWorkingMemoryDifficulty(){
+  const md = getMemoryDifficulty();
+  if(md.score <= 3.5) return {digits:3, seconds:12, label:md.label, calc:'5 × 4 ou 18 + 6'};
+  if(md.score <= 6.5) return {digits:4, seconds:12, label:md.label, calc:'6 × 7 ou 45 − 18'};
+  if(md.score <= 9)   return {digits:4, seconds:8,  label:md.label, calc:'8 × 6 + 5 ou 72 ÷ 8'};
+  return {digits:5, seconds:10, label:md.label, calc:'7 × 8 − 9 ou 125 + 48'};
+}
+
+// Random digits, never the same digit twice in a row
+function pickWorkingMemoryCode(n){
+  const code = [];
+  while(code.length < n){
+    const d = Math.floor(Math.random()*10);
+    if(d !== code[code.length-1]) code.push(d);
+  }
+  return code;
+}
+
 // Word lists are drawn here rather than by the AI, which kept reusing the same few words
 const MEMO_WORDS = ('pomme poire banane cerise fraise citron orange raisin melon tomate carotte salade radis poireau oignon fromage beurre gâteau biscuit pain soupe crêpe yaourt confiture '+
   'chat chien lapin cheval vache mouton cochon poule canard souris tigre lion girafe zèbre singe ours loup renard hibou abeille fourmi papillon escargot grenouille tortue baleine dauphin requin '+
@@ -3015,7 +3044,7 @@ TYPES D EXERCICES selon le sujet :
 - comprehension_texte : texte TRES court (4-5 phrases), questions précises sur le contenu, "qui fait quoi, où, quand, pourquoi"
 - comprehension_consigne : consignes multi-étapes à décoder et appliquer / "souligne les noms, entoure les verbes et écris le sujet"
 - ortho_lexicale : mots fréquents avec erreurs à corriger / choisir la bonne orthographe / écrire de mémoire des mots après les avoir bien observés
-- memoire_travail : retenir une info et l utiliser pour répondre / calculer mentalement tout en mémorisant un mot-clé`,
+- memoire_travail : FORMAT 2 PHASES OBLIGATOIRE (PHASE_MEMO: le code à retenir, seul ; PHASE_RAPPEL: le calcul mental puis le rappel du code). Le code est imposé plus bas : il est caché pendant le calcul, il ne doit jamais être recopié dans PHASE_RAPPEL.`,
       sec:'', pre:''
     },
     ortho_pre:{
@@ -3635,7 +3664,7 @@ async function getHint(){
   const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
   const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}${qText.includes('PHASE_MEMO:')?" C'est un exercice de mémoire : ne redonne JAMAIS ce qui était à mémoriser (liste, code), même en partie. Aide seulement sur la méthode ou le calcul.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.${exoContext.includes('```figure') ? '\nLe bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).' : ''}`;
@@ -6344,10 +6373,19 @@ function showMemoryExercise(fullText, qIdx){
   const memoMatch = fullText.match(/PHASE_MEMO:\s*([^\n]+(?:\n(?!PHASE_RAPPEL:)[^\n]*)*)/i);
   const rappelMatch = fullText.match(/PHASE_RAPPEL:\s*([\s\S]+)/i);
   const memoText = memoMatch ? memoMatch[1].trim() : fullText;
-  const rappelText = rappelMatch ? rappelMatch[1].trim() : 'Maintenant réponds de mémoire.';
+  let rappelText = rappelMatch ? rappelMatch[1].trim() : 'Maintenant réponds de mémoire.';
 
   // Adaptive timer based on progression level
   const md = getMemoryDifficulty();
+  if(currentSubject && currentSubject.topicId==='memoire_travail'){
+    md.seconds = getWorkingMemoryDifficulty().seconds;
+    // Safety net: if the AI copied the code into the task, mask it
+    const digits = (memoText.split(':').pop().match(/\d/g)||[]);
+    if(digits.length >= 3){
+      const leak = new RegExp(digits.join('[\\s\\-–.,*]*'),'g');
+      rappelText = rappelText.replace(leak, digits.map(()=>'?').join('-'));
+    }
+  }
   memoryPhase = 'memo';
   memoryCountdown = md.seconds;
   memoryTotalSeconds = md.seconds;
