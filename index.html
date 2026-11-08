@@ -2504,13 +2504,6 @@ RÈGLES CRITIQUES :
 
 SECURITE JSON : Dans les valeurs du JSON, n'utilise JAMAIS de guillemets droits (") non echappes. Remplace les guillemets de citation par des guillemets typographiques ou des chevrons. Echappe les apostrophes avec \' si necessaire. Pas de retour a la ligne reels dans les valeurs - utilise \n.
 
-REGLES DE CORRECTION STRICTES :
-1. TEMPS VERBAUX : sois TRES rigoureux. "j avais eliminé" (imparfait) est INCORRECT si le passé composé est attendu. Ne jamais accepter un temps différent de celui demandé.
-2. ORTHOGRAPHE STRICTE : compare lettre par lettre la réponse de l élève avec la réponse correcte. "court" (c-o-u-r-t) écrit correctement avec le t final = CORRECT. Ne jamais signaler une faute si le mot est orthographié exactement correctement. Les lettres muettes (t de "court", s de "bras", d de "grand") font partie intégrante du mot et doivent être présentes mais ne constituent PAS une faute si elles sont présentes. Une faute = mot écrit différemment de la réponse attendue.
-3. ACCORDS : vérifie tous les accords. Un accord incorrect = INCORRECT.
-4. Réponse presque correcte avec UNE faute -> PARTIEL avec explication précise de la faute et la forme correcte.
-5. Plusieurs fautes -> INCORRECT avec chaque erreur expliquée et la bonne réponse donnée.
-6. TOUJOURS donner la forme correcte dans la correction.
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
 {"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."${isEnglishSubject()?',"fr":"Traduction française de la consigne 1."':''}},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
@@ -2520,7 +2513,7 @@ Ne donne PAS les réponses.`;
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens: (isCM2 ? 1200 : 2500) + (figMode ? 500 : 0),
+      model:AI_MODEL, max_tokens: (isCM2 ? 1200 : 2500) + (figMode ? 500 : 0),
       system:systemPrompt,
       messages:[{role:'user',content:'Génère un exercice.'}]
     });
@@ -2531,7 +2524,7 @@ Ne donne PAS les réponses.`;
       qText.innerHTML = '<div style="text-align:center;padding:1rem">'+msg+'<br><br><button onclick="generateExercise()" style="padding:8px 20px;border-radius:10px;border:none;background:#7F77DD;color:#fff;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">↻ Réessayer</button></div>';
       return;
     }
-    const raw=data.content?.[0]?.text||'';
+    const raw=respText(data)||'';
     let parsed;
     try{
       // Strip markdown code fences
@@ -3130,12 +3123,12 @@ function renderTranslateButton(q){
 async function translateConsigne(text){
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:300,
+      model:AI_MODEL, max_tokens:300,
       system:"Traduis en français simple, pour un élève de 6e, UNIQUEMENT la consigne de cet exercice d'anglais. Ne traduis PAS les mots, phrases ou textes sur lesquels porte l'exercice (ils sont entre [[...]] après la consigne) : remplace-les par « ce mot », « cette phrase »... Réponds seulement par la traduction, sans guillemets.",
       messages:[{role:'user', content:String(text)}]
     });
     const data = await resp.json();
-    return (data.content?.[0]?.text || '').trim();
+    return (respText(data) || '').trim();
   }catch(e){ return ''; }
 }
 
@@ -3696,7 +3689,7 @@ Termine en l'invitant à redire la phrase. 2 à 5 lignes courtes, français simp
     + (problems.length ? '\nMots à retravailler : '+problems.map(x=>x.w+(x.instead ? ' → entendu « '+x.instead+' »' : x.s==='bad' ? ' → pas entendu' : ' → le micro a hésité')).join(' ; ') : '');
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user', content:userMsg}]
     });
@@ -3767,12 +3760,12 @@ ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consign
 2-4 lignes max. LaTeX si nécessaire.${exoContext.includes('```figure') ? '\nLe bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).' : ''}`;
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user',content:ctx+'Question : '+qText+'\n\nIndice n°'+hintNum+' svp.'}]
     });
     const data=await resp.json();
-    const hintText=data.content?.[0]?.text||'Indice non disponible';
+    const hintText=respText(data)||'Indice non disponible';
     const hz=document.getElementById('hint-zone');
     const hid='h-'+currentQIdx+'-'+hintNum;
     hz.innerHTML+=`<div class="hint-card" id="${hid}">💡 <strong>Indice ${hintNum} :</strong> <span></span></div>`;
@@ -3864,7 +3857,7 @@ ${isEnglishSubject() ? 'ANGLAIS : ecris tout mot ou phrase en anglais entre doub
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:maxTok,
+      model:AI_MODEL, max_tokens:maxTok,
       system:systemPrompt,
       messages:[{role:'user',content:ctx+qaList}]
     });
@@ -3874,7 +3867,7 @@ ${isEnglishSubject() ? 'ANGLAIS : ecris tout mot ou phrase en anglais entre doub
       restoreSubmitUI('Erreur API '+resp.status+' : '+(data.error?.message||''));
       return;
     }
-    showAllFeedbacks(data.content?.[0]?.text||'',isCM2);
+    showAllFeedbacks(respText(data)||'',isCM2);
   }catch(e){
     if(e.name==='AbortError'){
       restoreSubmitUI('Délai dépassé (90s). La correction a pris trop de temps.');
@@ -4243,21 +4236,27 @@ ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d\u2019accueil
   // Build messages for API
   // The conversation must start with a user turn (tutorHistory starts with the
   // tutor's greeting): always prepend the opening request, then the last 12 turns.
+  // Fenêtre qui avance par paquets de 10 : le début de la conversation reste identique
+  // d'un message à l'autre, donc il est relu depuis le cache (10 fois moins cher).
+  const tStart = Math.floor(Math.max(0, tutorHistory.length-12)/10)*10;
+  let hist = tutorHistory.slice(tStart);
+  while(hist.length && hist[0].role!=='assistant') hist.shift(); // after the opening user turn
   const messages = [{role:'user', content:'Lance la session.'}]
-    .concat(userMsg === 'START_SESSION' ? [] : tutorHistory.slice(-12));
+    .concat(userMsg === 'START_SESSION' ? [] : hist);
 
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:600,
+      model:AI_MODEL, max_tokens:600,
       system:systemPrompt,
-      messages
+      messages,
+      cache_control:{type:'ephemeral'}
     });
     const data = await resp.json();
     setTutorTyping(false);
 
     if(!resp.ok){ addTutorMsg('tutor','⚠️ Erreur API '+resp.status); return; }
 
-    let text = data.content?.[0]?.text || '';
+    let text = respText(data) || '';
 
     // Extract method badge
     let method = null;
@@ -4801,14 +4800,16 @@ async function callCoach(){
   typing.style.display = 'flex';
   document.getElementById('coach-body').scrollTo({top:99999});
   // Les 20 derniers messages, en commençant par un message d'Amaury (exigé par l'API)
-  let msgs = coachSession.messages.slice(-20).map(m=>({role:m.role, content:m.content}));
+  // Fenêtre qui avance par paquets de 10 messages : préfixe stable, relu depuis le cache
+  const cStart = Math.floor(Math.max(0, coachSession.messages.length-20)/10)*10;
+  let msgs = coachSession.messages.slice(cStart).map(m=>({role:m.role, content:m.content}));
   while(msgs.length && msgs[0].role!=='user') msgs.shift();
   try{
-    const resp = await fetchAnthropicWithRetry({model:'claude-sonnet-4-5', max_tokens:900, system:coachSystemPrompt(), messages:msgs});
+    const resp = await fetchAnthropicWithRetry({model:AI_MODEL, max_tokens:900, system:coachSystemPrompt(), messages:msgs, cache_control:{type:'ephemeral'}});
     const data = await resp.json();
     typing.style.display = 'none';
     if(!resp.ok){ addTutorSystemMsgTo('coach-messages', '⚠️ Erreur ('+resp.status+'). Renvoie ton message.'); return; }
-    handleCoachReply(data.content?.[0]?.text || '');
+    handleCoachReply(respText(data) || '');
   }catch(e){
     typing.style.display = 'none';
     addTutorSystemMsgTo('coach-messages', '❌ Pas de connexion. Renvoie ton message.');
@@ -5102,10 +5103,10 @@ async function transcribeLessonPhotos(files){
     const images = await Promise.all(files.map(f=>imageFileToJpegBase64(f)));
     const content = images.map(data=>({type:'image', source:{type:'base64', media_type:'image/jpeg', data}}));
     content.push({type:'text', text:'Transcris fidèlement le contenu de cette leçon (dans l\'ordre des photos). Garde les titres, définitions, règles, exemples et tableaux (en texte simple). Écris les formules en LaTeX entre $...$. Ignore les ratures, les décorations et ce qui n\'est pas la leçon. Si un passage est illisible, écris [illisible]. Réponds uniquement avec la transcription.'});
-    const resp = await fetchAnthropicWithRetry({ model:'claude-sonnet-4-5', max_tokens:4000, messages:[{role:'user', content}] });
+    const resp = await fetchAnthropicWithRetry({ model:AI_MODEL, max_tokens:4000, messages:[{role:'user', content}] });
     const data = await resp.json();
     if(!resp.ok){ status.textContent = '⚠️ Erreur API ' + resp.status + ' : ' + (data.error?.message||''); return; }
-    const text = (data.content?.[0]?.text || '').trim();
+    const text = (respText(data) || '').trim();
     const ta = document.getElementById('lesson-text');
     ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + text;
     status.textContent = '✅ Leçon lue ! Vérifie le texte ci-dessous, puis lance l\'entraînement.';
@@ -5670,11 +5671,11 @@ Rédige en français, sois encourageant, donne 2-3 conseils concrets et personna
 
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       messages:[{role:'user',content:prompt}]
     });
     const data = await resp.json();
-    const text = data.content?.[0]?.text||'Analyse non disponible.';
+    const text = respText(data)||'Analyse non disponible.';
     zone.innerHTML = `<div class="report-ai-summary">
       <div class="report-ai-title">🤖 Analyse IA personnalisée</div>
       <div class="report-ai-text">${text.replace(/\n/g,'<br>')}</div>
@@ -5974,20 +5975,25 @@ async function fetchGlossaryExplanation(term){
   }
   const isCM2 = currentProfile==='cm2';
   const levelName = currentProfile==='cm2'?'6e (11-12 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
+  // Déjà expliqué sur cet appareil : pas de nouvel appel à l'IA
+  const gKey = 'gloss_v1_'+currentProfile+'_'+String(term).toLowerCase().trim();
+  let gCache = null;
+  try{ gCache = JSON.parse(localStorage.getItem(gKey)||'null'); }catch(e){}
 
   const systemPrompt = `Tu es un professeur qui explique des termes complexes à des élèves de ${levelName}.
 Réponds UNIQUEMENT avec un JSON valide, rien d'autre.
 Format :
 {"explanation":"Explication simple en 3-5 phrases adaptées à l'âge. ${isCM2?'Utilise des analogies simples et des comparaisons avec la vie quotidienne. Sois enthousiaste.':'Sois précis et pédagogue.'} Utilise des exemples concrets.","wikipedia_search":"terme exact à chercher sur wikipedia en français (2-3 mots max)","fun_fact":"${isCM2?'Un fait amusant ou surprenant sur ce sujet en 1 phrase':'Une information complémentaire intéressante en 1 phrase'}"}`;
 
+  if(gCache){ showGlossaryResult(gCache.e, gCache.f, gCache.w, gCache.u, term); return; }
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user',content:'Explique ce terme : '+term}]
     });
     const data = await resp.json();
-    const raw = data.content?.[0]?.text||'{}';
+    const raw = respText(data)||'{}';
     let parsed = {};
     try{ parsed = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
     catch(e){ parsed = {explanation:raw, wikipedia_search:term, fun_fact:''}; }
@@ -6005,6 +6011,9 @@ Format :
           wikiUrl = wikiData.content_urls?.desktop?.page || '';
         }
       }catch(e){}
+    }
+    if(resp.ok && parsed.explanation){
+      try{ localStorage.setItem(gKey, JSON.stringify({e:parsed.explanation, f:parsed.fun_fact, w:wikiText, u:wikiUrl})); }catch(e){}
     }
     showGlossaryResult(parsed.explanation, parsed.fun_fact, wikiText, wikiUrl, term);
   }catch(e){
@@ -6429,7 +6438,17 @@ function buildAgentQueue(){
 // ══════════════════════════════════════════════════════════
 // FETCH WITH RETRY — handles 529 Overloaded automatically
 // ══════════════════════════════════════════════════════════
+// Modèle IA de l'appli : Sonnet 5.5 coûte 2 $ / 10 $ par million de tokens
+// (entrée / sortie) contre 3 $ / 15 $ pour Sonnet 4.5, pour une qualité supérieure.
+const AI_MODEL = 'claude-sonnet-5-5';
+// Texte de la réponse : on lit le premier bloc « text » (un bloc « thinking » peut le précéder)
+function respText(data){
+  const b = (data && data.content || []).find(c=>c.type==='text');
+  return b ? b.text : '';
+}
 async function fetchAnthropicWithRetry(body, maxRetries=3){
+  // Pas de réflexion étendue : réponses courtes, la réflexion coûterait des tokens de sortie
+  if(body.model===AI_MODEL && !body.thinking) body = {...body, thinking:{type:'between_tools'}};
   const headers = {
     'Content-Type':'application/json',
     'x-api-key': ANTHROPIC_KEY,
