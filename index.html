@@ -530,7 +530,10 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .say-btn{border:none;background:#E6F1FB;border-radius:99px;padding:1px 7px;margin:0 3px;cursor:pointer;font-size:.85em;vertical-align:baseline}
 .say-btn:hover{background:#B5D4F4}
 .ecoute .en-text{filter:blur(6px);cursor:pointer;user-select:none}
-.ecoute .en-text.revealed{filter:none}
+.ecoute .en-text.revealed,.ecoute .en-text.en-consigne{filter:none;cursor:auto;user-select:auto}
+.translate-box{margin-top:.6rem}
+.translate-btn{border:1.5px solid var(--border);background:var(--bg);border-radius:99px;padding:4px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer}
+.translate-text{margin-top:.4rem;padding:.5rem .7rem;border-radius:10px;background:#FFF6E0;color:#5A4300;font-size:.95rem}
 .btn-mic{padding:10px 18px;border-radius:10px;border:none;background:#E24B4A;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer}
 .btn-mic.listening{animation:pulse 1s infinite;background:#A32D2D}
 #pron-zone{margin:.6rem 0}
@@ -2509,7 +2512,7 @@ REGLES DE CORRECTION STRICTES :
 5. Plusieurs fautes -> INCORRECT avec chaque erreur expliquée et la bonne réponse donnée.
 6. TOUJOURS donner la forme correcte dans la correction.
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
-{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
+{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."${isEnglishSubject()?',"fr":"Traduction française de la consigne 1."':''}},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
 NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts. Ne fusionne JAMAIS plusieurs questions dans un seul objet.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
@@ -2573,7 +2576,7 @@ Ne donne PAS les réponses.`;
       document.getElementById('next-zone').style.display='block';
       return;
     }
-    questions = rawQs.map((q,i)=>({q:q.q||String(q),idx:i}));
+    questions = rawQs.map((q,i)=>({q:q.q||String(q),idx:i,fr:typeof q.fr==='string'?q.fr.trim():''}));
     console.log('Generated', questions.length, '/', nQuestions, 'questions');
     answers=new Array(questions.length).fill('');
     hintsPerQ=new Array(questions.length).fill(0);
@@ -2625,6 +2628,7 @@ function showCurrentQuestion(){
 
   renderMarkdownMath(fullText,'q-text');
   document.getElementById('q-text').classList.toggle('ecoute', currentSubject.topicId==='ecoute');
+  renderTranslateButton(q);
   renderMicButton();
   resetPronZone();
   const az=document.getElementById('answer-zone');
@@ -3005,11 +3009,11 @@ function getSubjectPrompt(){
     },
     anglais:{
       cm2:`ANGLAIS 6e (niveau A1, programme de cycle 3) : vocabulaire du quotidien (couleurs, nombres, animaux, école, famille, corps, jours, mois, météo, nourriture), se présenter, to be, have got, présent simple, there is / there are, can, questions simples (What / Where / How old / Do you like...).
-Les consignes sont en FRANÇAIS, courtes. Phrases anglaises courtes (3 à 8 mots).
+Les consignes et les questions sont en ANGLAIS très simple (voir CONSIGNES EN ANGLAIS plus bas). Phrases anglaises courtes (3 à 8 mots).
 TYPES selon le sujet :
 - parler_repeter : 3 à 5 phrases ou mots anglais à répéter (avec 1 ou 2 sons difficiles : th, h aspiré, -ing, voyelles longues). L élève écoute avec 🔊 puis dit les phrases au micro 🎤 ; sa réponse est la transcription de sa voix. Indique sous chaque phrase sa traduction en français entre parenthèses.
 - parler_repondre : 2 à 3 questions simples en anglais auxquelles l élève répond à l oral par une phrase complète (ex : [[What is your favourite colour?]]). Donne un modèle de début de réponse en anglais.
-- ecoute : un mini-texte ou dialogue anglais de 3 à 5 phrases dans le contexte (il sera flouté : l élève l écoute avec 🔊 sans le lire), puis une question en FRANÇAIS sur ce qu il a entendu.
+- ecoute : un mini-texte ou dialogue anglais de 3 à 5 phrases dans le contexte (il sera flouté : l élève l écoute avec 🔊 sans le lire), puis une question en anglais simple sur ce qu il a entendu (sa traduction va dans le champ fr).
 - se_presenter / vocabulaire_en / grammaire_en / lecture_en : exercice écrit court (compléter, traduire 4-5 mots, choisir la bonne forme, répondre à une question sur un texte de 3-4 phrases).`,
       sec:'', pre:''
     },
@@ -3069,7 +3073,7 @@ TYPES D EXERCICES selon le sujet :
     }
   };
   // Check for custom subject prompt
-  const enRule = isEnglishSubject() ? '\n'+ENGLISH_MARKER_RULE : '';
+  const enRule = isEnglishSubject() ? '\n'+ENGLISH_MARKER_RULE+'\n'+ENGLISH_CONSIGNE_RULE : '';
   if(currentSubject && currentSubject.customPrompt){
     return currentSubject.customPrompt + enRule;
   }
@@ -3083,6 +3087,7 @@ TYPES D EXERCICES selon le sujet :
 // bouton qui le prononce via la synthèse vocale du navigateur en en-GB.
 // ══════════════════════════════════════════════════════════
 const ENGLISH_MARKER_RULE = "ANGLAIS — RÈGLE D'AFFICHAGE OBLIGATOIRE : écris CHAQUE mot, expression ou phrase en anglais entre doubles crochets, par exemple [[Hello, my name is Tom.]] ou [[a red apple]]. Le français n'est jamais entre crochets. Un bouton 🔊 prononcera ce texte avec l'accent anglais.";
+const ENGLISH_CONSIGNE_RULE = "CONSIGNES EN ANGLAIS : chaque question (champ q) est écrite en anglais très simple, niveau A1 (ex : [[Listen and repeat.]], [[Complete the sentence.]], [[What colour is the cat?]]), entre [[...]] comme tout l'anglais. Chaque objet question a AUSSI un champ \"fr\" : la traduction française de la CONSIGNE seulement, pour un élève qui ne la comprend pas. Ne traduis JAMAIS dans fr les mots, phrases ou textes sur lesquels porte l'exercice (sinon ça donne la réponse) : « Traduis ce mot en français. » et pas « Traduis pomme ». Le texte du champ context n'est pas traduit.";
 function isEnglishSubject(){
   return !!currentSubject && (currentSubject.id==='anglais' || /angl|english/i.test(currentSubject.name||''));
 }
@@ -3094,6 +3099,46 @@ function convertEnglishMarkers(text){
   return String(text||'').replace(/\[\[([^\[\]\n]{1,300}?)\]\]/g, (m, en)=>
     `<span class="en-text" lang="en">${escAttr(en)}</span><button type="button" class="say-btn" data-say="${escAttr(en)}" title="Écouter en anglais">🔊</button>`);
 }
+// 🇫🇷 Consignes en anglais : un bouton affiche leur traduction française.
+// La traduction vient avec l'exercice (champ fr) ; sinon elle est demandée à l'IA.
+function renderTranslateButton(q){
+  const qText = document.getElementById('q-text');
+  if(!isEnglishSubject() || !qText) return;
+  // Écoute : seul le texte entendu est flouté, pas la consigne
+  if(currentSubject.topicId==='ecoute'){
+    const own = new Set([...String(q.q).matchAll(/\[\[([^\[\]\n]{1,300}?)\]\]/g)].map(m=>m[1].trim()));
+    qText.querySelectorAll('.en-text').forEach(el=>{ if(own.has(el.textContent.trim())) el.classList.add('en-consigne'); });
+  }
+  const box = document.createElement('div');
+  box.className = 'translate-box';
+  box.innerHTML = '<button type="button" class="translate-btn">🇫🇷 Traduire la consigne</button><div class="translate-text" hidden></div>';
+  qText.appendChild(box);
+  const btn = box.querySelector('.translate-btn'), out = box.querySelector('.translate-text');
+  btn.addEventListener('click', async ()=>{
+    if(!out.hidden){ out.hidden = true; btn.textContent = '🇫🇷 Traduire la consigne'; return; }
+    if(!q.fr){
+      btn.disabled = true; btn.textContent = '⏳ Traduction...';
+      q.fr = await translateConsigne(q.q);
+      btn.disabled = false;
+      if(!q.fr){ btn.textContent = '⚠️ Traduction indisponible, réessaie'; return; }
+    }
+    out.innerHTML = '🇫🇷 ' + (typeof marked!=='undefined' ? marked.parseInline(q.fr) : escAttr(q.fr));
+    out.hidden = false;
+    btn.textContent = '🙈 Cacher la traduction';
+  });
+}
+async function translateConsigne(text){
+  try{
+    const resp = await fetchAnthropicWithRetry({
+      model:'claude-sonnet-4-5', max_tokens:300,
+      system:"Traduis en français simple, pour un élève de 6e, UNIQUEMENT la consigne de cet exercice d'anglais. Ne traduis PAS les mots, phrases ou textes sur lesquels porte l'exercice (ils sont entre [[...]] après la consigne) : remplace-les par « ce mot », « cette phrase »... Réponds seulement par la traduction, sans guillemets.",
+      messages:[{role:'user', content:String(text)}]
+    });
+    const data = await resp.json();
+    return (data.content?.[0]?.text || '').trim();
+  }catch(e){ return ''; }
+}
+
 // Markdown + English markers (used for questions, hints, corrections, tutor)
 function mdToHtml(text){
   const t = convertEnglishMarkers(text);
@@ -3345,7 +3390,7 @@ document.addEventListener('click', e=>{
   const b = e.target.closest && e.target.closest('.say-btn');
   if(b){ e.preventDefault(); speakEnglish(b.dataset.say); return; }
   const hidden = e.target.closest && e.target.closest('.ecoute .en-text');
-  if(hidden && !hidden.classList.contains('revealed')){
+  if(hidden && !hidden.classList.contains('revealed') && !hidden.classList.contains('en-consigne')){
     if(confirm('Voir le texte ? Essaie d\'abord de bien écouter 🔊 (ça coûte un indice).')){
       hidden.classList.add('revealed');
       hintsPerQ[currentQIdx] = (hintsPerQ[currentQIdx]||0) + 1;
