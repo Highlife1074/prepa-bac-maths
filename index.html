@@ -3123,7 +3123,7 @@ function renderTranslateButton(q){
 async function translateConsigne(text){
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:AI_MODEL, max_tokens:300,
+      model:AI_MODEL_LIGHT, max_tokens:1000,
       system:"Traduis en français simple, pour un élève de 6e, UNIQUEMENT la consigne de cet exercice d'anglais. Ne traduis PAS les mots, phrases ou textes sur lesquels porte l'exercice (ils sont entre [[...]] après la consigne) : remplace-les par « ce mot », « cette phrase »... Réponds seulement par la traduction, sans guillemets.",
       messages:[{role:'user', content:String(text)}]
     });
@@ -3760,7 +3760,7 @@ ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consign
 2-4 lignes max. LaTeX si nécessaire.${exoContext.includes('```figure') ? '\nLe bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).' : ''}`;
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:AI_MODEL, max_tokens:400,
+      model:AI_MODEL_LIGHT, max_tokens:1200,
       system:systemPrompt,
       messages:[{role:'user',content:ctx+'Question : '+qText+'\n\nIndice n°'+hintNum+' svp.'}]
     });
@@ -5988,7 +5988,7 @@ Format :
   if(gCache){ showGlossaryResult(gCache.e, gCache.f, gCache.w, gCache.u, term); return; }
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:AI_MODEL, max_tokens:400,
+      model:AI_MODEL_LIGHT, max_tokens:1200,
       system:systemPrompt,
       messages:[{role:'user',content:'Explique ce terme : '+term}]
     });
@@ -6441,6 +6441,9 @@ function buildAgentQueue(){
 // Modèle IA de l'appli : Sonnet 5.5 coûte 2 $ / 10 $ par million de tokens
 // (entrée / sortie) contre 3 $ / 15 $ pour Sonnet 4.5, pour une qualité supérieure.
 const AI_MODEL = 'claude-sonnet-5-5';
+// Tâches simples (indices, traduction des consignes, glossaire) : Haiku 5.5,
+// environ 20 fois moins cher (0,10 $ / 0,50 $ par million de tokens).
+const AI_MODEL_LIGHT = 'claude-haiku-5-5';
 // Texte de la réponse : on lit le premier bloc « text » (un bloc « thinking » peut le précéder)
 function respText(data){
   const b = (data && data.content || []).find(c=>c.type==='text');
@@ -6449,6 +6452,8 @@ function respText(data){
 async function fetchAnthropicWithRetry(body, maxRetries=3){
   // Pas de réflexion étendue : réponses courtes, la réflexion coûterait des tokens de sortie
   if(body.model===AI_MODEL && !body.thinking) body = {...body, thinking:{type:'between_tools'}};
+  // Haiku 5.5 réfléchit par défaut : effort bas, il saute la réflexion sur les demandes simples
+  if(body.model===AI_MODEL_LIGHT && !body.output_config) body = {...body, output_config:{effort:'low'}};
   const headers = {
     'Content-Type':'application/json',
     'x-api-key': ANTHROPIC_KEY,
