@@ -530,7 +530,10 @@ mjx-container { overflow-x: auto; max-width: 100% }
 .say-btn{border:none;background:#E6F1FB;border-radius:99px;padding:1px 7px;margin:0 3px;cursor:pointer;font-size:.85em;vertical-align:baseline}
 .say-btn:hover{background:#B5D4F4}
 .ecoute .en-text{filter:blur(6px);cursor:pointer;user-select:none}
-.ecoute .en-text.revealed{filter:none}
+.ecoute .en-text.revealed,.ecoute .en-text.en-consigne{filter:none;cursor:auto;user-select:auto}
+.translate-box{margin-top:.6rem}
+.translate-btn{border:1.5px solid var(--border);background:var(--bg);border-radius:99px;padding:4px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer}
+.translate-text{margin-top:.4rem;padding:.5rem .7rem;border-radius:10px;background:#FFF6E0;color:#5A4300;font-size:.95rem}
 .btn-mic{padding:10px 18px;border-radius:10px;border:none;background:#E24B4A;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer}
 .btn-mic.listening{animation:pulse 1s infinite;background:#A32D2D}
 #pron-zone{margin:.6rem 0}
@@ -2443,6 +2446,16 @@ PHASE_MEMO: ${items.join(' - ')}
 PHASE_RAPPEL: ${rappel}
 ${md.mode==='envers'?'La bonne réponse est la liste en partant du DERNIER élément jusqu au premier. ':''}Le contexte reste vide. Une seule question.`;
   }
+  // Mémoire de travail: the code is shown alone, then hidden while the pupil does a mental calculation
+  if(currentSubject.topicId==='memoire_travail'){
+    const wm = getWorkingMemoryDifficulty();
+    const code = pickWorkingMemoryCode(wm.digits);
+    memoExtra += `\nMÉMOIRE DE TRAVAIL : niveau ${wm.label}. CODE IMPOSÉ. La question contient EXACTEMENT ce format :
+PHASE_MEMO: 🔐 CODE SECRET : **${code.join(' - ')}**
+PHASE_RAPPEL: (une mini-mission de 2 phrases maximum avec UN calcul mental simple de 6e, par exemple ${wm.calc}, dans un contexte jeu vidéo, sport ou animaux, qui se termine par « Puis écris le code secret. »)
+INTERDIT : le code ou ses chiffres ne doivent JAMAIS apparaître dans PHASE_RAPPEL ni dans le contexte (l élève doit l avoir gardé en tête). Les nombres du calcul ne contiennent pas les chiffres du code.
+La bonne réponse attendue contient le résultat du calcul ET le code ${code.join('-')}. Le contexte reste vide. Une seule question.`;
+  }
 
   if(currentProfile==='pre' && currentSubject.topicId==='sujet_bac'){
     memoExtra += `\nEXERCICE TYPE BAC : un exercice complet comme dans un sujet du bac de spécialité maths (environ 5 points), qui MÉLANGE 2 ou 3 chapitres de Terminale (ex : suite + fonction logarithme, probabilités + suite, fonction exponentielle + intégrale, espace + produit scalaire). Le contexte présente la situation et les parties (Partie A / Partie B). Le tableau questions contient EXACTEMENT 5 questions progressives, chacune annonce sa partie et ses points, par exemple « (Partie A — 1 pt) ». Les résultats intermédiaires utiles pour la suite sont donnés dans l énoncé.`;
@@ -2491,15 +2504,8 @@ RÈGLES CRITIQUES :
 
 SECURITE JSON : Dans les valeurs du JSON, n'utilise JAMAIS de guillemets droits (") non echappes. Remplace les guillemets de citation par des guillemets typographiques ou des chevrons. Echappe les apostrophes avec \' si necessaire. Pas de retour a la ligne reels dans les valeurs - utilise \n.
 
-REGLES DE CORRECTION STRICTES :
-1. TEMPS VERBAUX : sois TRES rigoureux. "j avais eliminé" (imparfait) est INCORRECT si le passé composé est attendu. Ne jamais accepter un temps différent de celui demandé.
-2. ORTHOGRAPHE STRICTE : compare lettre par lettre la réponse de l élève avec la réponse correcte. "court" (c-o-u-r-t) écrit correctement avec le t final = CORRECT. Ne jamais signaler une faute si le mot est orthographié exactement correctement. Les lettres muettes (t de "court", s de "bras", d de "grand") font partie intégrante du mot et doivent être présentes mais ne constituent PAS une faute si elles sont présentes. Une faute = mot écrit différemment de la réponse attendue.
-3. ACCORDS : vérifie tous les accords. Un accord incorrect = INCORRECT.
-4. Réponse presque correcte avec UNE faute -> PARTIEL avec explication précise de la faute et la forme correcte.
-5. Plusieurs fautes -> INCORRECT avec chaque erreur expliquée et la bonne réponse donnée.
-6. TOUJOURS donner la forme correcte dans la correction.
 FORMAT : Reponds UNIQUEMENT avec un JSON valide, sans texte ni markdown autour.
-{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
+{"context":"Texte complet de lénoncé avec toutes les données (définitions, formules, domaines).",${figMode?'"figure":"point A 1 1\\npoint B 9 2\\ndroite (d1) A B\\n...",':''}"questions":[{"q":"Question 1 complète et autonome."${isEnglishSubject()?',"fr":"Traduction française de la consigne 1."':''}},{"q":"Question 2 complète."},{"q":"Question 3 complète."}]}
 
 NOMBRE DE QUESTIONS OBLIGATOIRE : le tableau questions doit contenir EXACTEMENT ${nQuestions} objet(s). ${nQuestions>3 ? 'EXACTEMENT '+nQuestions+' questions dans '+nQuestions+' objets distincts. Ne fusionne JAMAIS plusieurs questions dans un seul objet.' : isCM2 ? '1 seule question simple courte et amusante.' : 'EXACTEMENT 3 questions séparées dans 3 objets distincts : {"q":"Q1..."}, {"q":"Q2..."}, {"q":"Q3..."}. Ne fusionne JAMAIS plusieurs questions dans un seul objet.'}
 Exemple pour 3 questions : {"context":"...","questions":[{"q":"Calcule..."},{"q":"Démontre..."},{"q":"Justifie..."}]}
@@ -2507,7 +2513,7 @@ Ne donne PAS les réponses.`;
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens: (isCM2 ? 1200 : 2500) + (figMode ? 500 : 0),
+      model:AI_MODEL, max_tokens: (isCM2 ? 1200 : 2500) + (figMode ? 500 : 0),
       system:systemPrompt,
       messages:[{role:'user',content:'Génère un exercice.'}]
     });
@@ -2518,7 +2524,7 @@ Ne donne PAS les réponses.`;
       qText.innerHTML = '<div style="text-align:center;padding:1rem">'+msg+'<br><br><button onclick="generateExercise()" style="padding:8px 20px;border-radius:10px;border:none;background:#7F77DD;color:#fff;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer">↻ Réessayer</button></div>';
       return;
     }
-    const raw=data.content?.[0]?.text||'';
+    const raw=respText(data)||'';
     let parsed;
     try{
       // Strip markdown code fences
@@ -2563,7 +2569,7 @@ Ne donne PAS les réponses.`;
       document.getElementById('next-zone').style.display='block';
       return;
     }
-    questions = rawQs.map((q,i)=>({q:q.q||String(q),idx:i}));
+    questions = rawQs.map((q,i)=>({q:q.q||String(q),idx:i,fr:typeof q.fr==='string'?q.fr.trim():''}));
     console.log('Generated', questions.length, '/', nQuestions, 'questions');
     answers=new Array(questions.length).fill('');
     hintsPerQ=new Array(questions.length).fill(0);
@@ -2615,6 +2621,7 @@ function showCurrentQuestion(){
 
   renderMarkdownMath(fullText,'q-text');
   document.getElementById('q-text').classList.toggle('ecoute', currentSubject.topicId==='ecoute');
+  renderTranslateButton(q);
   renderMicButton();
   resetPronZone();
   const az=document.getElementById('answer-zone');
@@ -2759,6 +2766,25 @@ function getMemoryDifficulty(){
   else { items=7; seconds=20; label='Expert'; mode='envers'; replays=0; }
 
   return {items, seconds, label, score, mode, replays};
+}
+
+// Mémoire de travail: code length and display time follow the level (max 3-4 items per the speech therapist's rules, 5 for experts)
+function getWorkingMemoryDifficulty(){
+  const md = getMemoryDifficulty();
+  if(md.score <= 3.5) return {digits:3, seconds:12, label:md.label, calc:'5 × 4 ou 18 + 6'};
+  if(md.score <= 6.5) return {digits:4, seconds:12, label:md.label, calc:'6 × 7 ou 45 − 18'};
+  if(md.score <= 9)   return {digits:4, seconds:8,  label:md.label, calc:'8 × 6 + 5 ou 72 ÷ 8'};
+  return {digits:5, seconds:10, label:md.label, calc:'7 × 8 − 9 ou 125 + 48'};
+}
+
+// Random digits, never the same digit twice in a row
+function pickWorkingMemoryCode(n){
+  const code = [];
+  while(code.length < n){
+    const d = Math.floor(Math.random()*10);
+    if(d !== code[code.length-1]) code.push(d);
+  }
+  return code;
 }
 
 // Word lists are drawn here rather than by the AI, which kept reusing the same few words
@@ -2976,11 +3002,11 @@ function getSubjectPrompt(){
     },
     anglais:{
       cm2:`ANGLAIS 6e (niveau A1, programme de cycle 3) : vocabulaire du quotidien (couleurs, nombres, animaux, école, famille, corps, jours, mois, météo, nourriture), se présenter, to be, have got, présent simple, there is / there are, can, questions simples (What / Where / How old / Do you like...).
-Les consignes sont en FRANÇAIS, courtes. Phrases anglaises courtes (3 à 8 mots).
+Les consignes et les questions sont en ANGLAIS très simple (voir CONSIGNES EN ANGLAIS plus bas). Phrases anglaises courtes (3 à 8 mots).
 TYPES selon le sujet :
 - parler_repeter : 3 à 5 phrases ou mots anglais à répéter (avec 1 ou 2 sons difficiles : th, h aspiré, -ing, voyelles longues). L élève écoute avec 🔊 puis dit les phrases au micro 🎤 ; sa réponse est la transcription de sa voix. Indique sous chaque phrase sa traduction en français entre parenthèses.
 - parler_repondre : 2 à 3 questions simples en anglais auxquelles l élève répond à l oral par une phrase complète (ex : [[What is your favourite colour?]]). Donne un modèle de début de réponse en anglais.
-- ecoute : un mini-texte ou dialogue anglais de 3 à 5 phrases dans le contexte (il sera flouté : l élève l écoute avec 🔊 sans le lire), puis une question en FRANÇAIS sur ce qu il a entendu.
+- ecoute : un mini-texte ou dialogue anglais de 3 à 5 phrases dans le contexte (il sera flouté : l élève l écoute avec 🔊 sans le lire), puis une question en anglais simple sur ce qu il a entendu (sa traduction va dans le champ fr).
 - se_presenter / vocabulaire_en / grammaire_en / lecture_en : exercice écrit court (compléter, traduire 4-5 mots, choisir la bonne forme, répondre à une question sur un texte de 3-4 phrases).`,
       sec:'', pre:''
     },
@@ -3015,7 +3041,7 @@ TYPES D EXERCICES selon le sujet :
 - comprehension_texte : texte TRES court (4-5 phrases), questions précises sur le contenu, "qui fait quoi, où, quand, pourquoi"
 - comprehension_consigne : consignes multi-étapes à décoder et appliquer / "souligne les noms, entoure les verbes et écris le sujet"
 - ortho_lexicale : mots fréquents avec erreurs à corriger / choisir la bonne orthographe / écrire de mémoire des mots après les avoir bien observés
-- memoire_travail : retenir une info et l utiliser pour répondre / calculer mentalement tout en mémorisant un mot-clé`,
+- memoire_travail : FORMAT 2 PHASES OBLIGATOIRE (PHASE_MEMO: le code à retenir, seul ; PHASE_RAPPEL: le calcul mental puis le rappel du code). Le code est imposé plus bas : il est caché pendant le calcul, il ne doit jamais être recopié dans PHASE_RAPPEL.`,
       sec:'', pre:''
     },
     ortho_pre:{
@@ -3040,7 +3066,7 @@ TYPES D EXERCICES selon le sujet :
     }
   };
   // Check for custom subject prompt
-  const enRule = isEnglishSubject() ? '\n'+ENGLISH_MARKER_RULE : '';
+  const enRule = isEnglishSubject() ? '\n'+ENGLISH_MARKER_RULE+'\n'+ENGLISH_CONSIGNE_RULE : '';
   if(currentSubject && currentSubject.customPrompt){
     return currentSubject.customPrompt + enRule;
   }
@@ -3054,6 +3080,7 @@ TYPES D EXERCICES selon le sujet :
 // bouton qui le prononce via la synthèse vocale du navigateur en en-GB.
 // ══════════════════════════════════════════════════════════
 const ENGLISH_MARKER_RULE = "ANGLAIS — RÈGLE D'AFFICHAGE OBLIGATOIRE : écris CHAQUE mot, expression ou phrase en anglais entre doubles crochets, par exemple [[Hello, my name is Tom.]] ou [[a red apple]]. Le français n'est jamais entre crochets. Un bouton 🔊 prononcera ce texte avec l'accent anglais.";
+const ENGLISH_CONSIGNE_RULE = "CONSIGNES EN ANGLAIS : chaque question (champ q) est écrite en anglais très simple, niveau A1 (ex : [[Listen and repeat.]], [[Complete the sentence.]], [[What colour is the cat?]]), entre [[...]] comme tout l'anglais. Chaque objet question a AUSSI un champ \"fr\" : la traduction française de la CONSIGNE seulement, pour un élève qui ne la comprend pas. Ne traduis JAMAIS dans fr les mots, phrases ou textes sur lesquels porte l'exercice (sinon ça donne la réponse) : « Traduis ce mot en français. » et pas « Traduis pomme ». Le texte du champ context n'est pas traduit.";
 function isEnglishSubject(){
   return !!currentSubject && (currentSubject.id==='anglais' || /angl|english/i.test(currentSubject.name||''));
 }
@@ -3065,6 +3092,46 @@ function convertEnglishMarkers(text){
   return String(text||'').replace(/\[\[([^\[\]\n]{1,300}?)\]\]/g, (m, en)=>
     `<span class="en-text" lang="en">${escAttr(en)}</span><button type="button" class="say-btn" data-say="${escAttr(en)}" title="Écouter en anglais">🔊</button>`);
 }
+// 🇫🇷 Consignes en anglais : un bouton affiche leur traduction française.
+// La traduction vient avec l'exercice (champ fr) ; sinon elle est demandée à l'IA.
+function renderTranslateButton(q){
+  const qText = document.getElementById('q-text');
+  if(!isEnglishSubject() || !qText) return;
+  // Écoute : seul le texte entendu est flouté, pas la consigne
+  if(currentSubject.topicId==='ecoute'){
+    const own = new Set([...String(q.q).matchAll(/\[\[([^\[\]\n]{1,300}?)\]\]/g)].map(m=>m[1].trim()));
+    qText.querySelectorAll('.en-text').forEach(el=>{ if(own.has(el.textContent.trim())) el.classList.add('en-consigne'); });
+  }
+  const box = document.createElement('div');
+  box.className = 'translate-box';
+  box.innerHTML = '<button type="button" class="translate-btn">🇫🇷 Traduire la consigne</button><div class="translate-text" hidden></div>';
+  qText.appendChild(box);
+  const btn = box.querySelector('.translate-btn'), out = box.querySelector('.translate-text');
+  btn.addEventListener('click', async ()=>{
+    if(!out.hidden){ out.hidden = true; btn.textContent = '🇫🇷 Traduire la consigne'; return; }
+    if(!q.fr){
+      btn.disabled = true; btn.textContent = '⏳ Traduction...';
+      q.fr = await translateConsigne(q.q);
+      btn.disabled = false;
+      if(!q.fr){ btn.textContent = '⚠️ Traduction indisponible, réessaie'; return; }
+    }
+    out.innerHTML = '🇫🇷 ' + (typeof marked!=='undefined' ? marked.parseInline(q.fr) : escAttr(q.fr));
+    out.hidden = false;
+    btn.textContent = '🙈 Cacher la traduction';
+  });
+}
+async function translateConsigne(text){
+  try{
+    const resp = await fetchAnthropicWithRetry({
+      model:AI_MODEL, max_tokens:300,
+      system:"Traduis en français simple, pour un élève de 6e, UNIQUEMENT la consigne de cet exercice d'anglais. Ne traduis PAS les mots, phrases ou textes sur lesquels porte l'exercice (ils sont entre [[...]] après la consigne) : remplace-les par « ce mot », « cette phrase »... Réponds seulement par la traduction, sans guillemets.",
+      messages:[{role:'user', content:String(text)}]
+    });
+    const data = await resp.json();
+    return (respText(data) || '').trim();
+  }catch(e){ return ''; }
+}
+
 // Markdown + English markers (used for questions, hints, corrections, tutor)
 function mdToHtml(text){
   const t = convertEnglishMarkers(text);
@@ -3316,7 +3383,7 @@ document.addEventListener('click', e=>{
   const b = e.target.closest && e.target.closest('.say-btn');
   if(b){ e.preventDefault(); speakEnglish(b.dataset.say); return; }
   const hidden = e.target.closest && e.target.closest('.ecoute .en-text');
-  if(hidden && !hidden.classList.contains('revealed')){
+  if(hidden && !hidden.classList.contains('revealed') && !hidden.classList.contains('en-consigne')){
     if(confirm('Voir le texte ? Essaie d\'abord de bien écouter 🔊 (ça coûte un indice).')){
       hidden.classList.add('revealed');
       hintsPerQ[currentQIdx] = (hintsPerQ[currentQIdx]||0) + 1;
@@ -3333,8 +3400,9 @@ function speechTranscript(results){
     const t = r[0].transcript.trim();
     if(!t) continue;
     const low = t.toLowerCase(), prev = text.toLowerCase();
-    if(low.startsWith(prev)) text = t;            // cumulative result: replaces the previous
-    else if(!prev.endsWith(low)) text = (text+' '+t).trim();
+    // whole words only: "I" then "is it" are two different words, not a repeat
+    if(!prev || low===prev || low.startsWith(prev+' ')) text = t;   // cumulative result: replaces the previous
+    else if(!prev.endsWith(' '+low)) text = (text+' '+t).trim();
   }
   return text;
 }
@@ -3353,6 +3421,57 @@ function renderMicButton(){
   btn.classList.remove('listening');
   btn.textContent = isSpeakingTopic() ? '🎤 Parler en anglais' : '🎤 Dire ma réponse';
 }
+// 🎤 Dictation shared by every mic button. The browser recognizer stops at the
+// first pause (a child often pauses after one word): it listens in continuous
+// mode, shows the words as they come, restarts itself if the browser cuts it,
+// and stops on its own after a few seconds of silence (or on a click).
+function startDictation(o){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const join = (a,b)=> a && b ? a+' '+b : (a||b);
+  const t0 = Date.now();
+  let committed = '', alts = [], stopped = false, done = false, rec = null, timer = null;
+  function armTimer(ms){ clearTimeout(timer); timer = setTimeout(stop, ms); }
+  function stop(){ stopped = true; clearTimeout(timer); try{ rec && rec.stop(); }catch(e){} }
+  function finish(){
+    if(done) return; done = true; clearTimeout(timer);
+    o.onEnd && o.onEnd(committed, alts);
+  }
+  function session(first){
+    let text = '';
+    rec = new SR();
+    rec.lang = o.lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = o.maxAlternatives || 1;
+    if(first) rec.onstart = ()=>{ o.onStart && o.onStart(); };
+    rec.onresult = ev=>{
+      const all = Array.from(ev.results);
+      text = speechTranscript(all);
+      const finals = all.filter(r=>r.isFinal);
+      if(o.maxAlternatives > 1 && finals.length) alts = speechAlternatives(finals).map(a=>({t:join(committed, a.t), c:a.c}));
+      o.onText(join(committed, text));
+      if(text) armTimer(o.silenceMs || 4000);
+    };
+    rec.onerror = ev=>{
+      if(ev.error==='no-speech' || ev.error==='aborted') return; // handled by the timers
+      stopped = true;
+      o.onError && o.onError(ev.error);
+    };
+    rec.onend = ()=>{
+      committed = join(committed, text);
+      // the browser stopped by itself (pause, Android limit): keep listening
+      if(!stopped && Date.now()-t0 < (o.maxMs || 60000)){
+        try{ session(false); return; }catch(e){}
+      }
+      finish();
+    };
+    rec.start();
+  }
+  armTimer(o.waitMs || 8000); // nothing said at all: give up after 8 s
+  try{ session(true); }catch(e){ finish(); }
+  return {stop};
+}
+
 // retry: the new attempt replaces the previous one in the answer box
 function toggleMic(retry){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3361,37 +3480,37 @@ function toggleMic(retry){
   if(micRecognizer){ micRecognizer.stop(); return; }
   if(window.speechSynthesis) speechSynthesis.cancel();
   const coach = isSpeakingTopic(), qIdx = currentQIdx;
-  micRecognizer = new SR();
-  micRecognizer.lang = 'en-GB';
-  micRecognizer.interimResults = false;
-  micRecognizer.maxAlternatives = coach ? 5 : 1; // other guesses of the recognizer = words it hesitated on
-  micRecognizer.continuous = false;
   btn.classList.add('listening');
   btn.textContent = '🔴 Je t\'écoute... (clique pour arrêter)';
   const ta = document.getElementById('answer-input');
   if(retry && lastMicBefore!==null) ta.value = lastMicBefore;
   const before = ta.value.trim() ? ta.value.trim()+'\n' : '';
-  let alts = [];
-  micRecognizer.onstart = ()=>{ if(coach) startVoiceRecording(); };
-  micRecognizer.onresult = ev=>{
-    ta.value = before + speechTranscript(ev.results);
-    if(coach) alts = speechAlternatives(ev.results);
-  };
-  micRecognizer.onerror = ev=>{
-    if(ev.error==='not-allowed' || ev.error==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
-    else if(ev.error==='no-speech') showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort');
-    else if(ev.error==='audio-capture' && voiceRecordOk && coach){
-      // this device can't share the mic between recognition and recording: keep the coach, drop "Ma voix"
-      voiceRecordOk = false;
-      showSyncBadge('🔁 Réessaie : ton appareil ne peut pas enregistrer ta voix en même temps');
+  const recording = coach && voiceRecordOk;
+  micRecognizer = startDictation({
+    lang:'en-GB',
+    maxAlternatives: coach ? 5 : 1, // other guesses of the recognizer = words it hesitated on
+    onStart: ()=>{ if(recording) startVoiceRecording(); },
+    onText: t=>{ ta.value = before + t; },
+    onError: err=>{
+      if(err==='not-allowed' || err==='service-not-allowed') alert('Autorise le micro pour ce site (icône 🔒 à côté de l\'adresse), puis réessaie.');
+      else if(err==='network') showSyncBadge('📶 Le micro a besoin d\'internet, vérifie la connexion');
+      else if(err==='audio-capture' && recording){
+        voiceRecordOk = false;
+        showSyncBadge('🔁 Réessaie : ton appareil ne peut pas enregistrer ta voix en même temps');
+      }
+    },
+    onEnd: (text, alts)=>{
+      stopVoiceRecording();
+      micRecognizer = null; renderMicButton();
+      if(!text){
+        // recording may have taken the mic away from the recognizer: drop "Ma voix" and retry without it
+        if(recording){ voiceRecordOk = false; showSyncBadge('🔁 Réessaie : le micro marchera mieux sans enregistrer ta voix'); }
+        else showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort, près du micro');
+        return;
+      }
+      if(coach && alts.length && qIdx===currentQIdx){ lastMicBefore = before.trim(); coachPronunciation(alts); }
     }
-  };
-  micRecognizer.onend = ()=>{
-    stopVoiceRecording();
-    micRecognizer = null; renderMicButton();
-    if(coach && alts.length && qIdx===currentQIdx){ lastMicBefore = before.trim(); coachPronunciation(alts); }
-  };
-  micRecognizer.start();
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3401,7 +3520,7 @@ function toggleMic(retry){
 // reconnu = un mot mal prononcé. L'élève réécoute le modèle et sa voix,
 // et le coach (Claude) explique comment bien dire les mots ratés.
 // ══════════════════════════════════════════════════════════
-let lastMicBefore = null, voiceRecordOk = true, voiceRecorder = null, voiceUrl = null;
+let lastMicBefore = null, voiceRecordOk = !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && !(navigator.maxTouchPoints>1 && /Macintosh/.test(navigator.userAgent)), voiceRecorder = null, voiceUrl = null;
 function speechAlternatives(results){
   const list = Array.from(results).filter(r=>r[0] && r[0].transcript.trim());
   if(!list.length) return [];
@@ -3570,7 +3689,7 @@ Termine en l'invitant à redire la phrase. 2 à 5 lignes courtes, français simp
     + (problems.length ? '\nMots à retravailler : '+problems.map(x=>x.w+(x.instead ? ' → entendu « '+x.instead+' »' : x.s==='bad' ? ' → pas entendu' : ' → le micro a hésité')).join(' ; ') : '');
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user', content:userMsg}]
     });
@@ -3635,18 +3754,18 @@ async function getHint(){
   const levelDesc=getLevelDesc(false);
   const qText=questions[currentQIdx].q;
   const ctx=(currentSubject.isLesson?'Leçon de l\'élève :\n'+currentSubject.lessonText+'\n\n':'')+(exoContext?'Contexte : '+exoContext+'\n\n':'');
-  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}
+  const systemPrompt=`Tu es un professeur pédagogue. Donne un indice progressif n°${hintNum} pour cette question.${currentSubject.isLesson?' Appuie-toi sur la leçon fournie : cite la phrase ou la règle de la leçon qui aide.':''}${isEnglishSubject()?' '+ENGLISH_MARKER_RULE:''}${isReadHideTopic()?" L'élève a lu le contexte puis il a été caché : donne un indice de mémoire (à quel moment de l'histoire c'était, à côté de quoi) SANS jamais donner la réponse ni recopier le passage.":''}${qText.includes('PHASE_MEMO:')?" C'est un exercice de mémoire : ne redonne JAMAIS ce qui était à mémoriser (liste, code), même en partie. Aide seulement sur la méthode ou le calcul.":''}
 Niveau : ${levelDesc}. Guide SANS donner la réponse.
 ${currentProfile==='cm2' ? "Élève de 6e qui a du mal à comprendre les consignes. Indice 1 : reformule simplement ce qu'on demande (« On te demande de... ») et montre la phrase-question. Indice 2 : quelles données utiliser. Indice 3+ : la première étape de calcul." : "Indice 1 : notion théorique. Indice 2 : première étape. Indice 3+ : guidage précis."}
 2-4 lignes max. LaTeX si nécessaire.${exoContext.includes('```figure') ? '\nLe bloc figure de l énoncé décrit le dessin que voit l élève (coordonnées internes, x vers la droite, y vers le haut) : sers-t-en pour raisonner, mais ne cite JAMAIS les coordonnées ni les instructions du bloc, parle de ce que l élève voit (droites, points, codages, équerre).' : ''}`;
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user',content:ctx+'Question : '+qText+'\n\nIndice n°'+hintNum+' svp.'}]
     });
     const data=await resp.json();
-    const hintText=data.content?.[0]?.text||'Indice non disponible';
+    const hintText=respText(data)||'Indice non disponible';
     const hz=document.getElementById('hint-zone');
     const hid='h-'+currentQIdx+'-'+hintNum;
     hz.innerHTML+=`<div class="hint-card" id="${hid}">💡 <strong>Indice ${hintNum} :</strong> <span></span></div>`;
@@ -3738,7 +3857,7 @@ ${isEnglishSubject() ? 'ANGLAIS : ecris tout mot ou phrase en anglais entre doub
 
   try{
     const resp=await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:maxTok,
+      model:AI_MODEL, max_tokens:maxTok,
       system:systemPrompt,
       messages:[{role:'user',content:ctx+qaList}]
     });
@@ -3748,7 +3867,7 @@ ${isEnglishSubject() ? 'ANGLAIS : ecris tout mot ou phrase en anglais entre doub
       restoreSubmitUI('Erreur API '+resp.status+' : '+(data.error?.message||''));
       return;
     }
-    showAllFeedbacks(data.content?.[0]?.text||'',isCM2);
+    showAllFeedbacks(respText(data)||'',isCM2);
   }catch(e){
     if(e.name==='AbortError'){
       restoreSubmitUI('Délai dépassé (90s). La correction a pris trop de temps.');
@@ -4117,21 +4236,27 @@ ${userMsg === 'START_SESSION' ? 'Lance la session avec un message d\u2019accueil
   // Build messages for API
   // The conversation must start with a user turn (tutorHistory starts with the
   // tutor's greeting): always prepend the opening request, then the last 12 turns.
+  // Fenêtre qui avance par paquets de 10 : le début de la conversation reste identique
+  // d'un message à l'autre, donc il est relu depuis le cache (10 fois moins cher).
+  const tStart = Math.floor(Math.max(0, tutorHistory.length-12)/10)*10;
+  let hist = tutorHistory.slice(tStart);
+  while(hist.length && hist[0].role!=='assistant') hist.shift(); // after the opening user turn
   const messages = [{role:'user', content:'Lance la session.'}]
-    .concat(userMsg === 'START_SESSION' ? [] : tutorHistory.slice(-12));
+    .concat(userMsg === 'START_SESSION' ? [] : hist);
 
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:600,
+      model:AI_MODEL, max_tokens:600,
       system:systemPrompt,
-      messages
+      messages,
+      cache_control:{type:'ephemeral'}
     });
     const data = await resp.json();
     setTutorTyping(false);
 
     if(!resp.ok){ addTutorMsg('tutor','⚠️ Erreur API '+resp.status); return; }
 
-    let text = data.content?.[0]?.text || '';
+    let text = respText(data) || '';
 
     // Extract method badge
     let method = null;
@@ -4675,14 +4800,16 @@ async function callCoach(){
   typing.style.display = 'flex';
   document.getElementById('coach-body').scrollTo({top:99999});
   // Les 20 derniers messages, en commençant par un message d'Amaury (exigé par l'API)
-  let msgs = coachSession.messages.slice(-20).map(m=>({role:m.role, content:m.content}));
+  // Fenêtre qui avance par paquets de 10 messages : préfixe stable, relu depuis le cache
+  const cStart = Math.floor(Math.max(0, coachSession.messages.length-20)/10)*10;
+  let msgs = coachSession.messages.slice(cStart).map(m=>({role:m.role, content:m.content}));
   while(msgs.length && msgs[0].role!=='user') msgs.shift();
   try{
-    const resp = await fetchAnthropicWithRetry({model:'claude-sonnet-4-5', max_tokens:900, system:coachSystemPrompt(), messages:msgs});
+    const resp = await fetchAnthropicWithRetry({model:AI_MODEL, max_tokens:900, system:coachSystemPrompt(), messages:msgs, cache_control:{type:'ephemeral'}});
     const data = await resp.json();
     typing.style.display = 'none';
     if(!resp.ok){ addTutorSystemMsgTo('coach-messages', '⚠️ Erreur ('+resp.status+'). Renvoie ton message.'); return; }
-    handleCoachReply(data.content?.[0]?.text || '');
+    handleCoachReply(respText(data) || '');
   }catch(e){
     typing.style.display = 'none';
     addTutorSystemMsgTo('coach-messages', '❌ Pas de connexion. Renvoie ton message.');
@@ -4756,15 +4883,21 @@ function toggleCoachMic(){
   if(!SR){ alert('Le micro ne marche pas dans ce navigateur. Utilise Chrome ou Safari.'); return; }
   if(coachMic){ coachMic.stop(); return; }
   if(window.speechSynthesis) speechSynthesis.cancel();
-  coachMic = new SR();
-  coachMic.lang = 'fr-FR'; coachMic.interimResults = false; coachMic.continuous = false;
   btn.classList.add('listening');
   const ta = document.getElementById('coach-input');
   const before = ta.value.trim() ? ta.value.trim()+' ' : '';
-  coachMic.onresult = ev=>{ ta.value = before + speechTranscript(ev.results); };
-  coachMic.onerror = ev=>{ if(ev.error==='not-allowed') alert('Autorise le micro pour ce site, puis réessaie.'); };
-  coachMic.onend = ()=>{ coachMic = null; btn.classList.remove('listening'); };
-  coachMic.start();
+  coachMic = startDictation({
+    lang:'fr-FR',
+    onText: t=>{ ta.value = before + t; },
+    onError: err=>{
+      if(err==='not-allowed' || err==='service-not-allowed') alert('Autorise le micro pour ce site, puis réessaie.');
+      else if(err==='network') showSyncBadge('📶 Le micro a besoin d\'internet, vérifie la connexion');
+    },
+    onEnd: text=>{
+      coachMic = null; btn.classList.remove('listening');
+      if(!text) showSyncBadge('🤫 Je n\'ai rien entendu, réessaie en parlant plus fort, près du micro');
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -4970,10 +5103,10 @@ async function transcribeLessonPhotos(files){
     const images = await Promise.all(files.map(f=>imageFileToJpegBase64(f)));
     const content = images.map(data=>({type:'image', source:{type:'base64', media_type:'image/jpeg', data}}));
     content.push({type:'text', text:'Transcris fidèlement le contenu de cette leçon (dans l\'ordre des photos). Garde les titres, définitions, règles, exemples et tableaux (en texte simple). Écris les formules en LaTeX entre $...$. Ignore les ratures, les décorations et ce qui n\'est pas la leçon. Si un passage est illisible, écris [illisible]. Réponds uniquement avec la transcription.'});
-    const resp = await fetchAnthropicWithRetry({ model:'claude-sonnet-4-5', max_tokens:4000, messages:[{role:'user', content}] });
+    const resp = await fetchAnthropicWithRetry({ model:AI_MODEL, max_tokens:4000, messages:[{role:'user', content}] });
     const data = await resp.json();
     if(!resp.ok){ status.textContent = '⚠️ Erreur API ' + resp.status + ' : ' + (data.error?.message||''); return; }
-    const text = (data.content?.[0]?.text || '').trim();
+    const text = (respText(data) || '').trim();
     const ta = document.getElementById('lesson-text');
     ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + text;
     status.textContent = '✅ Leçon lue ! Vérifie le texte ci-dessous, puis lance l\'entraînement.';
@@ -5538,11 +5671,11 @@ Rédige en français, sois encourageant, donne 2-3 conseils concrets et personna
 
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       messages:[{role:'user',content:prompt}]
     });
     const data = await resp.json();
-    const text = data.content?.[0]?.text||'Analyse non disponible.';
+    const text = respText(data)||'Analyse non disponible.';
     zone.innerHTML = `<div class="report-ai-summary">
       <div class="report-ai-title">🤖 Analyse IA personnalisée</div>
       <div class="report-ai-text">${text.replace(/\n/g,'<br>')}</div>
@@ -5842,20 +5975,25 @@ async function fetchGlossaryExplanation(term){
   }
   const isCM2 = currentProfile==='cm2';
   const levelName = currentProfile==='cm2'?'6e (11-12 ans)':currentProfile==='sec'?'Seconde (15-16 ans)':'Terminale (17-18 ans)';
+  // Déjà expliqué sur cet appareil : pas de nouvel appel à l'IA
+  const gKey = 'gloss_v1_'+currentProfile+'_'+String(term).toLowerCase().trim();
+  let gCache = null;
+  try{ gCache = JSON.parse(localStorage.getItem(gKey)||'null'); }catch(e){}
 
   const systemPrompt = `Tu es un professeur qui explique des termes complexes à des élèves de ${levelName}.
 Réponds UNIQUEMENT avec un JSON valide, rien d'autre.
 Format :
 {"explanation":"Explication simple en 3-5 phrases adaptées à l'âge. ${isCM2?'Utilise des analogies simples et des comparaisons avec la vie quotidienne. Sois enthousiaste.':'Sois précis et pédagogue.'} Utilise des exemples concrets.","wikipedia_search":"terme exact à chercher sur wikipedia en français (2-3 mots max)","fun_fact":"${isCM2?'Un fait amusant ou surprenant sur ce sujet en 1 phrase':'Une information complémentaire intéressante en 1 phrase'}"}`;
 
+  if(gCache){ showGlossaryResult(gCache.e, gCache.f, gCache.w, gCache.u, term); return; }
   try{
     const resp = await fetchAnthropicWithRetry({
-      model:'claude-sonnet-4-5', max_tokens:400,
+      model:AI_MODEL, max_tokens:400,
       system:systemPrompt,
       messages:[{role:'user',content:'Explique ce terme : '+term}]
     });
     const data = await resp.json();
-    const raw = data.content?.[0]?.text||'{}';
+    const raw = respText(data)||'{}';
     let parsed = {};
     try{ parsed = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
     catch(e){ parsed = {explanation:raw, wikipedia_search:term, fun_fact:''}; }
@@ -5873,6 +6011,9 @@ Format :
           wikiUrl = wikiData.content_urls?.desktop?.page || '';
         }
       }catch(e){}
+    }
+    if(resp.ok && parsed.explanation){
+      try{ localStorage.setItem(gKey, JSON.stringify({e:parsed.explanation, f:parsed.fun_fact, w:wikiText, u:wikiUrl})); }catch(e){}
     }
     showGlossaryResult(parsed.explanation, parsed.fun_fact, wikiText, wikiUrl, term);
   }catch(e){
@@ -6297,7 +6438,17 @@ function buildAgentQueue(){
 // ══════════════════════════════════════════════════════════
 // FETCH WITH RETRY — handles 529 Overloaded automatically
 // ══════════════════════════════════════════════════════════
+// Modèle IA de l'appli : Sonnet 5.5 coûte 2 $ / 10 $ par million de tokens
+// (entrée / sortie) contre 3 $ / 15 $ pour Sonnet 4.5, pour une qualité supérieure.
+const AI_MODEL = 'claude-sonnet-5-5';
+// Texte de la réponse : on lit le premier bloc « text » (un bloc « thinking » peut le précéder)
+function respText(data){
+  const b = (data && data.content || []).find(c=>c.type==='text');
+  return b ? b.text : '';
+}
 async function fetchAnthropicWithRetry(body, maxRetries=3){
+  // Pas de réflexion étendue : réponses courtes, la réflexion coûterait des tokens de sortie
+  if(body.model===AI_MODEL && !body.thinking) body = {...body, thinking:{type:'between_tools'}};
   const headers = {
     'Content-Type':'application/json',
     'x-api-key': ANTHROPIC_KEY,
@@ -6344,10 +6495,19 @@ function showMemoryExercise(fullText, qIdx){
   const memoMatch = fullText.match(/PHASE_MEMO:\s*([^\n]+(?:\n(?!PHASE_RAPPEL:)[^\n]*)*)/i);
   const rappelMatch = fullText.match(/PHASE_RAPPEL:\s*([\s\S]+)/i);
   const memoText = memoMatch ? memoMatch[1].trim() : fullText;
-  const rappelText = rappelMatch ? rappelMatch[1].trim() : 'Maintenant réponds de mémoire.';
+  let rappelText = rappelMatch ? rappelMatch[1].trim() : 'Maintenant réponds de mémoire.';
 
   // Adaptive timer based on progression level
   const md = getMemoryDifficulty();
+  if(currentSubject && currentSubject.topicId==='memoire_travail'){
+    md.seconds = getWorkingMemoryDifficulty().seconds;
+    // Safety net: if the AI copied the code into the task, mask it
+    const digits = (memoText.split(':').pop().match(/\d/g)||[]);
+    if(digits.length >= 3){
+      const leak = new RegExp(digits.join('[\\s\\-–.,*]*'),'g');
+      rappelText = rappelText.replace(leak, digits.map(()=>'?').join('-'));
+    }
+  }
   memoryPhase = 'memo';
   memoryCountdown = md.seconds;
   memoryTotalSeconds = md.seconds;
